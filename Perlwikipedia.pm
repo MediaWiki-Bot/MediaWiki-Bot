@@ -2,50 +2,44 @@ package Perlwikipedia;
 
 use strict;
 use 5.8.8;
-use LWP::UserAgent;
 use WWW::Mechanize;
-
-my $agent=LWP::UserAgent->new;
-$agent->agent('Perlwikipedia/0.90');
-$agent->cookie_jar({file=> '.perlwikipedia-cookies'});
-
-my $mech=WWW::Mechanize->new();
-$mech->agent("Perlwikipedia/0.90");
-$mech->cookie_jar($agent->cookie_jar());
-
-our $VERSION = '0.90';
-
-my $host='en.wikipedia.org';
-my $path='w';
+use HTML::Entities;
+use Carp;
+our $version='0.90';
 
 sub new {
-	my $self = shift;
-	return (bless {}, $self);
+	my $package = shift;
+	my $self = bless {}, $package;
+	$self->{mech}=WWW::Mechanize->new(cookie_jar => {file => '.perlwikipedia_cookies.dat'}, onerror=> sub {carp ''});
+	$self->{mech}->agent("Perlwikipedia/$version");
+	$self->{host}='en.wikipedia.org';
+	$self->{path}='w';
+
+	return $self;
 }
 
 sub set_wiki {
 	my $self=shift;
-	($host, $path)=@_;
+	$self->{host}=shift;
+	$self->{path}=shift;
 }
 
 sub login {
-	my $self=shift;	
-	my $editor=shift;
-	my $password=shift;
-	
-	my $login = HTTP::Request->new(POST => "http://$host/$path/index.php?title=Special:Userlogin&action=submitlogin&type=login");
-	$login->content_type('application/x-www-form-urlencoded');
-	$login->content("wpName=$editor&wpPassword=$password&wpRemember=1&wpLoginattempt=Log+in");
-	my $logger_inner = $agent->request($login);
-	
-my $do_redirect=HTTP::Request->new(GET =>'http://$host/$path/index.php?title=Special:Userlogin&wpCookieCheck=login');
-	my $redirecter= $agent->request($do_redirect);
-	my $is_success=$redirecter->content;
-	
-	if ($is_success=~m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
+	my $self = shift;	
+	my $editor = shift;
+	my $password = shift;
+	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=Special:Userlogin");
+	my $content = $self->{mech}->submit_form(
+        form_name => 'userlogin',
+        fields    => { 
+            wpName => $editor,
+            wpPassword => $password,
+        },
+    )->content;
+	if ($content=~m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
 		return "Success";
 	}
-	elsif ($is_success=~!m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
+	elsif ($content=~!m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
 		return "Fail";
 	}
 
@@ -55,28 +49,29 @@ my $do_redirect=HTTP::Request->new(GET =>'http://$host/$path/index.php?title=Spe
 sub edit {
 	my $self=shift;
 	my $page=shift;
-	my $summary=shift;
 	my $text=shift;
+	my $summary=shift;
 
-	$mech->get("http://$host/$path/index.php?title=$page&action=edit");
-	$mech->form_name('editform');
-	$mech->field('wpSummary',$summary);
-	$mech->field('wpTextbox1',$text);
+	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=$page&action=edit");
+	$self->{mech}->form_name('editform');
+	$self->{mech}->field('wpSummary',$summary);
+	$self->{mech}->field('wpTextbox1',$text);
 
-	$mech->click_button(name=>'wpSave');
+	$self->{mech}->click_button(name=>'wpSave');
 }
+
 sub edit_talk {
 	my $self=shift;
 	my $user=shift;
 	my $summary=shift;
 	my $text=shift;
 
-	$mech->get("http://$host/$path/index.php?title=User_talk:$user&action=edit&section=new");
-	$mech->form_name('editform');
-	$mech->field('wpSummary',$summary);
-	$mech->field('wpTextbox1',$text);
+	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=User_talk:$user&action=edit&section=new");
+	$self->{mech}->form_name('editform');
+	$self->{mech}->field('wpSummary',$summary);
+	$self->{mech}->field('wpTextbox1',$text);
 
-	$mech->click_button(name=>'wpSave');
+	$self->{mech}->click_button(name=>'wpSave');
 }
 
 sub get_history {
@@ -84,22 +79,18 @@ sub get_history {
 	my $pagename = shift;
 	my $type = shift;
 	
-	my $request=HTTP::Request->new(GET=>"http://$host/$path/api.php?action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
-	my $response = $agent->request($request);
-	my $history  = $response->content;
+	my $history=$self->{mech}->get("http://$self->{host}/$self->{path}/api.php?action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user|comment")->content;
 
-	$history =~ s/<.+?>//g;
-	$history =~ s/&lt;/</g;
-	$history =~ s/&gt;/>/g;
+	decode_entities($history);
 	$history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
 
 	my @history = split( /\n/, $history );
 	my @users;
 	my @revids;
-
+	my @comments;
 	foreach (@history) {
-		if ( $_ =~ m/<rev revid="(\d+)" pageid="(\d+)" oldid="(\d+)" user="(.+)" \/>/ ) {
+		if ( $_ =~ m/<rev revid="(\d+)" pageid="(\d+)" oldid="(\d+)" user="(.+)"/ ) {
 
 			my $revid = $1;
 			my $oldid = $3;
@@ -107,6 +98,10 @@ sub get_history {
 
 			push(@users,$user);
 			push(@revids,$revid);
+			if (/comment="(.+)"/) {
+				my $comment=$1;
+				push @comments,$comment;
+			}
 		}
 	}
 
@@ -116,11 +111,14 @@ sub get_history {
 	elsif ($type eq 'revids') {
 		return @revids;
 	}			
-
+	elsif ($type eq 'comments') {
+		return @comments;
+	}
+	
 	return;
 }
 
-sub grab_text {
+sub get_text {
 	my $self=shift;	
 	my $pagename=shift;
 	my $revid=shift;
@@ -129,19 +127,17 @@ sub grab_text {
 	my $fetch='';
 
 	if ($revid eq undef) {	
-		$fetch = HTTP::Request->new(GET => "http://$host/$path/index.php?title=$pagename&action=edit");
+		$fetch = HTTP::Request->new(GET => "http://$self->{host}/$self->{path}/index.php?title=$pagename&action=edit");
 	}
 	elsif ($revid ne undef) {
-		$fetch = HTTP::Request->new(GET => "http://$host/$path/index.php?title=$pagename&action=edit&oldid=$revid");
+		$fetch = HTTP::Request->new(GET => "http://$self->{host}/$self->{path}/index.php?title=$pagename&action=edit&oldid=$revid");
 	}
-	my $response=$agent->request($fetch);
-	my $content=$response->content;
-	if ($content=~m/cols='80' >(.+)<\/textarea>/s) { $wikitext=$1; }
+	my $response=$self->{mech}->request($fetch);
+	my $content=$response->content;	
+	
+	if ($content=~/<textarea name='wpTextbox1' .+?>(.+)<\/textarea>/s) {$wikitext=$1;} 
 
-	$wikitext =~ s/&lt;/</g;
-	$wikitext =~ s/&gt;/>/g;
-	$wikitext =~ s/&quot;/\"/g;
-	$wikitext =~ s/&amp;/&/g;
+	decode_entities($wikitext);
 
 	return $wikitext;
 }
@@ -152,14 +148,14 @@ sub revert {
 	my $summary=shift;
 	my $revid=shift;
 
-	$mech->get("http://$host/$path/index.php?title=$pagename&action=edit&oldid=$revid");
+	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=$pagename&action=edit&oldid=$revid");
 
-	$mech->form_name('editform');
-	$mech->field('wpSummary',$summary);
-	$mech->field('wpScrolltop','');
-	$mech->field('wpSection','');
+	$self->{mech}->form_name('editform');
+	$self->{mech}->field('wpSummary',$summary);
+	$self->{mech}->field('wpScrolltop','');
+	$self->{mech}->field('wpSection','');
 
-	$mech->click_button(name=>'wpSave');
+	$self->{mech}->click_button(name=>'wpSave');
 }
 
 sub get_last {
@@ -168,13 +164,11 @@ sub get_last {
 	my $editor   = shift;
 
 	my $revertto = 0;
-	my $request = HTTP::Request->new(GET=>"http://$host/$path/api.php?action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
-	my $response = $agent->request($request);
+	my $request = HTTP::Request->new(GET=>"http://$self->{host}/$self->{path}/api.php?action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
+	my $response = $self->{mech}->request($request);
 	my $history  = $response->content;
 
-	$history =~ s/<.+?>//g;
-	$history =~ s/&lt;/</g;
-	$history =~ s/&gt;/>/g;
+	decode_entities($history);
 	$history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
 	my @history = split( /\n/, $history );
@@ -196,31 +190,29 @@ sub get_last {
 }
 
 sub update_rc {
+	my $self=shift;
+	my $limit=shift || 5;
 	my @pagenames;
 	my @revids;
 	my @oldids;
-	my %rc_table;
+	my @rc_table;
 	
-	my $request = new HTTP::Request(GET => 'http://$host/$path/api.php?action=query&list=recentchanges&rcnamespace=0&rclimit=5');
-	my $response = $agent->request($request);
-	my $contents = $response->content;
+	my $history=$self->{mech}->get("http://$self->{host}/$self->{path}/api.php?action=query&list=recentchanges&rcnamespace=0&rclimit=$limit")->content;
 	
-	$contents =~ s/<.+?>//g;
-	$contents =~ s/&lt;/</g;
-	$contents =~ s/&gt;/>/g;
-	my @rctable = split(/\n/,$contents);
-	foreach (@rctable) {
+	decode_entities($history);
+	my @content = split(/\n/,$history);
+	foreach (@content) {
 		if (/<rc ns="0" title="(.+)" pageid="\d+" revid="(\d+)" old_revid="(\d+)" type="0" timestamp=".+" \/>/) {
 
 			my $pagename = $1;
 			my $revid = $2;
 			my $oldid = $3;
-
-			$rc_table{$pagename} = "$revid:$oldid";
+			push @rc_table, {pagename=>$pagename, revid=>$revid, oldid=>$oldid};
+			
 		}
 	}
 
-	return %rc_table;
+	return @rc_table;
 }
 
 sub what_links_here {
@@ -228,14 +220,14 @@ sub what_links_here {
 	my $article = shift;
 	my @links;
 
-	$_ = $agent->get("http://$host/$path/index.php?title=Special:Whatlinkshere&target=$article&limit=5000")->content;
+	$_ = $self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=Special:Whatlinkshere&target=$article&limit=5000")->content;
 	while (/<li><a href=\".+\" title=\"(.+)\">.+<\/a>(.*)<\/li>/g) {
 		my $title = $1;
 		my $type = $&;
 		if ($type !~ /\(redirect page\)/ && $type !~ /\(transclusion\)/) { $type = ""; }
 		if ($type =~ /\(redirect page\)/) { $type = "redirect"; }
 		if ($type =~ /\(transclusion\)/) { $type = "transclusion"; }
-
+		
 		push @links, {title => $title, type => $type};
 	}
 
