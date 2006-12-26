@@ -1,22 +1,63 @@
 package Perlwikipedia;
 
 use strict;
-use 5.8.8;
 use WWW::Mechanize;
 use HTML::Entities;
+use URI::Escape;
 use Carp;
-our $version='0.90';
+
+our $VERSION = '0.90';
 
 sub new {
 	my $package = shift;
 	my $self = bless {}, $package;
-	$self->{mech}=WWW::Mechanize->new(cookie_jar => {file => '.perlwikipedia_cookies.dat'}, onerror=> sub {carp ''});
-	$self->{mech}->agent("Perlwikipedia/$version");
+	$self->{mech}=WWW::Mechanize->new(cookie_jar => {file => '.perlwikipedia_cookies.dat'}, onerror=> \&Carp::carp);
+	$self->{mech}->agent("Perlwikipedia/$VERSION");
 	$self->{host}='en.wikipedia.org';
 	$self->{path}='w';
 
 	return $self;
 }
+
+sub _get {
+    my $self = shift;
+    my $page = shift;
+    my $action = shift || 'view';
+    my $extra = shift;
+    $page = uri_escape($page);
+    my $url = "http://$self->{host}/$self->{path}/index.php?title=$page&action=$action";
+    $url .= $extra if $extra;
+    my $res = $self->{mech}->get($url);
+    if ($res->is_success()) {
+        return $res;
+    } else {
+        carp "Error requesting $page: ".$res->status_line();
+        return;
+    }
+}
+
+sub _get_api {
+    my $self = shift;
+    my $query = shift;
+    my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/api.php?$query");
+    if ($res->is_success()) {
+        return $res;
+    } else {
+        carp "Error requesting api.php?$query: ".$res->status_line();
+        return;
+    }
+}
+
+sub _put {
+    my $self = shift;
+    my $page = shift;
+    my $options = shift;
+    my $extra = shift;
+    my $res = $self->_get($page, 'edit', $extra);
+    return $self->{mech}->submit_form(%{$options});
+}
+
+
 
 sub set_wiki {
 	my $self=shift;
@@ -28,22 +69,20 @@ sub login {
 	my $self = shift;	
 	my $editor = shift;
 	my $password = shift;
-	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=Special:Userlogin");
-	my $content = $self->{mech}->submit_form(
+    
+	my $res = $self->_put('Special:Userlogin', { 
         form_name => 'userlogin',
-        fields    => { 
+        fields => {
             wpName => $editor,
             wpPassword => $password,
         },
-    )->content;
-	if ($content=~m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
+    });
+    my $content = $res->decoded_content();
+	if ($content =~ m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
 		return "Success";
-	}
-	elsif ($content=~!m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
+	} else {
 		return "Fail";
 	}
-
-	return;
 }
 
 sub edit {
@@ -51,16 +90,20 @@ sub edit {
 	my $page=shift;
 	my $text=shift;
 	my $summary=shift;
+    my $is_minor = shift || 0;
 
-	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=$page&action=edit");
-	$self->{mech}->form_name('editform');
-	$self->{mech}->field('wpSummary',$summary);
-	$self->{mech}->field('wpTextbox1',$text);
-
-	$self->{mech}->click_button(name=>'wpSave');
+	return $self->_put($page, 'edit', {
+        form_name => 'editform',
+        fields => {
+            wpSummary => $summary,
+            wpTextbox1 => $text,
+            wpMinoredit => $is_minor
+            
+        },
+    });
 }
 
-sub edit_talk {
+sub edit_talk { # is this really necessary? -- Jmax
 	my $self=shift;
 	my $user=shift;
 	my $summary=shift;
@@ -79,9 +122,9 @@ sub get_history {
 	my $pagename = shift;
 	my $type = shift;
 	
-	my $history=$self->{mech}->get("http://$self->{host}/$self->{path}/api.php?action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user|comment")->content;
+	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user|comment");
+    my $history = $res->content;
 
-	decode_entities($history);
 	$history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
 
@@ -124,22 +167,23 @@ sub get_text {
 	my $revid=shift;
 
 	my $wikitext='';
-	my $fetch='';
+	my $res;
 
 	if ($revid eq undef) {	
-		$fetch = HTTP::Request->new(GET => "http://$self->{host}/$self->{path}/index.php?title=$pagename&action=edit");
+		$res = $self->_get($pagename, 'edit');
+	} else {
+        $res = $self->_get($pagename, 'edit', "&oldid=$revid");
 	}
-	elsif ($revid ne undef) {
-		$fetch = HTTP::Request->new(GET => "http://$self->{host}/$self->{path}/index.php?title=$pagename&action=edit&oldid=$revid");
-	}
-	my $response=$self->{mech}->request($fetch);
-	my $content=$response->content;	
+	my $content = $res->content;	
 	
-	if ($content=~/<textarea name='wpTextbox1' .+?>(.+)<\/textarea>/s) {$wikitext=$1;} 
+	if ($content=~/<textarea name='wpTextbox1' .+?>(.+)<\/textarea>/s) {
+        $wikitext=$1;
+    } else {
+        carp "Could not get_text for $pagename!";
+    }
 
-	decode_entities($wikitext);
+	return decode_entities($wikitext);
 
-	return $wikitext;
 }
 
 sub revert {
@@ -147,15 +191,15 @@ sub revert {
 	my $pagename=shift;
 	my $summary=shift;
 	my $revid=shift;
-
-	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=$pagename&action=edit&oldid=$revid");
-
-	$self->{mech}->form_name('editform');
-	$self->{mech}->field('wpSummary',$summary);
-	$self->{mech}->field('wpScrolltop','');
-	$self->{mech}->field('wpSection','');
-
-	$self->{mech}->click_button(name=>'wpSave');
+    
+    return $self->_put($pagename, "&oldid=$revid", {
+        form_name => 'editform',
+        fields => {
+            wpSummary => $summary,
+            wpScrolltop => '',
+            wpSection => '',
+        },
+    });
 }
 
 sub get_last {
@@ -164,12 +208,11 @@ sub get_last {
 	my $editor   = shift;
 
 	my $revertto = 0;
-	my $request = HTTP::Request->new(GET=>"http://$self->{host}/$self->{path}/api.php?action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
-	my $response = $self->{mech}->request($request);
-	my $history  = $response->content;
 
-	decode_entities($history);
-	$history =~ s/ anon=""//g;
+    my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
+    my $history = decode_entities($res->content);
+	
+    $history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
 	my @history = split( /\n/, $history );
 
@@ -197,9 +240,9 @@ sub update_rc {
 	my @oldids;
 	my @rc_table;
 	
-	my $history=$self->{mech}->get("http://$self->{host}/$self->{path}/api.php?action=query&list=recentchanges&rcnamespace=0&rclimit=$limit")->content;
-	
-	decode_entities($history);
+    my $res = $self->_get_api("action=query&list=recentchanges&rcnamespace=0&rclimit=$limit");
+    my $history = decode_entities($res->content);
+
 	my @content = split(/\n/,$history);
 	foreach (@content) {
 		if (/<rc ns="0" title="(.+)" pageid="\d+" revid="(\d+)" old_revid="(\d+)" type="0" timestamp=".+" \/>/) {
@@ -220,8 +263,9 @@ sub what_links_here {
 	my $article = shift;
 	my @links;
 
-	$_ = $self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=Special:Whatlinkshere&target=$article&limit=5000")->content;
-	while (/<li><a href=\".+\" title=\"(.+)\">.+<\/a>(.*)<\/li>/g) {
+	my $res = $self->_get('Special:Whatlinkshere', 'view', "&target=$article&limit=5000");
+    my $content = $res->content;
+	while ($content =~ m/<li><a href=\".+\" title=\"(.+)\">.+<\/a>(.*)<\/li>/g) {
 		my $title = $1;
 		my $type = $&;
 		if ($type !~ /\(redirect page\)/ && $type !~ /\(transclusion\)/) { $type = ""; }
@@ -232,6 +276,45 @@ sub what_links_here {
 	}
 
 	return @links;
+}
+
+sub get_pages_in_category {
+    my $self = shift;
+    my $category = shift;
+
+    my @pages;
+    my $res = $self->_get($category, 'view');
+    my $content = $res->content;
+    while ($content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig) {
+        push @pages, 'Category:'.$1;
+    }
+    while ($content =~ m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig) {
+        push @pages, $1;
+    }
+    while (my $res = $self->{mech}->follow_link(text => 'next 200')) {
+        my $content = $res->content;
+        while ($content =~ m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig) {
+            push @pages, $1;
+        }
+    }
+    return @pages;
+}
+
+sub get_all_pages_in_category {
+    my $self = shift;
+    my $base_category = shift;
+    my @first = $self->get_pages_in_category($base_category);
+    my %data;
+    foreach my $page (@first) {
+        $data{ $page } = '';
+        if ($page =~ /^Category:/) {
+            my @pages = $self->get_pages_in_category($page);
+            foreach (@pages) {
+                $data{ $_ } = '';
+            }
+        }
+    }
+    return keys %data;
 }
 
 1;
