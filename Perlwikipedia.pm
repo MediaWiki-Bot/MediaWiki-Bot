@@ -5,7 +5,6 @@ use WWW::Mechanize;
 use HTML::Entities;
 use URI::Escape;
 use Carp;
-use HTML::Form;
 
 our $VERSION = '0.90';
 
@@ -93,7 +92,7 @@ sub edit {
 	my $summary=shift;
     my $is_minor = shift || 0;
 
-	return $self->_put($page, 'edit', {
+	return $self->_put($page, {
         form_name => 'editform',
         fields => {
             wpSummary => $summary,
@@ -175,8 +174,8 @@ sub get_text {
 	} else {
         $res = $self->_get($pagename, 'edit', "&oldid=$revid");
 	}
-	my $edit_form=HTML::Form->parse($res);
-	my $wikitext = $edit_form->find_input('wpTextbox1')->value || carp "Could not get_text for $pagename!";
+
+    my $wikitext = $self->{mech}->value('wpTextbox1') || carp "Could not get_text for $pagename!";
 
 	return decode_entities($wikitext);
 
@@ -317,7 +316,6 @@ sub get_all_pages_in_category {
 
 
 __END__
-# Below is stub documentation for your module. You'd better edit it!
 
 =head1 NAME
 
@@ -326,22 +324,16 @@ perlwikipedia - a Wikipedia bot framework written in Perl
 =head1 SYNOPSIS
 
   use Perlwikipedia;
-  my $editor=Perlwikipedia->new;
-  $editor->login('Account','password');
-  $editor->revert('Wikipedia:Sandbox','Reverting vandalism','38484848');
+
+  my $editor = Perlwikipedia->new;
+  $editor->login('Account', 'password');
+  $editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
 
 =head1 DESCRIPTION
 
-perlwikipedia is a bot framework for Wikipedia that can be used to write bots (you guessed it!).
-
-=head2 EXPORT
-
-None by default.
-
-
-
-=head1 SEE ALSO
-
+perlwikipedia is a bot framework for Wikipedia that can be used to write 
+bots (you guessed it!).  Information and policy on bots on the english 
+Wikipedia can be found at L<http://en.wikipedia.org/wiki/WP:BOT>
 
 =head1 AUTHOR
 
