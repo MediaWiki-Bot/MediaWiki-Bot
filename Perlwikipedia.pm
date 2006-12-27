@@ -97,7 +97,6 @@ sub edit {
         fields => {
             wpSummary => $summary,
             wpTextbox1 => $text,
-            wpMinoredit => $is_minor
             
         },
     });
@@ -312,6 +311,11 @@ sub get_all_pages_in_category {
     return keys %data;
 }
 
+sub purge_page {
+    my $self=shift;
+    my $page=shift;
+    my $res = $self->_get($page,'purge');
+}
 1;
 
 
