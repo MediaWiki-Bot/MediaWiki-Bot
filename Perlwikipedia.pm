@@ -5,6 +5,7 @@ use WWW::Mechanize;
 use HTML::Entities;
 use URI::Escape;
 use Carp;
+use HTML::Form;
 
 our $VERSION = '0.90';
 
@@ -173,8 +174,8 @@ sub get_text {
 	} else {
         $res = $self->_get($pagename, 'edit', "&oldid=$revid");
 	}
-
-    my $wikitext = $self->{mech}->value('wpTextbox1') || carp "Could not get_text for $pagename!";
+	my $edit_form=HTML::Form->parse($res);
+    my $wikitext = $edit_form->find_input('wpTextbox1','textarea')->value || carp "Could not get_text for $pagename!";
 
 	return decode_entities($wikitext);
 
