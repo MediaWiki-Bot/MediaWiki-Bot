@@ -186,14 +186,14 @@ sub revert {
 	my $summary=shift;
 	my $revid=shift;
     
-    return $self->_put($pagename, "&oldid=$revid", {
+    return $self->_put($pagename, {
         form_name => 'editform',
         fields => {
             wpSummary => $summary,
             wpScrolltop => '',
             wpSection => '',
         },
-    });
+    }, "&oldid=$revid");
 }
 
 sub get_last {
