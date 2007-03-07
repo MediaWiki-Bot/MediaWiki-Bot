@@ -58,8 +58,6 @@ sub _put {
     return $self->{mech}->submit_form(%{$options});
 }
 
-
-
 sub set_wiki {
 	my $self=shift;
 	$self->{host}=shift;
@@ -91,7 +89,7 @@ sub edit {
 	my $page=shift;
 	my $text=shift;
 	my $summary=shift;
-    my $is_minor = shift || 0;
+        my $is_minor = shift || 0;
 
 	return $self->_put($page, {
         form_name => 'editform',
@@ -165,12 +163,12 @@ sub get_text {
 	my $self=shift;	
 	my $pagename=shift;
 	my $revid=shift;
-
+	my $section=shift;
 	my $wikitext='';
 	my $res;
 
 	if ($revid eq undef) {	
-		$res = $self->_get($pagename, 'edit');
+		$res = $self->_get($pagename, 'edit',"&section=$section");
 	} else {
         $res = $self->_get($pagename, 'edit', "&oldid=$revid");
 	}
@@ -286,7 +284,8 @@ sub get_pages_in_category {
         push @pages, $1;
     }
     while (my $res = $self->{mech}->follow_link(text => 'next 200')) {
-        my $content = $res->content;
+        sleep 1;							#Cheap hack to make sure we don't bog down the server
+	my $content = $res->content;
         while ($content =~ m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig) {
             push @pages, $1;
         }
@@ -315,6 +314,7 @@ sub purge_page {
     my $self=shift;
     my $page=shift;
     my $res = $self->_get($page,'purge');
+    
 }
 1;
 
@@ -336,8 +336,7 @@ perlwikipedia - a Wikipedia bot framework written in Perl
 =head1 DESCRIPTION
 
 perlwikipedia is a bot framework for Wikipedia that can be used to write 
-bots (you guessed it!).  Information and policy on bots on the english 
-Wikipedia can be found at L<http://en.wikipedia.org/wiki/WP:BOT>
+bots (you guessed it!).
 
 =head1 AUTHOR
 
@@ -345,8 +344,64 @@ Alex Rowe (alex.d.rowe@gmail.com)
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2006 by Alex Rowe
+Copyright (C) 2006 by the perlwikipedia team
 
 This library is free software; it is distributed under the terms and conditions of the GNU Public License version 2. A copy of the GPLv2 is included with this distribution.
 
-=cut
+=head1 METHODS
+
+=over 4
+
+=item new()
+
+Calling Perlwikipedia->new will create a new Perlwikipedia object
+
+=item set_wiki($wiki_host,$wiki_path)
+
+set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell Perlwikipedia to use http://de.wikipedia.org/w/index.php. Perlwikipedia's default settings are 'en.wikipedia.org' with a path of 'w'.
+
+=item login($username,$password)
+
+Logs the Perlwikipedia object into the specified wiki. If the login was a success, it will return 'Success', otherwise, 'Fail'.
+
+=item edit($pagename,$page_text,$edit_summary,[$is_minor])
+
+Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified.
+
+=item get_history($pagename,$type)
+
+Returns the history of the specified page, as one of three defined types: 'users', 'revids', or 'comments'
+
+=item get_text($pagename,[$revid,$section_number])
+
+Returns the text of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section.
+
+=item revert($pagename,$edit_summary,$old_revision_id)
+
+Reverts the specified page to $old_revision_id, with an edit summary of $edit_summary.
+
+=item get_last($pagename,$username)
+
+Returns the number of the last revision not made by $username.
+
+=item update_rc([$limit])
+
+Returns an array containing the Recent Changes to the wiki's Main namespace. The array's structure contains 'pagename', 'revid', and 'oldid'.
+
+=item what_links_here($pagename)
+
+Returns an array containing a list of all pages linking to the given page. The array's structure contains 'title' and 'type', the type being a transclusion, redirect, or neither.
+
+=item get_pages_in_category($category_name)
+
+Returns an array containing the names of all pages in the specified category. Does not go into sub-categories.
+
+=item get_all_pages_in_category($category_name)
+
+Returns an array containing the names of ALL pages in the specified category, including sub-categories up to a depth of one sub-category.
+
+=item purge_page($pagename)
+
+Purges the server's cache of the specified page.
+
+=back
