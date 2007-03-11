@@ -6,7 +6,6 @@ use HTML::Entities;
 use URI::Escape;
 use Carp;
 
-
 our $VERSION = '0.90';
 
 sub new {
@@ -16,7 +15,7 @@ sub new {
 	$self->{mech}->agent("Perlwikipedia/$VERSION");
 	$self->{host}='en.wikipedia.org';
 	$self->{path}='w';
-
+	$self->{mech}->default_header('Accept-Encoding'=>'');
 	return $self;
 }
 
@@ -80,7 +79,15 @@ sub login {
 	if ($content =~ m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
 		return "Success";
 	} else {
-		return "Fail";
+		if ($content =~ m/There is no user by the name/) {
+			return "Fail (Bad username)";
+		}
+		elsif ($content =~ m/Incorrect password entered/) {
+			return "Fail (Bad password)";
+		}
+		elsif ($content =~ m/Password entered was blank/) {
+			return "Fail (Blank password)";
+		}
 	}
 }
 
@@ -121,11 +128,10 @@ sub get_history {
 	my $type = shift;
 	
 	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user|comment");
-    my $history = $res->content;
-
+        my $history = $res->content;
 	$history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
-
+	print "$history\n";
 	my @history = split( /\n/, $history );
 	my @users;
 	my @revids;
@@ -136,7 +142,7 @@ sub get_history {
 			my $revid = $1;
 			my $oldid = $3;
 			my $user  = $4;
-
+			print "$_\n";
 			push(@users,$user);
 			push(@revids,$revid);
 			if (/comment="(.+)"/) {
