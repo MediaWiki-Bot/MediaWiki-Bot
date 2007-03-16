@@ -131,7 +131,6 @@ sub get_history {
         my $history = $res->content;
 	$history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
-	print "$history\n";
 	my @history = split( /\n/, $history );
 	my @users;
 	my @revids;
@@ -142,7 +141,6 @@ sub get_history {
 			my $revid = $1;
 			my $oldid = $3;
 			my $user  = $4;
-			print "$_\n";
 			push(@users,$user);
 			push(@revids,$revid);
 			if (/comment="(.+)"/) {
