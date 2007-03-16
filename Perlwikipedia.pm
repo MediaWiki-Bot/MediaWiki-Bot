@@ -126,7 +126,10 @@ sub get_history {
 	my $self = shift;
 	my $pagename = shift;
 	my $limit = shift;
-	
+	if ($limit>50) {
+		carp "Error requesting history for $pagename: $limit may not be set to values above 50.";
+		return;
+	}	
 	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=user|comment|timestamp");
         my $history = $res->content;
 	decode_entities($history);
