@@ -106,7 +106,6 @@ sub edit {
             
         },
     });
-	print "Edited $page\n";
 }
 
 sub edit_talk { # is this really necessary? -- Jmax
@@ -126,42 +125,30 @@ sub edit_talk { # is this really necessary? -- Jmax
 sub get_history {
 	my $self = shift;
 	my $pagename = shift;
-	my $type = shift;
+	my $limit = shift;
 	
-	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user|comment");
+	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=user|comment|timestamp");
         my $history = $res->content;
 	decode_entities($history);
 	$history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
 	my @history = split( /\n/, $history );
-	my @users;
-	my @revids;
-	my @comments;
+	my @return;
 	foreach (@history) {
-		if ( $_ =~ m/<rev revid="(\d+?)" pageid="(\d+?)" oldid="(\d+?)" user="(.+?)"/) {
-			my $revid = $1;
-			my $oldid = $3;
-			my $user  = $4;
-			push(@users,$user);
-			push(@revids,$revid);
-			if (/comment="(.+?)"/) {
-				my $comment=$1;
-				push @comments,$comment;
-			}
+		if (/<rev revid="(.+?)" pageid=".+?" oldid="(.+?)" user="(.+?)" timestamp="(.+?)T(.+?)Z"(?: comment="(.+?)")?/) {
+			my $revid          = $1;
+			my $oldid          = $2;
+			my $user           = $3;
+			my $timestamp_date = $4;
+			my $timestamp_time = $5;
+			my $comment        = $6;
+			push 
+(@return,{revid=>$revid,oldid=>$oldid,user=>$user,comment=>$comment,timestamp_date=>$timestamp_date, 
+timestamp_time=>$timestamp_time});
 		}
 	}
-
-	if ($type eq 'users') {
-		return @users;
-	}
-	elsif ($type eq 'revids') {
-		return @revids;
-	}			
-	elsif ($type eq 'comments') {
-		return @comments;
-	}
 	
-	return;
+	return @return;
 }
 
 sub get_text {
@@ -373,9 +360,9 @@ Logs the Perlwikipedia object into the specified wiki. If the login was a succes
 
 Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified.
 
-=item get_history($pagename,$type)
+=item get_history($pagename,$limit)
 
-Returns the history of the specified page, as one of three defined types: 'users', 'revids', or 'comments'
+Returns an array containing the history of the specified page, with $limit number of revisions. The array's structure contains 'revid','oldid','user','comment','timestamp_date', and 'timestamp_time'.
 
 =item get_text($pagename,[$revid,$section_number])
 
