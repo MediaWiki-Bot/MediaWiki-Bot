@@ -106,6 +106,7 @@ sub edit {
             
         },
     });
+	print "Edited $page\n";
 }
 
 sub edit_talk { # is this really necessary? -- Jmax
@@ -129,6 +130,7 @@ sub get_history {
 	
 	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user|comment");
         my $history = $res->content;
+	decode_entities($history);
 	$history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
 	my @history = split( /\n/, $history );
@@ -136,14 +138,13 @@ sub get_history {
 	my @revids;
 	my @comments;
 	foreach (@history) {
-		if ( $_ =~ m/<rev revid="(\d+)" pageid="(\d+)" oldid="(\d+)" user="(.+)"/ ) {
-
+		if ( $_ =~ m/<rev revid="(\d+?)" pageid="(\d+?)" oldid="(\d+?)" user="(.+?)"/) {
 			my $revid = $1;
 			my $oldid = $3;
 			my $user  = $4;
 			push(@users,$user);
 			push(@revids,$revid);
-			if (/comment="(.+)"/) {
+			if (/comment="(.+?)"/) {
 				my $comment=$1;
 				push @comments,$comment;
 			}
