@@ -54,6 +54,10 @@ sub _put {
     my $options = shift;
     my $extra = shift;
     my $res = $self->_get($page, 'edit', $extra);
+    if (($res->content)=~m/<textarea .+? readonly='readonly'/) {
+	carp "Error editing $page: Page is protected";
+	return;
+    }
     return $self->{mech}->submit_form(%{$options});
 }
 
@@ -97,29 +101,25 @@ sub edit {
 	my $text=shift;
 	my $summary=shift;
         my $is_minor = shift || 0;
-
-	return $self->_put($page, {
-        form_name => 'editform',
-        fields => {
-            wpSummary => $summary,
-            wpTextbox1 => $text,
-            
-        },
-    });
-}
-
-sub edit_talk { # is this really necessary? -- Jmax
-	my $self=shift;
-	my $user=shift;
-	my $summary=shift;
-	my $text=shift;
-
-	$self->{mech}->get("http://$self->{host}/$self->{path}/index.php?title=User_talk:$user&action=edit&section=new");
-	$self->{mech}->form_name('editform');
-	$self->{mech}->field('wpSummary',$summary);
-	$self->{mech}->field('wpTextbox1',$text);
-
-	$self->{mech}->click_button(name=>'wpSave');
+	if ($is_minor) {
+		return $self->_put($page, {
+        		form_name => 'editform',
+        		fields => {
+            			wpSummary => $summary,
+            			wpTextbox1 => $text,
+				wpMinoredit => 1,
+			},
+    		});
+	}
+	else {
+		return $self->_put($page, {
+			form_name => 'editform',
+			fields=> {
+				wpSummary=>$summary,
+				wpTextbox1=>$text,
+			},
+		});
+	}
 }
 
 sub get_history {
@@ -127,7 +127,7 @@ sub get_history {
 	my $pagename = shift;
 	my $limit = shift;
 	if ($limit>50) {
-		carp "Error requesting history for $pagename: $limit may not be set to values above 50.";
+		carp "Error requesting history for $pagename: Limit may not be set to values above 50.";
 		return;
 	}	
 	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=user|comment|timestamp");
@@ -170,7 +170,6 @@ sub get_text {
 
         if(($res->content) =~ /<textarea.+?\s?>(.+)<\/textarea>/s) {$wikitext=$1;} else { carp "Could not get_text for $pagename!";}
 	return decode_entities($wikitext);
-
 }
 
 sub revert {
@@ -179,12 +178,10 @@ sub revert {
 	my $summary=shift;
 	my $revid=shift;
     
-    return $self->_put($pagename, {
+        return $self->_put($pagename, {
         form_name => 'editform',
         fields => {
             wpSummary => $summary,
-            wpScrolltop => '',
-            wpSection => '',
         },
     }, "&oldid=$revid");
 }
