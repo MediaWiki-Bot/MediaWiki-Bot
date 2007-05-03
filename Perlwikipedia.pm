@@ -31,7 +31,7 @@ sub _get {
         return $res;
     } else {
         carp "Error requesting $page: ".$res->status_line();
-        return;
+        return 0;
     }
 }
 
@@ -43,7 +43,7 @@ sub _get_api {
         return $res;
     } else {
         carp "Error requesting api.php?$query: ".$res->status_line();
-        return;
+        return 0;
     }
 }
 
@@ -53,6 +53,7 @@ sub _put {
     my $options = shift;
     my $extra = shift;
     my $res = $self->_get($page, 'edit', $extra);
+    unless ($res->is_success) {return;}
     if (($res->content)=~m/<textarea .+? readonly='readonly'/) {
 	carp "Error editing $page: Page is protected";
 	return;
@@ -78,6 +79,7 @@ sub login {
             wpPassword => $password,
         },
     });
+    unless ($res) {return;}
     my $content = $res->decoded_content();
 	if ($content =~ m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
 		return "Success";
@@ -130,6 +132,7 @@ sub get_history {
 		return;
 	}	
 	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=user|comment|timestamp");
+	unless ($res) {return;}
         my $history = $res->content;
 	decode_entities($history);
 	$history =~ s/ anon=""//g;
@@ -166,7 +169,7 @@ sub get_text {
 	} else {
         $res = $self->_get($pagename, 'edit', "&oldid=$revid");
 	}
-
+	unless ($res)  {return;}
         if(($res->content) =~ /<textarea.+?\s?>(.+)<\/textarea>/s) {$wikitext=$1;} else { carp "Could not get_text for $pagename!";}
 	return decode_entities($wikitext);
 }
@@ -192,8 +195,9 @@ sub get_last {
 
 	my $revertto = 0;
 
-    my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
-    my $history = decode_entities($res->content);
+        my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
+        unless ($res) {return;}
+	my $history = decode_entities($res->content);
 	
     $history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
@@ -223,8 +227,9 @@ sub update_rc {
 	my @oldids;
 	my @rc_table;
 	
-    my $res = $self->_get_api("action=query&list=recentchanges&rcnamespace=0&rclimit=$limit");
-    my $history = decode_entities($res->content);
+        my $res = $self->_get_api("action=query&list=recentchanges&rcnamespace=0&rclimit=$limit");
+        unless ($res) {return;}
+	my $history = decode_entities($res->content);
 
 	my @content = split(/\n/,$history);
 	foreach (@content) {
@@ -247,7 +252,8 @@ sub what_links_here {
 	my @links;
 
 	my $res = $self->_get('Special:Whatlinkshere', 'view', "&target=$article&limit=5000");
-    my $content = $res->content;
+    	unless ($res) {return;}
+        my $content = $res->content;
 	while ($content =~ m/<li><a href=\".+\" title=\"(.+)\">.+<\/a>(.*)<\/li>/g) {
 		my $title = $1;
 		my $type = $&;
@@ -267,6 +273,7 @@ sub get_pages_in_category {
 
     my @pages;
     my $res = $self->_get($category, 'view');
+    unless ($res) {return;}
     my $content = $res->content;
     while ($content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig) {
         push @pages, 'Category:'.$1;
