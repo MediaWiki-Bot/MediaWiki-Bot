@@ -15,7 +15,6 @@ sub new {
 	$self->{mech}->agent("Perlwikipedia/$VERSION");
 	$self->{host}='en.wikipedia.org';
 	$self->{path}='w';
-	$self->{mech}->default_header('Accept-Encoding'=>'');
 	return $self;
 }
 
