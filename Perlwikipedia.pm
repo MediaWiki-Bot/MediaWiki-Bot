@@ -53,7 +53,7 @@ sub _put {
     my $options = shift;
     my $extra = shift;
     my $res = $self->_get($page, 'edit', $extra);
-    unless ($res->is_success) {return;}
+    unless ($res) {return;}
     if (($res->content)=~m/<textarea .+? readonly='readonly'/) {
 	carp "Error editing $page: Page is protected";
 	return;
