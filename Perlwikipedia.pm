@@ -15,6 +15,7 @@ sub new {
 	$self->{mech}->agent("Perlwikipedia/$VERSION");
 	$self->{host}='en.wikipedia.org';
 	$self->{path}='w';
+	$self->{debug}=0;
 	return $self;
 }
 
@@ -23,12 +24,20 @@ sub _get {
     my $page = shift;
     my $action = shift || 'view';
     my $extra = shift;
-    $page = uri_escape($page);
+    my $no_escape = shift || 0;
+    $page = uri_escape($page) unless $no_escape;
     my $url = "http://$self->{host}/$self->{path}/index.php?title=$page&action=$action";
     $url .= $extra if $extra;
+    print "Retrieving $url\n" if $self->{debug};
     my $res = $self->{mech}->get($url);
     if ($res->is_success()) {
-        return $res;
+	if ($res->content=~m/The action you have requested is limited to users in the group <.+?>(.+?)<\/a>/) {
+		print "Error requesting $page: You must be in the user group \"$1\".\n";
+		return 0;
+	}
+        else {
+		return $res;
+	}
     } else {
         carp "Error requesting $page: ".$res->status_line();
         return 0;
@@ -38,6 +47,7 @@ sub _get {
 sub _get_api {
     my $self = shift;
     my $query = shift;
+    print "Retrieving http://$self->{host}/$self->{path}/api.php?$query\n" if $self->{debug};
     my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/api.php?$query");
     if ($res->is_success()) {
         return $res;
@@ -56,7 +66,7 @@ sub _put {
     unless ($res) {return;}
     if (($res->content)=~m/<textarea .+? readonly='readonly'/) {
 	carp "Error editing $page: Page is protected";
-	return;
+	return 0;
     }
     return $self->{mech}->submit_form(%{$options});
 }
@@ -65,6 +75,7 @@ sub set_wiki {
 	my $self=shift;
 	$self->{host}=shift;
 	$self->{path}=shift;
+	print "Wiki set to http://$self->{host}/$self->{path}\n" if $self->{debug};
 }
 
 sub login {
@@ -81,16 +92,20 @@ sub login {
     });
     unless ($res) {return;}
     my $content = $res->decoded_content();
-	if ($content =~ m/\QYou have successfully signed in to Wikipedia as "$editor".\E/) {
+	if ($content =~ m/var wgUserName = "$editor"/) {
+                print "Login as \"$editor\" succeeded.\n" if $self->{debug};		
 		return "Success";
 	} else {
 		if ($content =~ m/There is no user by the name/) {
+			print "Login as \"$editor\" failed: User \"$editor\" does not exist.\n" if $self->{debug};
 			return "Fail (Bad username)";
 		}
 		elsif ($content =~ m/Incorrect password entered/) {
+                        print "Login as \"$editor\" failed: Bad password.\n" if $self->{debug};
 			return "Fail (Bad password)";
 		}
 		elsif ($content =~ m/Password entered was blank/) {
+                        print "Login as \"$editor\" failed: Blank password.\n" if $self->{debug};
 			return "Fail (Blank password)";
 		}
 	}
@@ -199,7 +214,7 @@ sub get_last {
         unless ($res) {return;}
 	my $history = decode_entities($res->content);
 	
-    $history =~ s/ anon=""//g;
+        $history =~ s/ anon=""//g;
 	$history =~ s/ minor=""//g;
 	my @history = split( /\n/, $history );
 
@@ -314,6 +329,7 @@ sub purge_page {
     my $res = $self->_get($page,'purge');
     
 }
+
 1;
 
 
