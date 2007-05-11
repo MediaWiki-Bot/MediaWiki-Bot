@@ -11,11 +11,12 @@ our $VERSION = '0.90';
 sub new {
 	my $package = shift;
 	my $self = bless {}, $package;
-	$self->{mech}=WWW::Mechanize->new(cookie_jar => {file => '.perlwikipedia_cookies.dat'}, onerror=> \&Carp::carp);
+	$self->{mech}=WWW::Mechanize->new(cookie_jar => {file => '.perlwikipedia_cookies.dat', autosave=>1}, onerror=> \&Carp::carp);
 	$self->{mech}->agent("Perlwikipedia/$VERSION");
 	$self->{host}='en.wikipedia.org';
 	$self->{path}='w';
 	$self->{debug}=0;
+	$self->{mech}->{cookie_jar}->load('.perlwikipedia_cookies.dat');
 	return $self;
 }
 
@@ -86,14 +87,15 @@ sub login {
 	my $res = $self->_put('Special:Userlogin', { 
         form_name => 'userlogin',
         fields => {
-            wpName => $editor,
-            wpPassword => $password,
+            wpName 	=> $editor,
+            wpPassword 	=> $password,
+	    wpRemember 	=> 1,
         },
     });
     unless ($res) {return;}
     my $content = $res->decoded_content();
 	if ($content =~ m/var wgUserName = "$editor"/) {
-                print "Login as \"$editor\" succeeded.\n" if $self->{debug};		
+                print "Login as \"$editor\" succeeded.\n" if $self->{debug};
 		return "Success";
 	} else {
 		if ($content =~ m/There is no user by the name/) {
