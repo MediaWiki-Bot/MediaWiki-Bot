@@ -11,12 +11,11 @@ our $VERSION = '0.90';
 sub new {
 	my $package = shift;
 	my $self = bless {}, $package;
-	$self->{mech}=WWW::Mechanize->new(cookie_jar => {file => '.perlwikipedia_cookies.dat', autosave=>1}, onerror=> \&Carp::carp);
+	$self->{mech}=WWW::Mechanize->new(cookie_jar => {}, onerror=> \&Carp::carp);
 	$self->{mech}->agent("Perlwikipedia/$VERSION");
 	$self->{host}='en.wikipedia.org';
 	$self->{path}='w';
 	$self->{debug}=0;
-	$self->{mech}->{cookie_jar}->load('.perlwikipedia_cookies.dat');
 	return $self;
 }
 
@@ -83,7 +82,19 @@ sub login {
 	my $self = shift;	
 	my $editor = shift;
 	my $password = shift;
-    
+        $self->{mech}->cookie_jar({file=>".perlwikipedia-$editor-cookies",autosave=>1});    
+	if (!defined $password) {
+		my $cookies_exist=system("test -s \".perlwikipedia-$editor-cookies\"");
+		if (!$cookies_exist) {
+			$self->{mech}->{cookie_jar}->load(".perlwikipedia-$editor-cookies");
+			print "Loaded MediaWiki cookies from file .perlwikipedia-$editor-cookies\n" if $self->{debug};
+			return "Success";
+		}
+		else {
+			print "Cannot load MediaWiki cookies from file .perlwikipedia-$editor-cookies\n" if $self->{debug};
+			return "Fail (Cannot read from file)";
+		}
+	}	
 	my $res = $self->_put('Special:Userlogin', { 
         form_name => 'userlogin',
         fields => {
@@ -91,7 +102,7 @@ sub login {
             wpPassword 	=> $password,
 	    wpRemember 	=> 1,
         },
-    });
+        });
     unless ($res) {return;}
     my $content = $res->decoded_content();
 	if ($content =~ m/var wgUserName = "$editor"/) {
