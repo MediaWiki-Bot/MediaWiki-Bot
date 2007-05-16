@@ -191,14 +191,19 @@ sub get_text {
 	my $section=shift;
 	my $wikitext='';
 	my $res;
+	
+	$res=$self->_get($pagename,'edit',"&oldid=$revid&section=$section");
 
-	if ($revid eq undef) {	
-		$res = $self->_get($pagename, 'edit',"&section=$section");
-	} else {
-        $res = $self->_get($pagename, 'edit', "&oldid=$revid");
-	}
 	unless ($res)  {return;}
-        if(($res->content) =~ /<textarea.+?\s?>(.+)<\/textarea>/s) {$wikitext=$1;} else { carp "Could not get_text for $pagename!";}
+
+	until ($res->content=~m/var wgAction = "edit"/) {
+		my $real_title;
+		if ($res->content=~m/var wgTitle = "(.+?)"/) {
+			$real_title=$1;
+		}
+		$res=$self->_get($real_title,'edit');
+	}
+        if($res->content =~ /<textarea.+?\s?>(.+)<\/textarea>/s) {$wikitext=$1;} else { carp "Could not get_text for $pagename!";}
 	return decode_entities($wikitext);
 }
 
