@@ -154,12 +154,12 @@ sub edit {
 sub get_history {
 	my $self = shift;
 	my $pagename = shift;
-	my $limit = shift;
+	my $limit = shift || 1;
 	if ($limit>50) {
 		carp "Error requesting history for $pagename: Limit may not be set to values above 50.";
 		return;
 	}	
-	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=user|comment|timestamp");
+	my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment");
 	unless ($res) {return;}
         my $history = $res->content;
 	decode_entities($history);
@@ -168,16 +168,13 @@ sub get_history {
 	my @history = split( /\n/, $history );
 	my @return;
 	foreach (@history) {
-		if (/<rev revid="(.+?)" pageid=".+?" oldid="(.+?)" user="(.+?)" timestamp="(.+?)T(.+?)Z"(?: comment="(.+?)")?/) {
+		if (/<rev revid="(.+?)" pageid=".+?" user="(.+?)".+?timestamp="(.+?)T(.+?)Z" (comment="(.+?)")?/) {
 			my $revid          = $1;
-			my $oldid          = $2;
-			my $user           = $3;
-			my $timestamp_date = $4;
-			my $timestamp_time = $5;
-			my $comment        = $6;
-			push 
-(@return,{revid=>$revid,oldid=>$oldid,user=>$user,comment=>$comment,timestamp_date=>$timestamp_date, 
-timestamp_time=>$timestamp_time});
+			my $user           = $2;
+			my $timestamp_date = $3;
+			my $timestamp_time = $4;
+			my $comment        = $5;
+			push (@return,{revid=>$revid,user=>$user,comment=>$comment,timestamp_date=>$timestamp_date, timestamp_time=>$timestamp_time});
 		}
 	}
 	
