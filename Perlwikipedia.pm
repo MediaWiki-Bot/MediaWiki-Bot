@@ -298,7 +298,7 @@ sub get_last {
 
 	my $revertto = 0;
 
-        my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=user");
+        my $res = $self->_get_api("action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=ids|user&rvexcludeuser=$editor");
         unless ($res) {return;}
 	my $history = decode_entities($res->content);
 	
@@ -306,19 +306,13 @@ sub get_last {
 	$history =~ s/ minor=""//g;
 	my @history = split( /\n/, $history );
 
-	foreach (@history) {
-		if ( $_ =~ m/<rev revid="(\d+)" pageid="(\d+)" oldid="(\d+)" user="(.+)" \/>/ ) {
-			my $revid = $1;
-			my $oldid = $3;
-			my $user  = $4;
-
-			if ( $user ne $editor ) {
-				$revertto=$revid;
-				return $revertto;
-			}
+	foreach my $entry ( @history ) {
+		if ( $entry =~ m/<rev revid="(\d+)"/ ) {
+			$revertto=$1;
+			last;
 		}
 	}
-
+	
 	return $revertto;
 }
 
