@@ -8,6 +8,37 @@ use Carp;
 
 our $VERSION = '0.90';
 
+=head1 NAME
+
+perlwikipedia - a Wikipedia bot framework written in Perl
+
+=head1 SYNOPSIS
+
+  use Perlwikipedia;
+
+  my $editor = Perlwikipedia->new;
+  $editor->login('Account', 'password');
+  $editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
+
+=head1 DESCRIPTION
+
+perlwikipedia is a bot framework for Wikipedia that can be used to write 
+bots (you guessed it!).
+
+=head1 AUTHOR
+
+The Perlwikipedia team (Alex Rowe, Jmax, Oleg Alexandrov) and others
+
+=head1 METHODS
+
+=over 4
+
+=item new()
+
+Calling Perlwikipedia->new will create a new Perlwikipedia object
+
+=cut
+
 sub new {
 	my $package = shift;
 	my $self = bless {}, $package;
@@ -71,12 +102,24 @@ sub _put {
     return $self->{mech}->submit_form(%{$options});
 }
 
+=item set_wiki($wiki_host,$wiki_path)
+
+set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell Perlwikipedia to use http://de.wikipedia.org/w/index.php. Perlwikipedia's default settings are 'en.wikipedia.org' with a path of 'w'.
+
+=cut
+
 sub set_wiki {
 	my $self=shift;
 	$self->{host}=shift;
 	$self->{path}=shift;
 	print "Wiki set to http://$self->{host}/$self->{path}\n" if $self->{debug};
 }
+
+=item login($username,$password)
+
+Logs the Perlwikipedia object into the specified wiki. If the login was a success, it will return 'Success', otherwise, 'Fail'.
+
+=cut
 
 sub login {
 	my $self = shift;	
@@ -124,6 +167,12 @@ sub login {
 	}
 }
 
+=item edit($pagename,$page_text,$edit_summary,[$is_minor])
+
+Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified.
+
+=cut
+
 sub edit {
 	my $self=shift;
 	my $page=shift;
@@ -150,6 +199,12 @@ sub edit {
 		});
 	}
 }
+
+=item get_history($pagename,$limit)
+
+Returns an array containing the history of the specified page, with $limit number of revisions. The array's structure contains 'revid','oldid','user','comment','timestamp_date', and 'timestamp_time'.
+
+=cut
 
 sub get_history {
 	my $self = shift;
@@ -181,6 +236,12 @@ sub get_history {
 	return @return;
 }
 
+=item get_text($pagename,[$revid,$section_number])
+
+Returns the text of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section.
+
+=cut
+
 sub get_text {
 	my $self=shift;	
 	my $pagename=shift;
@@ -204,6 +265,12 @@ sub get_text {
 	return decode_entities($wikitext);
 }
 
+=item revert($pagename,$edit_summary,$old_revision_id)
+
+Reverts the specified page to $old_revision_id, with an edit summary of $edit_summary.
+
+=cut
+
 sub revert {
 	my $self=shift;	
 	my $pagename=shift;
@@ -217,6 +284,12 @@ sub revert {
         },
     }, "&oldid=$revid");
 }
+
+=item get_last($pagename,$username)
+
+Returns the number of the last revision not made by $username.
+
+=cut
 
 sub get_last {
 	my $self     = shift;
@@ -249,6 +322,12 @@ sub get_last {
 	return $revertto;
 }
 
+=item update_rc([$limit])
+
+Returns an array containing the Recent Changes to the wiki's Main namespace. The array's structure contains 'pagename', 'revid', and 'oldid'.
+
+=cut
+
 sub update_rc {
 	my $self=shift;
 	my $limit=shift || 5;
@@ -276,6 +355,12 @@ sub update_rc {
 	return @rc_table;
 }
 
+=item what_links_here($pagename)
+
+Returns an array containing a list of all pages linking to the given page. The array's structure contains 'title' and 'type', the type being a transclusion, redirect, or neither.
+
+=cut
+
 sub what_links_here {
 	my $self = shift;
 	my $article = shift;
@@ -296,6 +381,12 @@ sub what_links_here {
 
 	return @links;
 }
+
+=item get_pages_in_category($category_name)
+
+Returns an array containing the names of all pages in the specified category. Does not go into sub-categories.
+
+=cut
 
 sub get_pages_in_category {
     my $self = shift;
@@ -321,6 +412,12 @@ sub get_pages_in_category {
     return @pages;
 }
 
+=item get_all_pages_in_category($category_name)
+
+Returns an array containing the names of ALL pages in the specified category, including sub-categories up to a depth of one sub-category.
+
+=cut
+
 sub get_all_pages_in_category {
     my $self = shift;
     my $base_category = shift;
@@ -338,6 +435,12 @@ sub get_all_pages_in_category {
     return keys %data;
 }
 
+=item purge_page($pagename)
+
+Purges the server's cache of the specified page.
+
+=cut
+
 sub purge_page {
     my $self=shift;
     my $page=shift;
@@ -347,90 +450,5 @@ sub purge_page {
 
 1;
 
-
 __END__
 
-=head1 NAME
-
-perlwikipedia - a Wikipedia bot framework written in Perl
-
-=head1 SYNOPSIS
-
-  use Perlwikipedia;
-
-  my $editor = Perlwikipedia->new;
-  $editor->login('Account', 'password');
-  $editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
-
-=head1 DESCRIPTION
-
-perlwikipedia is a bot framework for Wikipedia that can be used to write 
-bots (you guessed it!).
-
-=head1 AUTHOR
-
-Alex Rowe (alex.d.rowe@gmail.com)
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2006 by the perlwikipedia team
-
-This library is free software; it is distributed under the terms and conditions of the GNU Public License version 2. A copy of the GPLv2 is included with this distribution.
-
-=head1 METHODS
-
-=over 4
-
-=item new()
-
-Calling Perlwikipedia->new will create a new Perlwikipedia object
-
-=item set_wiki($wiki_host,$wiki_path)
-
-set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell Perlwikipedia to use http://de.wikipedia.org/w/index.php. Perlwikipedia's default settings are 'en.wikipedia.org' with a path of 'w'.
-
-=item login($username,$password)
-
-Logs the Perlwikipedia object into the specified wiki. If the login was a success, it will return 'Success', otherwise, 'Fail'.
-
-=item edit($pagename,$page_text,$edit_summary,[$is_minor])
-
-Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified.
-
-=item get_history($pagename,$limit)
-
-Returns an array containing the history of the specified page, with $limit number of revisions. The array's structure contains 'revid','oldid','user','comment','timestamp_date', and 'timestamp_time'.
-
-=item get_text($pagename,[$revid,$section_number])
-
-Returns the text of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section.
-
-=item revert($pagename,$edit_summary,$old_revision_id)
-
-Reverts the specified page to $old_revision_id, with an edit summary of $edit_summary.
-
-=item get_last($pagename,$username)
-
-Returns the number of the last revision not made by $username.
-
-=item update_rc([$limit])
-
-Returns an array containing the Recent Changes to the wiki's Main namespace. The array's structure contains 'pagename', 'revid', and 'oldid'.
-
-=item what_links_here($pagename)
-
-Returns an array containing a list of all pages linking to the given page. The array's structure contains 'title' and 'type', the type being a transclusion, redirect, or neither.
-
-=item get_pages_in_category($category_name)
-
-Returns an array containing the names of all pages in the specified category. Does not go into sub-categories.
-
-=item get_all_pages_in_category($category_name)
-
-Returns an array containing the names of ALL pages in the specified category, including sub-categories up to a depth of one sub-category.
-
-=item purge_page($pagename)
-
-Purges the server's cache of the specified page.
-
-=back
