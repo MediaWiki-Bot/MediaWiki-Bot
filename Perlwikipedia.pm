@@ -127,8 +127,9 @@ sub login {
 	my $password = shift;
         $self->{mech}->cookie_jar({file=>".perlwikipedia-$editor-cookies",autosave=>1});    
 	if (!defined $password) {
-		my $cookies_exist=system("test -s \".perlwikipedia-$editor-cookies\"");
-		if (!$cookies_exist) {
+        	$self->{mech}->{cookie_jar}->load(".perlwikipedia-$editor-cookies");
+		my $cookies_exist = $self->{mech}->{cookie_jar}->as_string;
+		if ($cookies_exist) {
 			$self->{mech}->{cookie_jar}->load(".perlwikipedia-$editor-cookies");
 			print "Loaded MediaWiki cookies from file .perlwikipedia-$editor-cookies\n" if $self->{debug};
 			return "Success";
