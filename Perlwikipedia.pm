@@ -337,7 +337,7 @@ sub update_rc {
 
 	my @content = split(/\n/,$history);
 	foreach (@content) {
-		if (/<rc ns="0" title="(.+)" pageid="\d+" revid="(\d+)" old_revid="(\d+)" type="0" timestamp=".+" \/>/) {
+		if (/<rc type="0" ns="0" title="(.+)" pageid="\d+" revid="(\d+)" old_revid="(\d+)" timestamp=".+" \/>/) {
 
 			my $pagename = $1;
 			my $revid = $2;
