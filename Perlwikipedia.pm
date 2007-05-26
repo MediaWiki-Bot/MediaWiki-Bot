@@ -468,7 +468,7 @@ sub get_pages_in_category {
 
 =item get_all_pages_in_category($category_name)
 
-Returns an array containing the names of ALL pages in the specified category, including sub-categories up to a depth of one sub-category.
+Returns an array containing the names of ALL pages in the specified category, including sub-categories.
 
 =cut
 
@@ -480,7 +480,7 @@ sub get_all_pages_in_category {
     foreach my $page (@first) {
         $data{$page} = '';
         if ( $page =~ /^Category:/ ) {
-            my @pages = $self->get_pages_in_category($page);
+            my @pages = $self->get_all_pages_in_category($page);
             foreach (@pages) {
                 $data{$_} = '';
             }
