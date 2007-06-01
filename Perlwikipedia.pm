@@ -4,6 +4,7 @@ use strict;
 use WWW::Mechanize;
 use HTML::Entities;
 use URI::Escape;
+use XML::Simple;
 use Carp;
 
 our $VERSION = '0.90';
@@ -43,7 +44,7 @@ sub new {
     my $package = shift;
     my $self = bless {}, $package;
     $self->{mech} =
-      WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
+    WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
     $self->{mech}->agent("Perlwikipedia/$VERSION");
     $self->{host}  = 'en.wikipedia.org';
     $self->{path}  = 'w';
@@ -529,6 +530,26 @@ sub purge_page {
     my $page = shift;
     my $res  = $self->_get( $page, 'purge' );
 
+}
+
+=item get_namespace_names
+get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as Talk:.
+
+=cut
+
+sub get_namespace_names {
+	my $self = shift;
+	my %return;
+	my $res = $self->_get_api("action=query&meta=siteinfo&siprop=namespaces&format=xml");
+	my $xml = XMLin($res->content, ForceArray => 0, KeyAttr => [] );
+	no strict "refs";
+	foreach my $hash ( @{ $xml->{query}->{namespaces}->{ns} } ) {
+		my $name = $hash->{'content'};
+		my $id   = $hash->{'id'};
+		$return{$id} = $name;
+	}
+	use strict;
+	return %return;
 }
 
 1;
