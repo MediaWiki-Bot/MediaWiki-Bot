@@ -46,9 +46,10 @@ sub new {
     $self->{mech} =
     WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
     $self->{mech}->agent("Perlwikipedia/$VERSION");
-    $self->{host}  = 'en.wikipedia.org';
-    $self->{path}  = 'w';
-    $self->{debug} = 0;
+    $self->{host}   = 'en.wikipedia.org';
+    $self->{path}   = 'w';
+    $self->{debug}  = 0;
+    $self->{errstr};
     return $self;
 }
 
@@ -67,16 +68,19 @@ sub _get {
 
     if ( $res->is_success() ) {
         if ( $res->content =~
-m/The action you have requested is limited to users in the group <.+?>(.+?)<\/a>/
+m/The action you have requested is limited to users in the group (.+)\./
           ) {
-            print
-              "Error requesting $page: You must be in the user group \"$1\".\n";
+            my $group = $1;
+            $group =~ s/<.+?>//g;
+            $self->{errstr} = qq/Error requesting $page: You must be in the user group "$group"/;
+            carp $self->{errstr};
             return 0;
         } else {
             return $res;
         }
     } else {
-        carp "Error requesting $page: " . $res->status_line();
+    	$self->{errstr} = "Error requesting $page: " . $res->status_line();
+        carp $self->{errstr};
         return 0;
     }
 }
@@ -91,7 +95,8 @@ sub _get_api {
     if ( $res->is_success() ) {
         return $res;
     } else {
-        carp "Error requesting api.php?$query: " . $res->status_line();
+    	$self->{errstr} = "Error requesting api.php?$query: " . $res->status_line();
+        carp $self->{errstr};
         return 0;
     }
 }
@@ -104,7 +109,8 @@ sub _put {
     my $res     = $self->_get( $page, 'edit', $extra );
     unless ($res) { return; }
     if ( ( $res->content ) =~ m/<textarea .+? readonly='readonly'/ ) {
-        carp "Error editing $page: Page is protected";
+        $self->{errstr} = "Error editing $page: Page is protected";
+        carp $self->{errstr};
         return 0;
     }
     return $self->{mech}->submit_form( %{$options} );
@@ -140,15 +146,12 @@ sub login {
         my $cookies_exist = $self->{mech}->{cookie_jar}->as_string;
         if ($cookies_exist) {
             $self->{mech}->{cookie_jar}->load(".perlwikipedia-$editor-cookies");
-            print
-"Loaded MediaWiki cookies from file .perlwikipedia-$editor-cookies\n"
-              if $self->{debug};
-            return "Success";
+            print "Loaded MediaWiki cookies from file .perlwikipedia-$editor-cookies\n" if $self->{debug};
+            return 0;
         } else {
-            print
-"Cannot load MediaWiki cookies from file .perlwikipedia-$editor-cookies\n"
-              if $self->{debug};
-            return "Fail (Cannot read from file)";
+            $self->{errstr} = "Cannot load MediaWiki cookies from file .perlwikipedia-$editor-cookies";
+            carp $self->{errstr};
+            return 1;
         }
     }
     my $res = $self->_put(
@@ -165,22 +168,18 @@ sub login {
     unless ($res) { return; }
     my $content = $res->decoded_content();
     if ( $content =~ m/var wgUserName = "$editor"/ ) {
-        print "Login as \"$editor\" succeeded.\n" if $self->{debug};
-        return "Success";
+        print qq/Login as "$editor" succeeded.\n/ if $self->{debug};
+        return 0;
     } else {
         if ( $content =~ m/There is no user by the name/ ) {
-            print
-              "Login as \"$editor\" failed: User \"$editor\" does not exist.\n"
-              if $self->{debug};
-            return "Fail (Bad username)";
+            $self->{errstr} = qq/Login as "$editor" failed: User "$editor" does not exist/;
+            return 1;
         } elsif ( $content =~ m/Incorrect password entered/ ) {
-            print "Login as \"$editor\" failed: Bad password.\n"
-              if $self->{debug};
-            return "Fail (Bad password)";
+            $self->{errstr} = qq/Login as "$editor" failed: Bad password/;
+            return 1;
         } elsif ( $content =~ m/Password entered was blank/ ) {
-            print "Login as \"$editor\" failed: Blank password.\n"
-              if $self->{debug};
-            return "Fail (Blank password)";
+            $self->{errstr} = qq/Login as "$editor" failed: Blank password/;
+            return 1;
         }
     }
 }
@@ -235,9 +234,9 @@ sub get_history {
     my $limit    = shift || 1;
     my @return;
     if ( $limit > 50 ) {
-        carp
-"Error requesting history for $pagename: Limit may not be set to values above 50.";
-        return;
+        $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
+        carp $self->{errstr};
+        return 1;
     }
     my $res =
       $self->_get_api(
@@ -290,7 +289,8 @@ sub get_text {
     if ( $res->content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
         $wikitext = $1;
     } else {
-        carp "Could not get_text for $pagename!";
+    	$self->{errstr} = "Could not get_text for $pagename!";
+        carp $self->{errstr};
     }
     return decode_entities($wikitext);
 }
