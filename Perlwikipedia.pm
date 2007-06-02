@@ -11,7 +11,7 @@ our $VERSION = '0.90';
 
 =head1 NAME
 
-perlwikipedia - a Wikipedia bot framework written in Perl
+Perlwikipedia - a Wikipedia bot framework written in Perl
 
 =head1 SYNOPSIS
 
@@ -225,7 +225,7 @@ sub edit {
 
 =item get_history($pagename,$limit)
 
-Returns an array containing the history of the specified page, with $limit number of revisions. The array's structure contains 'revid','oldid','user','comment','timestamp_date', and 'timestamp_time'.
+Returns an array containing the history of the specified page, with $limit number of revisions. The array's structure contains 'revid','user','comment','timestamp_date', and 'timestamp_time'.
 
 =cut
 
@@ -233,6 +233,7 @@ sub get_history {
     my $self     = shift;
     my $pagename = shift;
     my $limit    = shift || 1;
+    my @return;
     if ( $limit > 50 ) {
         carp
 "Error requesting history for $pagename: Limit may not be set to values above 50.";
@@ -240,38 +241,24 @@ sub get_history {
     }
     my $res =
       $self->_get_api(
-"action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment"
+"action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml"
       );
     unless ($res) { return; }
-    my $history = $res->content;
-    decode_entities($history);
-    $history =~ s/ anon=""//g;
-    $history =~ s/ minor=""//g;
-    my @history = split( /\n/, $history );
-    my @return;
-
-    foreach (@history) {
-        if (
-/<rev revid="(.+?)" pageid=".+?" user="(.+?)".+?timestamp="(.+?)T(.+?)Z" (comment="(.+?)")?/
-          ) {
-            my $revid          = $1;
-            my $user           = $2;
-            my $timestamp_date = $3;
-            my $timestamp_time = $4;
-            my $comment        = $5;
-            push(
-                @return,
-                {
-                    revid          => $revid,
-                    user           => $user,
-                    comment        => $comment,
-                    timestamp_date => $timestamp_date,
-                    timestamp_time => $timestamp_time
-                }
-            );
-        }
+    my $xml = XMLin( $res->content );
+    foreach my $hash ( @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} } ) {
+    	my $revid = $hash->{revid};
+    	my $user  = $hash->{user};
+    	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
+    	$timestamp_time=~s/Z$//;
+    	my $comment = $hash->{comment};
+    	push ( @return, {
+    		revid 	       => $revid,
+    		user           => $user,
+    		timestamp_date => $timestamp_date,
+    		timestamp_time => $timestamp_time,
+    		comment	       => $comment,
+    	} );
     }
-
     return @return;
 }
 
@@ -533,6 +520,7 @@ sub purge_page {
 }
 
 =item get_namespace_names
+
 get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as Talk:.
 
 =cut
