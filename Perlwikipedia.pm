@@ -49,7 +49,7 @@ sub new {
     $self->{host}   = 'en.wikipedia.org';
     $self->{path}   = 'w';
     $self->{debug}  = 0;
-    $self->{errstr};
+    $self->{errstr} = '';
     return $self;
 }
 
@@ -127,6 +127,7 @@ sub set_wiki {
     $self->{host} = shift;
     $self->{path} = shift;
     print "Wiki set to http://$self->{host}/$self->{path}\n" if $self->{debug};
+    return 0;
 }
 
 =item login($username,$password)
@@ -242,7 +243,7 @@ sub get_history {
       $self->_get_api(
 "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml"
       );
-    unless ($res) { return; }
+    unless ($res) { return 1; }
     my $xml = XMLin( $res->content );
     foreach my $hash ( @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} } ) {
     	my $revid = $hash->{revid};
@@ -270,21 +271,24 @@ Returns the text of the specified page. If $revid is defined, it will return the
 sub get_text {
     my $self     = shift;
     my $pagename = shift;
-    my $revid    = shift;
-    my $section  = shift;
+    my $revid    = shift || '';
+    my $section  = shift || '';
+    my $recurse  = shift || 0;
+    
     my $wikitext = '';
     my $res;
 
     $res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section" );
 
-    unless ($res) { return; }
-
-    until ( $res->content =~ m/var wgAction = "edit"/ ) {
-        my $real_title;
-        if ( $res->content =~ m/var wgTitle = "(.+?)"/ ) {
-            $real_title = $1;
-        }
-        $res = $self->_get( $real_title, 'edit' );
+    unless ($res) { return 1; }
+    if ($recurse) {
+    	until ( $res->content =~ m/var wgAction = "edit"/ ) {
+    	    my $real_title;
+    	    if ( $res->content =~ m/var wgTitle = "(.+?)"/ ) {
+    	        $real_title = $1;
+    	    }
+    	    $res = $self->_get( $real_title, 'edit' );
+    	}
     }
     if ( $res->content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
         $wikitext = $1;
@@ -332,60 +336,44 @@ sub get_last {
 
     my $res =
       $self->_get_api(
-"action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=ids|user&rvexcludeuser=$editor"
+"action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=ids|user&rvexcludeuser=$editor&format=xml"
       );
-    unless ($res) { return; }
-    my $history = decode_entities( $res->content );
-
-    $history =~ s/ anon=""//g;
-    $history =~ s/ minor=""//g;
-    my @history = split( /\n/, $history );
-
-    foreach my $entry (@history) {
-        if ( $entry =~ m/<rev revid="(\d+)"/ ) {
-            $revertto = $1;
-            last;
-        }
-    }
-
+    unless ($res) { return 1; }
+    my $xml = XMLin( $res->content );
+    $revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}[0]->{revid};
     return $revertto;
 }
 
 =item update_rc([$limit])
 
-Returns an array containing the Recent Changes to the wiki's Main namespace. The array's structure contains 'pagename', 'revid', and 'oldid'.
+Returns an array containing the Recent Changes to the wiki's Main namespace. The array's structure contains 'pagename', 'revid', 'oldid', 'timestamp_date', and 'timestamp_time'.
 
 =cut
 
 sub update_rc {
     my $self = shift;
     my $limit = shift || 5;
-    my @pagenames;
-    my @revids;
-    my @oldids;
     my @rc_table;
 
     my $res =
       $self->_get_api(
-        "action=query&list=recentchanges&rcnamespace=0&rclimit=$limit");
-    unless ($res) { return; }
-    my $history = decode_entities( $res->content );
-
-    my @content = split( /\n/, $history );
-    foreach (@content) {
-        if (
-/<rc type="0" ns="0" title="(.+)" pageid="\d+" revid="(\d+)" old_revid="(\d+)" timestamp=".+" \/>/
-          ) {
-
-            my $pagename = $1;
-            my $revid    = $2;
-            my $oldid    = $3;
-            push @rc_table,
-              { pagename => $pagename, revid => $revid, oldid => $oldid };
-
-        }
+        "action=query&list=recentchanges&rcnamespace=0&rclimit=$limit&format=xml");
+    unless ($res) { return 1; }
+    
+    my $xml = XMLin( $res->content );
+    foreach my $hash ( @{ $xml->{query}->{recentchanges}->{rc} } ) {
+    	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
+    	$timestamp_time =~ s/Z$//;
+    	push( @rc_table, {
+    			pagename       => $hash->{title},
+    			revid	       => $hash->{revid},
+    			oldid	       => $hash->{old_revid},
+    			timestamp_date => $timestamp_date,
+    			timestamp_time => $timestamp_time,
+    			}
+    	);
     }
-
+    
     return @rc_table;
 }
 
@@ -403,7 +391,7 @@ sub what_links_here {
     my $res =
       $self->_get( 'Special:Whatlinkshere', 'view',
         "&target=$article&limit=5000" );
-    unless ($res) { return; }
+    unless ($res) { return 1; }
     my $content = $res->content;
     while (
         $content =~ m/<li><a href=\".+\" title=\"(.+)\">.+<\/a>(.*)<\/li>/g ) {
@@ -433,7 +421,7 @@ sub get_pages_in_category {
 
     my @pages;
     my $res = $self->_get( $category, 'view' );
-    unless ($res) { return; }
+    unless ($res) { return 1; }
     my $content = $res->content;
     while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
     {
@@ -490,6 +478,7 @@ sub linksearch {
     my @links;
     my $res =
       $self->_get( "Special:Linksearch", "edit", "&target=$link&limit=500" );
+    unless ($res) { return 1; }
     my $content = $res->content;
     while ( $content =~
         m{<li><a href.+>(.+?)</a> linked from <a href.+>(.+)</a></li>}g ) {
@@ -529,14 +518,11 @@ sub get_namespace_names {
 	my $self = shift;
 	my %return;
 	my $res = $self->_get_api("action=query&meta=siteinfo&siprop=namespaces&format=xml");
-	my $xml = XMLin($res->content, ForceArray => 0, KeyAttr => [] );
-	no strict "refs";
-	foreach my $hash ( @{ $xml->{query}->{namespaces}->{ns} } ) {
-		my $name = $hash->{'content'};
-		my $id   = $hash->{'id'};
-		$return{$id} = $name;
+	my $xml = XMLin( $res->content );
+
+	foreach my $id ( keys %{ $xml->{query}->{namespaces}->{ns} } ) {
+		$return{$id} = $xml->{query}->{namespaces}->{ns}->{$id}->{content};
 	}
-	use strict;
 	return %return;
 }
 
