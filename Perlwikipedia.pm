@@ -230,19 +230,24 @@ Returns an array containing the history of the specified page, with $limit numbe
 =cut
 
 sub get_history {
-    my $self     = shift;
-    my $pagename = shift;
-    my $limit    = shift || 1;
+    my $self      = shift;
+    my $pagename  = shift;
+    my $limit     = shift || 1;
+    my $rvstartid = shift || '';
+    my $direction = shift;
+
     my @return;
     if ( $limit > 50 ) {
         $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
         carp $self->{errstr};
         return 1;
     }
-    my $res =
-      $self->_get_api(
-"action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml"
-      );
+    my $query = "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml&rvstartid=$rvstartid";
+    if ( $direction ) {
+    	$query .= "&rvdir=$direction";
+    }
+    my $res = $self->_get_api($query);
+
     unless ($res) { return 1; }
     my $xml = XMLin( $res->content );
     foreach my $hash ( @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} } ) {
