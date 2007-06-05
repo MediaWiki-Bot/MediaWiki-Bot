@@ -399,7 +399,7 @@ sub what_links_here {
     unless ($res) { return 1; }
     my $content = $res->content;
     while (
-        $content =~ m/<li><a href=\".+\" title=\"(.+)\">.+<\/a>(.*)<\/li>/g ) {
+        $content =~ m/<li><a href=\".+\" title=\"(.+)\">(.+)<\/a>.+?\(/g ) {
         my $title = $1;
         my $type  = $&;
         if ( $type !~ /\(redirect page\)/ && $type !~ /\(transclusion\)/ ) {
