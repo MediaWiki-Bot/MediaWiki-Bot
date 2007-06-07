@@ -6,6 +6,7 @@ use HTML::Entities;
 use URI::Escape;
 use XML::Simple;
 use Carp;
+use Data::Dumper;
 
 our $VERSION = '0.90';
 
@@ -67,7 +68,7 @@ sub _get {
     my $res = $self->{mech}->get($url);
 
     if ( $res->is_success() ) {
-        if ( $res->content =~
+        if ( $res->decoded_content =~
 m/The action you have requested is limited to users in the group (.+)\./
           ) {
             my $group = $1;
@@ -108,7 +109,7 @@ sub _put {
     my $extra   = shift;
     my $res     = $self->_get( $page, 'edit', $extra );
     unless ($res) { return; }
-    if ( ( $res->content ) =~ m/<textarea .+? readonly='readonly'/ ) {
+    if ( ( $res->decoded_content ) =~ m/<textarea .+?readonly='readonly'/ ) {
         $self->{errstr} = "Error editing $page: Page is protected";
         carp $self->{errstr};
         return 0;
@@ -232,25 +233,38 @@ Returns an array containing the history of the specified page, with $limit numbe
 sub get_history {
     my $self      = shift;
     my $pagename  = shift;
-    my $limit     = shift || 1;
+    my $limit     = shift || 5;
     my $rvstartid = shift || '';
     my $direction = shift;
 
     my @return;
+    my @revisions;
+    
     if ( $limit > 50 ) {
         $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
         carp $self->{errstr};
         return 1;
     }
-    my $query = "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml&rvstartid=$rvstartid";
+    my $query = "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml";
+    if ( $rvstartid ) {
+    	$query .= "&rvstartid=$rvstartid";
+    }
     if ( $direction ) {
     	$query .= "&rvdir=$direction";
     }
     my $res = $self->_get_api($query);
 
     unless ($res) { return 1; }
-    my $xml = XMLin( $res->content );
-    foreach my $hash ( @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} } ) {
+    my $xml = XMLin( $res->decoded_content );
+
+    if ( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq "HASH" ) {
+    	@revisions[0] = $xml->{query}->{pages}->{page}->{revisions}->{rev};
+    }
+    else {
+    	@revisions = @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} };
+    }
+    
+    foreach my $hash ( @revisions ) {
     	my $revid = $hash->{revid};
     	my $user  = $hash->{user};
     	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
@@ -287,15 +301,15 @@ sub get_text {
 
     unless ($res) { return 1; }
     if ($recurse) {
-    	until ( $res->content =~ m/var wgAction = "edit"/ ) {
+    	until ( $res->decoded_content =~ m/var wgAction = "edit"/ ) {
     	    my $real_title;
-    	    if ( $res->content =~ m/var wgTitle = "(.+?)"/ ) {
+    	    if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
     	        $real_title = $1;
     	    }
     	    $res = $self->_get( $real_title, 'edit' );
     	}
     }
-    if ( $res->content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
+    if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
         $wikitext = $1;
     } else {
     	$self->{errstr} = "Could not get_text for $pagename!";
@@ -344,7 +358,7 @@ sub get_last {
 "action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=ids|user&rvexcludeuser=$editor&format=xml"
       );
     unless ($res) { return 1; }
-    my $xml = XMLin( $res->content );
+    my $xml = XMLin( $res->decoded_content );
     $revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}[0]->{revid};
     return $revertto;
 }
@@ -365,7 +379,7 @@ sub update_rc {
         "action=query&list=recentchanges&rcnamespace=0&rclimit=$limit&format=xml");
     unless ($res) { return 1; }
     
-    my $xml = XMLin( $res->content );
+    my $xml = XMLin( $res->decoded_content );
     foreach my $hash ( @{ $xml->{query}->{recentchanges}->{rc} } ) {
     	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
     	$timestamp_time =~ s/Z$//;
@@ -397,7 +411,7 @@ sub what_links_here {
       $self->_get( 'Special:Whatlinkshere', 'view',
         "&target=$article&limit=5000" );
     unless ($res) { return 1; }
-    my $content = $res->content;
+    my $content = $res->decoded_content;
     while (
         $content =~ m/<li><a href=\".+\" title=\"(.+)\">(.+)<\/a>.+?\(/g ) {
         my $title = $1;
@@ -427,7 +441,7 @@ sub get_pages_in_category {
     my @pages;
     my $res = $self->_get( $category, 'view' );
     unless ($res) { return 1; }
-    my $content = $res->content;
+    my $content = $res->decoded_content;
     while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
     {
         push @pages, 'Category:' . $1;
@@ -438,7 +452,7 @@ sub get_pages_in_category {
     }
     while ( my $res = $self->{mech}->follow_link( text => 'next 200' ) ) {
         sleep 1;    #Cheap hack to make sure we don't bog down the server
-        my $content = $res->content;
+        my $content = $res->decoded_content;
         while ( $content =~
             m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
             push @pages, $1;
@@ -484,14 +498,14 @@ sub linksearch {
     my $res =
       $self->_get( "Special:Linksearch", "edit", "&target=$link&limit=500" );
     unless ($res) { return 1; }
-    my $content = $res->content;
+    my $content = $res->decoded_content;
     while ( $content =~
         m{<li><a href.+>(.+?)</a> linked from <a href.+>(.+)</a></li>}g ) {
         push( @links, { link => $1, page => $2 } );
     }
     while ( my $res = $self->{mech}->follow_link( text => 'next 500' ) ) {
         sleep 2;
-        my $content = $res->content;
+        my $content = $res->decoded_content;
         while ( $content =~
             m{<li><a href.+>(.+?)</a> linked from <a href=.+>(.+)</a></li>}g ) {
             push( @links, { link => $1, page => $2 } );
@@ -523,7 +537,7 @@ sub get_namespace_names {
 	my $self = shift;
 	my %return;
 	my $res = $self->_get_api("action=query&meta=siteinfo&siprop=namespaces&format=xml");
-	my $xml = XMLin( $res->content );
+	my $xml = XMLin( $res->decoded_content );
 
 	foreach my $id ( keys %{ $xml->{query}->{namespaces}->{ns} } ) {
 		$return{$id} = $xml->{query}->{namespaces}->{ns}->{$id}->{content};
