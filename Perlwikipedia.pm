@@ -258,7 +258,7 @@ sub get_history {
     my $xml = XMLin( $res->decoded_content );
 
     if ( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq "HASH" ) {
-    	@revisions[0] = $xml->{query}->{pages}->{page}->{revisions}->{rev};
+    	$revisions[0] = $xml->{query}->{pages}->{page}->{revisions}->{rev};
     }
     else {
     	@revisions = @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} };
