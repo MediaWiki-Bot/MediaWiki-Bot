@@ -6,7 +6,6 @@ use HTML::Entities;
 use URI::Escape;
 use XML::Simple;
 use Carp;
-use Data::Dumper;
 
 our $VERSION = '0.90';
 
