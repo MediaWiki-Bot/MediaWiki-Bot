@@ -6,6 +6,7 @@ use HTML::Entities;
 use URI::Escape;
 use XML::Simple;
 use Carp;
+use Encode;
 
 our $VERSION = '0.90';
 
@@ -197,6 +198,7 @@ sub edit {
     my $text     = shift;
     my $summary  = shift;
     my $is_minor = shift || 0;
+    $text = encode( 'utf8', $text );
     if ($is_minor) {
         return $self->_put(
             $page,
@@ -303,13 +305,13 @@ sub get_text {
     	until ( $res->decoded_content =~ m/var wgAction = "edit"/ ) {
     	    my $real_title;
     	    if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
-    	        $real_title = $1;
+    	        $real_title = encode( 'utf8', $1 );
     	    }
     	    $res = $self->_get( $real_title, 'edit' );
     	}
     }
     if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
-        $wikitext = $1;
+        $wikitext = encode( 'utf8', $1 );
     } else {
     	$self->{errstr} = "Could not get_text for $pagename!";
         carp $self->{errstr};
@@ -412,9 +414,9 @@ sub what_links_here {
     unless ($res) { return 1; }
     my $content = $res->decoded_content;
     while (
-        $content =~ m/<li><a href=\".+\" title=\"(.+)\">(.+)<\/a>.+?\(/g ) {
+        $content =~ m/<li><a href=\".+?\" title=\"([^"]+)\">.+<\/a>(.+)<span/g ) {
         my $title = $1;
-        my $type  = $&;
+        my $type  = $2;
         if ( $type !~ /\(redirect page\)/ && $type !~ /\(transclusion\)/ ) {
             $type = "";
         }
