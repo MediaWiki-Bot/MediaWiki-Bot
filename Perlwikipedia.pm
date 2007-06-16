@@ -6,7 +6,6 @@ use HTML::Entities;
 use URI::Escape;
 use XML::Simple;
 use Carp;
-use Encode;
 
 our $VERSION = '0.90';
 
@@ -198,7 +197,6 @@ sub edit {
     my $text     = shift;
     my $summary  = shift;
     my $is_minor = shift || 0;
-    $text = encode( 'utf8', $text );
     if ($is_minor) {
         return $self->_put(
             $page,
@@ -311,7 +309,7 @@ sub get_text {
     	}
     }
     if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
-        $wikitext = encode( 'utf8', $1 );
+        $wikitext = $1;
     } else {
     	$self->{errstr} = "Could not get_text for $pagename!";
         carp $self->{errstr};
