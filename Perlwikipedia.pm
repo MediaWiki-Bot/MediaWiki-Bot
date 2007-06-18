@@ -197,8 +197,9 @@ sub edit {
     my $text     = shift;
     my $summary  = shift;
     my $is_minor = shift || 0;
+    my $res;
     if ($is_minor) {
-        return $self->_put(
+        $res = $self->_put(
             $page,
             {
                 form_name => 'editform',
@@ -210,7 +211,7 @@ sub edit {
             }
         );
     } else {
-        return $self->_put(
+        $res = $self->_put(
             $page,
             {
                 form_name => 'editform',
@@ -221,6 +222,7 @@ sub edit {
             }
         );
     }
+    return $res;
 }
 
 =item get_history($pagename,$limit)
@@ -303,7 +305,7 @@ sub get_text {
     	until ( $res->decoded_content =~ m/var wgAction = "edit"/ ) {
     	    my $real_title;
     	    if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
-    	        $real_title = encode( 'utf8', $1 );
+    	        $real_title = $1;
     	    }
     	    $res = $self->_get( $real_title, 'edit' );
     	}
