@@ -313,7 +313,7 @@ sub get_text {
     	}
     }
     if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
-        $wikitext = encode( 'utf8', $1);
+		$wikitext = $1; 
     } else {
     	$self->{errstr} = "Could not get_text for $pagename!";
         carp $self->{errstr};
