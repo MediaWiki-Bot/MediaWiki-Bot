@@ -6,6 +6,7 @@ use HTML::Entities;
 use URI::Escape;
 use XML::Simple;
 use Carp;
+use Encode;
 
 our $VERSION = '0.90';
 
@@ -43,8 +44,7 @@ Calling Perlwikipedia->new will create a new Perlwikipedia object
 sub new {
     my $package = shift;
     my $self = bless {}, $package;
-    $self->{mech} =
-    WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
+    $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
     $self->{mech}->agent("Perlwikipedia/$VERSION");
     $self->{host}   = 'en.wikipedia.org';
     $self->{path}   = 'w';
@@ -113,7 +113,8 @@ sub _put {
         carp $self->{errstr};
         return 0;
     }
-    return $self->{mech}->submit_form( %{$options} );
+    my $res = $self->{mech}->submit_form( %{$options} );
+    return $res;
 }
 
 =item set_wiki($wiki_host,$wiki_path)
@@ -198,6 +199,7 @@ sub edit {
     my $summary  = shift;
     my $is_minor = shift || 0;
     my $res;
+	encode( 'utf8', $text );
     if ($is_minor) {
         $res = $self->_put(
             $page,
@@ -311,12 +313,13 @@ sub get_text {
     	}
     }
     if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
-        $wikitext = $1;
+        $wikitext = encode( 'utf8', $1);
     } else {
     	$self->{errstr} = "Could not get_text for $pagename!";
         carp $self->{errstr};
     }
-    return decode_entities($wikitext);
+
+	return decode_entities($wikitext);
 }
 
 =item revert($pagename,$edit_summary,$old_revision_id)
