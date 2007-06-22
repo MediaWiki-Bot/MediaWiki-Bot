@@ -113,7 +113,7 @@ sub _put {
         carp $self->{errstr};
         return 0;
     }
-    my $res = $self->{mech}->submit_form( %{$options} );
+    $res = $self->{mech}->submit_form( %{$options} );
     return $res;
 }
 
