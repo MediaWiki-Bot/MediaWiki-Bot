@@ -43,11 +43,12 @@ Calling Perlwikipedia->new will create a new Perlwikipedia object
 
 sub new {
     my $package = shift;
-    my $user = shift;  
+    my $agent = shift || 0;
+    $agent = 'Perlwikipedia' unless ($agent);  # default agent 
     
     my $self = bless {}, $package;
     $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
-    $self->{mech}->agent("$user/$VERSION");
+    $self->{mech}->agent("$agent/$VERSION");
     $self->{host}   = 'en.wikipedia.org';
     $self->{path}   = 'w';
     $self->{debug}  = 0;
