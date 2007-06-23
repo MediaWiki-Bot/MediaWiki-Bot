@@ -24,8 +24,7 @@ Perlwikipedia - a Wikipedia bot framework written in Perl
 
 =head1 DESCRIPTION
 
-Perlwikipedia is a bot framework for Wikipedia that can be used to write 
-bots.
+Perlwikipedia is a framework that can be used to write Wikipedia bots.
 
 =head1 AUTHOR
 
