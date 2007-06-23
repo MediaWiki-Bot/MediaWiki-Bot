@@ -18,14 +18,14 @@ Perlwikipedia - a Wikipedia bot framework written in Perl
 
   use Perlwikipedia;
 
-  my $editor = Perlwikipedia->new;
+  my $editor = Perlwikipedia->new('Account');
   $editor->login('Account', 'password');
   $editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
 
 =head1 DESCRIPTION
 
-perlwikipedia is a bot framework for Wikipedia that can be used to write 
-bots (you guessed it!).
+Perlwikipedia is a bot framework for Wikipedia that can be used to write 
+bots.
 
 =head1 AUTHOR
 
@@ -43,7 +43,7 @@ Calling Perlwikipedia->new will create a new Perlwikipedia object
 
 sub new {
     my $package = shift;
-    my $agent = shift || 'Perlwikipedia'; #user-specified agent or default to 'perlwikipedia'
+    my $agent = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
         
     my $self = bless {}, $package;
     $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
