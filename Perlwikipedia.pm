@@ -200,7 +200,7 @@ sub edit {
     my $summary  = shift;
     my $is_minor = shift || 0;
     my $res;
-	encode( 'utf8', $text );
+	$text = encode( 'utf8', $text );
     if ($is_minor) {
         $res = $self->_put(
             $page,
