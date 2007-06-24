@@ -142,17 +142,18 @@ sub login {
     my $self     = shift;
     my $editor   = shift;
     my $password = shift;
+    my $cookies  = ".perlwikipedia-$editor-cookies";
     $self->{mech}->cookie_jar(
-        { file => ".perlwikipedia-$editor-cookies", autosave => 1 } );
+        { file => $cookies, autosave => 1 } );
     if ( !defined $password ) {
-        $self->{mech}->{cookie_jar}->load(".perlwikipedia-$editor-cookies");
+        $self->{mech}->{cookie_jar}->load($cookies);
         my $cookies_exist = $self->{mech}->{cookie_jar}->as_string;
         if ($cookies_exist) {
-            $self->{mech}->{cookie_jar}->load(".perlwikipedia-$editor-cookies");
-            print "Loaded MediaWiki cookies from file .perlwikipedia-$editor-cookies\n" if $self->{debug};
+            $self->{mech}->{cookie_jar}->load($cookies);
+            print "Loaded MediaWiki cookies from file $cookies\n" if $self->{debug};
             return 0;
         } else {
-            $self->{errstr} = "Cannot load MediaWiki cookies from file .perlwikipedia-$editor-cookies";
+            $self->{errstr} = "Cannot load MediaWiki cookies from file $cookies";
             carp $self->{errstr};
             return 1;
         }
