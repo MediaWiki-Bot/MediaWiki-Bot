@@ -368,7 +368,12 @@ sub get_last {
       );
     unless ($res) { return 1; }
     my $xml = XMLin( $res->decoded_content );
-    $revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}[0]->{revid};
+    if( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq 'ARRAY' ) {
+		$revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}[0]->{revid};
+	}
+	else {
+		$revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}->{revid};
+	}
     return $revertto;
 }
 
