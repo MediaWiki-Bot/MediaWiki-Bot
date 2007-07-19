@@ -7,6 +7,7 @@ use URI::Escape;
 use XML::Simple;
 use Carp;
 use Encode;
+use URI::Escape qw(uri_escape_utf8);
 
 our $VERSION = '0.90';
 
@@ -61,7 +62,7 @@ sub _get {
     my $extra     = shift;
     my $no_escape = shift || 0;
     
-    $page = uri_escape($page) unless $no_escape;
+	$page = uri_escape_utf8($page) unless $no_escape;
     $page =~ s/\&/%26/g; # escape the ampersand
 
     my $url =
