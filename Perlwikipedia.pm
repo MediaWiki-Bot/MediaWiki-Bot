@@ -63,7 +63,6 @@ sub _get {
     my $no_escape = shift || 0;
     
     $page = uri_escape_utf8($page) unless $no_escape;
-    $page =~ s/\&/%26/g; # escape the ampersand
 
     my $url =
       "http://$self->{host}/$self->{path}/index.php?title=$page&action=$action";
