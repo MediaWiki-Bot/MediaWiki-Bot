@@ -204,31 +204,20 @@ sub edit {
     my $summary  = shift;
     my $is_minor = shift || 0;
     my $res;
+
 	$text = encode( 'utf8', $text );
-    if ($is_minor) {
-        $res = $self->_put(
-            $page,
-            {
-                form_name => 'editform',
-                fields    => {
-                    wpSummary   => $summary,
-                    wpTextbox1  => $text,
-                    wpMinoredit => 1,
-                },
-            }
-        );
-    } else {
-        $res = $self->_put(
-            $page,
-            {
-                form_name => 'editform',
-                fields    => {
-                    wpSummary  => $summary,
-                    wpTextbox1 => $text,
-                },
-            }
-        );
-    }
+
+    my $options  = {
+                    form_name => 'editform',
+                    fields    => {
+                                  wpSummary   => $summary,
+                                  wpTextbox1  => $text,
+                                 },
+                   };
+    
+    $options->{fields}->{wpMinoredit} = 1 if ($is_minor);
+
+    $res = $self->_put($page, $options);
     return $res;
 }
 
