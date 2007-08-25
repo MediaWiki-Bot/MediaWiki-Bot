@@ -416,7 +416,7 @@ sub what_links_here {
     unless ($res) { return 1; }
     my $content = $res->decoded_content;
     while (
-        $content =~ m/<li><a href=\".+?\" title=\"([^"]+)\">.+<\/a>(.+)<span/g ) {
+        $content =~ m{<li><a href="[^"]+" title="([^"]+)">[^<]+</a>([^<]+)<span}g ) {
         my $title = $1;
         my $type  = $2;
         if ( $type !~ /\(redirect page\)/ && $type !~ /\(transclusion\)/ ) {
