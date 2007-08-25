@@ -44,7 +44,7 @@ Calling Perlwikipedia->new will create a new Perlwikipedia object
 sub new {
     my $package = shift;
     my $agent = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
-        
+
     my $self = bless {}, $package;
     $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
     $self->{mech}->agent("$agent/$VERSION");
@@ -61,7 +61,7 @@ sub _get {
     my $action    = shift || 'view';
     my $extra     = shift;
     my $no_escape = shift || 0;
-    
+
     $page = uri_escape_utf8($page) unless $no_escape;
 
     my $url =
@@ -214,7 +214,7 @@ sub edit {
                                   wpTextbox1  => $text,
                                  },
                    };
-    
+
     $options->{fields}->{wpMinoredit} = 1 if ($is_minor);
 
     $res = $self->_put($page, $options);
@@ -236,7 +236,7 @@ sub get_history {
 
     my @return;
     my @revisions;
-    
+
     if ( $limit > 50 ) {
         $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
         carp $self->{errstr};
@@ -260,7 +260,7 @@ sub get_history {
     else {
     	@revisions = @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} };
     }
-    
+
     foreach my $hash ( @revisions ) {
     	my $revid = $hash->{revid};
     	my $user  = $hash->{user};
@@ -290,7 +290,7 @@ sub get_text {
     my $revid    = shift || '';
     my $section  = shift || '';
     my $recurse  = shift || 0;
-    
+
     my $wikitext = '';
     my $res;
 
@@ -307,7 +307,7 @@ sub get_text {
     	}
     }
     if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
-		$wikitext = $1; 
+		$wikitext = $1;
     } else {
     	$self->{errstr} = "Could not get_text for $pagename!";
         carp $self->{errstr};
@@ -381,7 +381,7 @@ sub update_rc {
       $self->_get_api(
         "action=query&list=recentchanges&rcnamespace=0&rclimit=$limit&format=xml");
     unless ($res) { return 1; }
-    
+
     my $xml = XMLin( $res->decoded_content );
     foreach my $hash ( @{ $xml->{query}->{recentchanges}->{rc} } ) {
     	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
@@ -395,7 +395,7 @@ sub update_rc {
     			}
     	);
     }
-    
+
     return @rc_table;
 }
 
@@ -453,13 +453,21 @@ sub get_pages_in_category {
         m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
         push @pages, $1;
     }
-    while ( my $res = $self->{mech}->follow_link( text => 'next 200' ) ) {
+	while ( $content =~
+		m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
+    	push @pages, $1;
+	}
+	while ( my $res = $self->{mech}->follow_link( text => 'next 200' ) ) {
         sleep 1;    #Cheap hack to make sure we don't bog down the server
         my $content = $res->decoded_content;
         while ( $content =~
             m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
             push @pages, $1;
         }
+		while ( $content =~
+			m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
+			push @pages, $1;
+		}
     }
     return @pages;
 }
@@ -489,8 +497,8 @@ sub get_all_pages_in_category {
 
 =item linksearch($link)
 
-Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys "link" for the 
-outbound link name, and "page" for the page the link is on.
+Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys "link" for the
+ outbound link name, and "page" for the page the link is on.
 
 =cut
 
