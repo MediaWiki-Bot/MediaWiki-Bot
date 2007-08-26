@@ -1,0 +1,8 @@
+Perlwikipedia is very easy to install, just run the following commands:
+
+1. perl Makefile.PL
+2. make
+3. make test (optional, the module should work right out of the box)
+4. make install
+
+That's it! The man page is available by "man Perlwikipedia"
