@@ -234,6 +234,7 @@ sub get_history {
     my $rvstartid = shift || '';
     my $direction = shift;
 
+	$pagename = uri_escape_utf8( $pagename );
     my @return;
     my @revisions;
 
@@ -409,6 +410,8 @@ sub what_links_here {
     my $self    = shift;
     my $article = shift;
     my @links;
+
+	$article = uri_escape_utf8( $article );
 
     my $res =
       $self->_get( 'Special:Whatlinkshere', 'view',
