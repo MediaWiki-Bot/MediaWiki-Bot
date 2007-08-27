@@ -1,0 +1,8 @@
+Revision history for Perlwikipedia
+
+1.01 THIS IS AN UPCOMING RELEASE!
+	Bugs fixed since 1.0:
+		* get_history and other _get_api-based functions will now properly escape utf8 characters in the query
+
+1.0  Sat Aug 25 2007
+	* original version

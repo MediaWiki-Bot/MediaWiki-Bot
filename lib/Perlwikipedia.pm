@@ -351,6 +351,7 @@ sub get_last {
     my $editor   = shift;
 
     my $revertto = 0;
+	$pagename = uri_escacpe_utf8( $pagename );
 
     my $res =
       $self->_get_api(
