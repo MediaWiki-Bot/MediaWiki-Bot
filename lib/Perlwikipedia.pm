@@ -9,7 +9,7 @@ use Carp;
 use Encode;
 use URI::Escape qw(uri_escape_utf8);
 
-our $VERSION = '0.90';
+our $VERSION = '1.00';
 
 =head1 NAME
 
