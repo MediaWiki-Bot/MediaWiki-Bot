@@ -46,7 +46,7 @@ sub new {
     my $agent = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
 
     my $self = bless {}, $package;
-    $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp );
+    $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp, stack_depth => 1 );
     $self->{mech}->agent("$agent/$VERSION");
     $self->{host}   = 'en.wikipedia.org';
     $self->{path}   = 'w';
