@@ -70,22 +70,22 @@ sub _get {
     print "Retrieving $url\n" if $self->{debug};
     my $res = $self->{mech}->get($url);
 
-    if ( $res->is_success() ) {
+    if ( ref($res) eq 'HTTP::Response' && $res->is_success() ) {
         if ( $res->decoded_content =~
 m/The action you have requested is limited to users in the group (.+)\./
           ) {
             my $group = $1;
             $group =~ s/<.+?>//g;
             $self->{errstr} = qq/Error requesting $page: You must be in the user group "$group"/;
-            carp $self->{errstr};
-            return 0;
+            carp $self->{errstr} if $self->{debug};
+            return 1;
         } else {
             return $res;
         }
     } else {
     	$self->{errstr} = "Error requesting $page: " . $res->status_line();
-        carp $self->{errstr};
-        return 0;
+        carp $self->{errstr} if $self->{debug};
+        return 1;
     }
 }
 
@@ -96,12 +96,12 @@ sub _get_api {
       if $self->{debug};
     my $res =
       $self->{mech}->get("http://$self->{host}/$self->{path}/api.php?$query");
-    if ( $res->is_success() ) {
+    if ( ref($res) eq 'HTTP::Response' && $res->is_success() ) {
         return $res;
     } else {
     	$self->{errstr} = "Error requesting api.php?$query: " . $res->status_line();
-        carp $self->{errstr};
-        return 0;
+        carp $self->{errstr} if $self->{debug};
+        return 1;
     }
 }
 
@@ -111,11 +111,11 @@ sub _put {
     my $options = shift;
     my $extra   = shift;
     my $res     = $self->_get( $page, 'edit', $extra );
-    unless ($res) { return; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     if ( ( $res->decoded_content ) =~ m/<textarea .+?readonly='readonly'/ ) {
         $self->{errstr} = "Error editing $page: Page is protected";
-        carp $self->{errstr};
-        return 0;
+        carp $self->{errstr} if $self->{debug};
+        return 1;
     }
     $res = $self->{mech}->submit_form( %{$options} );
     return $res;
@@ -172,7 +172,7 @@ sub login {
             },
         }
     );
-    unless ($res) { return; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     my $content = $res->decoded_content();
     if ( $content =~ m/var wgUserName = "$editor"/ ) {
         print qq/Login as "$editor" succeeded.\n/ if $self->{debug};
@@ -180,14 +180,13 @@ sub login {
     } else {
         if ( $content =~ m/There is no user by the name/ ) {
             $self->{errstr} = qq/Login as "$editor" failed: User "$editor" does not exist/;
-            return 1;
         } elsif ( $content =~ m/Incorrect password entered/ ) {
             $self->{errstr} = qq/Login as "$editor" failed: Bad password/;
-            return 1;
         } elsif ( $content =~ m/Password entered was blank/ ) {
             $self->{errstr} = qq/Login as "$editor" failed: Blank password/;
-            return 1;
         }
+		carp $self->{errstr} if $self->{debug};
+		return 1;
     }
 }
 
@@ -240,7 +239,7 @@ sub get_history {
 
     if ( $limit > 50 ) {
         $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
-        carp $self->{errstr};
+        carp $self->{errstr} if $self->{debug};
         return 1;
     }
     my $query = "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml";
@@ -252,7 +251,7 @@ sub get_history {
     }
     my $res = $self->_get_api($query);
 
-    unless ($res) { return 1; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $xml = XMLin( $res->decoded_content );
 
     if ( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq "HASH" ) {
@@ -297,9 +296,9 @@ sub get_text {
 
     $res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section" );
 
-    unless ($res) { return 1; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     if ($recurse) {
-    	until ( $res->decoded_content =~ m/var wgAction = "edit"/ ) {
+    	until ( ref($res) eq 'HTTP::Response' && $res->is_success && $res->decoded_content =~ m/var wgAction = "edit"/ ) {
     	    my $real_title;
     	    if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
     	        $real_title = $1;
@@ -310,8 +309,9 @@ sub get_text {
     if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
 		$wikitext = $1;
     } else {
-    	$self->{errstr} = "Could not get_text for $pagename!";
-        carp $self->{errstr};
+    	$self->{errstr} = "Could not get_text for $pagename";
+        carp $self->{errstr} if $self->{debug};
+		return 1;
     }
 
 	return decode_entities($wikitext);
@@ -357,7 +357,7 @@ sub get_last {
       $self->_get_api(
 "action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=ids|user&rvexcludeuser=$editor&format=xml"
       );
-    unless ($res) { return 1; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $xml = XMLin( $res->decoded_content );
     if( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq 'ARRAY' ) {
 		$revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}[0]->{revid};
@@ -382,7 +382,7 @@ sub update_rc {
     my $res =
       $self->_get_api(
         "action=query&list=recentchanges&rcnamespace=0&rclimit=$limit&format=xml");
-    unless ($res) { return 1; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
 
     my $xml = XMLin( $res->decoded_content );
     foreach my $hash ( @{ $xml->{query}->{recentchanges}->{rc} } ) {
@@ -417,7 +417,7 @@ sub what_links_here {
     my $res =
       $self->_get( 'Special:Whatlinkshere', 'view',
         "&target=$article&limit=5000" );
-    unless ($res) { return 1; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $content = $res->decoded_content;
     while (
         $content =~ m{<li><a href="[^"]+" title="([^"]+)">[^<]+</a>([^<]+)<span}g ) {
@@ -447,7 +447,7 @@ sub get_pages_in_category {
 
     my @pages;
     my $res = $self->_get( $category, 'view' );
-    unless ($res) { return 1; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $content = $res->decoded_content;
     while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
     {
@@ -461,7 +461,7 @@ sub get_pages_in_category {
 		m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
     	push @pages, $1;
 	}
-	while ( my $res = $self->{mech}->follow_link( text => 'next 200' ) ) {
+	while ( my $res = $self->{mech}->follow_link( text => 'next 200' ) && ref($res) eq 'HTTP::Response' && $res->is_success ) {
         sleep 1;    #Cheap hack to make sure we don't bog down the server
         my $content = $res->decoded_content;
         while ( $content =~
@@ -512,13 +512,13 @@ sub linksearch {
     my @links;
     my $res =
       $self->_get( "Special:Linksearch", "edit", "&target=$link&limit=500" );
-    unless ($res) { return 1; }
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $content = $res->decoded_content;
     while ( $content =~
         m{<li><a href.+>(.+?)</a> linked from <a href.+>(.+)</a></li>}g ) {
         push( @links, { link => $1, page => $2 } );
     }
-    while ( my $res = $self->{mech}->follow_link( text => 'next 500' ) ) {
+    while ( my $res = $self->{mech}->follow_link( text => 'next 500' ) && ref($res) eq 'HTTP::Response' && $res->is_success ) {
         sleep 2;
         my $content = $res->decoded_content;
         while ( $content =~
@@ -546,6 +546,8 @@ sub purge_page {
 
 get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as Talk:.
 
+=back
+
 =cut
 
 sub get_namespace_names {
@@ -561,6 +563,12 @@ sub get_namespace_names {
 }
 
 1;
+
+=head1 ERROR HANDLING
+
+All Perlwikipedia functions will return either 0 or 1 if they do not return data. If an error occurs in a function, $perlwikipedia_object->{errstr} is set to the error message and the function will return 1. A robust bot should check $perlwikipedia_object->{errstr} for messages after performing any action with the object.
+
+=cut
 
 __END__
 

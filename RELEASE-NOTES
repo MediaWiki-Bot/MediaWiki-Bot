@@ -1,6 +1,9 @@
 Revision history for Perlwikipedia
 
 1.01 THIS IS AN UPCOMING RELEASE!
+	Changes made since 1.0:
+		* Standardized all functions to return 1 and set $object->{errstr} in the event of an error
+
 	Bugs fixed since 1.0:
 		* get_history and other _get_api-based functions will now properly escape utf8 characters in the query
 		* Fixed memory leak issues with WWW::Mechanize
