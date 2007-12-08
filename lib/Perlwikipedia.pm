@@ -43,7 +43,8 @@ Calling Perlwikipedia->new will create a new Perlwikipedia object
 
 sub new {
     my $package = shift;
-    my $agent = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
+    my $agent   = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
+    my $assert  = shift || undef;
 
     my $self = bless {}, $package;
     $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp, stack_depth => 1 );
@@ -52,6 +53,7 @@ sub new {
     $self->{path}   = 'w';
     $self->{debug}  = 0;
     $self->{errstr} = '';
+    $self->{assert} = $assert;
     return $self;
 }
 
@@ -116,9 +118,13 @@ sub _put {
         $self->{errstr} = "Error editing $page: Page is protected";
         carp $self->{errstr} if $self->{debug};
         return 1;
+    } elsif ( ($res->decoded_content)=~m/The specified assertion \(.+?\) failed/) {
+        $self->{errstr} = "Error editing $page: Assertion failed";
+        return 2;
+    } else {
+        $res = $self->{mech}->submit_form( %{$options} );
+        return $res;
     }
-    $res = $self->{mech}->submit_form( %{$options} );
-    return $res;
 }
 
 =item set_wiki($wiki_host,$wiki_path)
@@ -190,9 +196,9 @@ sub login {
     }
 }
 
-=item edit($pagename,$page_text,$edit_summary,[$is_minor])
+=item edit($pagename,$page_text,[$edit_summary],[$is_minor],[$assert])
 
-Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified.
+Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified, and adding an assertion, if requested. Assertions should be of the form "&assert=user".
 
 =cut
 
@@ -202,6 +208,7 @@ sub edit {
     my $text     = shift;
     my $summary  = shift;
     my $is_minor = shift || 0;
+    my $assert   = shift || $self->{assert};
     my $res;
 
 	$text = encode( 'utf8', $text );
@@ -216,7 +223,7 @@ sub edit {
 
     $options->{fields}->{wpMinoredit} = 1 if ($is_minor);
 
-    $res = $self->_put($page, $options);
+    $res = $self->_put($page, $options, $assert);
     return $res;
 }
 
