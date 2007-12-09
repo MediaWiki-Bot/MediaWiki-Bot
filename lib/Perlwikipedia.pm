@@ -470,7 +470,7 @@ sub get_pages_in_category {
 	}
 	while ( $res = $self->{mech}->follow_link( text => 'next 200' ) && ref($res) eq 'HTTP::Response' && $res->is_success ) {
         sleep 1;    #Cheap hack to make sure we don't bog down the server
-        $content = $self->{mech}->content();
+        $content = $self->{mech}->decoded_content();
 
         while ( $content =~
             m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
