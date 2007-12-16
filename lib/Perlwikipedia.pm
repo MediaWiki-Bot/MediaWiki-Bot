@@ -114,7 +114,7 @@ sub _put {
     my $extra   = shift;
     my $res     = $self->_get( $page, 'edit', $extra );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
-    if ( ( $res->decoded_content ) =~ m/<textarea .+?readonly='readonly'/ ) {
+    if ( ( $res->decoded_content ) =~ m/<textarea .+?readonly="readonly"/ ) {
         $self->{errstr} = "Error editing $page: Page is protected";
         carp $self->{errstr} if $self->{debug};
         return 1;
