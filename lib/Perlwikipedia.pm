@@ -351,9 +351,9 @@ sub revert {
     );
 }
 
-=item undo($pagename,$edit_summary,$old_revision_id)
+=item undo($pagename,$edit_summary,$revision_id,$after)
 
-Reverts the specified page to $old_revision_id, with an edit summary of $edit_summary, using the undo function.
+Reverts the specified page to $revision_id, with an edit summary of $edit_summary, using the undo function. To use old revision id instead of new, set last param to 'after'.
 
 =cut
 
@@ -362,6 +362,7 @@ sub undo {
     my $pagename = shift;
     my $summary  = shift;
     my $revid    = shift;
+    my $after    = shift;
 
     return $self->_put(
         $pagename,
@@ -369,7 +370,7 @@ sub undo {
             form_name => 'editform',
             fields    => { wpSummary => $summary, },          
         },
-        "&undo=$revid"
+        "&undo$after=$revid"
     );
 }
 
@@ -749,12 +750,12 @@ sub protect {
 	unless ($res) { return; }
 	my $options = {
 		   fields	=> {
-				mwProtect-level-edit  => $editlvl,
-				mwProtect-level-move  => $movelvl,
-				mwProtectUnchained  => 1,
-				mwProtect-cascade => $cascade,
-				mwProtect-expiry => $time,
-				mwProtect-reason => $reason,
+				'mwProtect-level-edit'  => $editlvl,
+				'mwProtect-level-move'  => $movelvl,
+				'mwProtectUnchained'  => 1,
+				'mwProtect-cascade' => $cascade,
+				'mwProtect-expiry' => $time,
+				'mwProtect-reason' => $reason,
 			},
 		};
 	$res = $self->{mech}->submit_form( %{$options});
