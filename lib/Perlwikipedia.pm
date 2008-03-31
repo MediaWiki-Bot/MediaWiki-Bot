@@ -135,8 +135,10 @@ set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_
 
 sub set_wiki {
     my $self = shift;
-    $self->{host} = shift;
-    $self->{path} = shift;
+    my $host = shift;
+    my $path = shift;
+    $self->{host} = $host if $host;
+    $self->{path} = $path if $path;
     print "Wiki set to http://$self->{host}/$self->{path}\n" if $self->{debug};
     return 0;
 }
