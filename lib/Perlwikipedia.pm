@@ -9,7 +9,7 @@ use Carp;
 use Encode;
 use URI::Escape qw(uri_escape_utf8);
 
-our $VERSION = '1.1';
+our $VERSION = '1.2';
 
 =head1 NAME
 
@@ -17,11 +17,11 @@ Perlwikipedia - a Wikipedia bot framework written in Perl
 
 =head1 SYNOPSIS
 
-  use Perlwikipedia;
+use Perlwikipedia;
 
-  my $editor = Perlwikipedia->new('Account');
-  $editor->login('Account', 'password');
-  $editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
+my $editor = Perlwikipedia->new('Account');
+$editor->login('Account', 'password');
+$editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
 
 =head1 DESCRIPTION
 
@@ -130,7 +130,7 @@ sub _put {
     }
 }
 
-=item set_wiki($wiki_host,$wiki_path)
+=item set_wiki([$wiki_host[,$wiki_path]])
 
 set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell Perlwikipedia to use http://de.wikipedia.org/w/index.php. Perlwikipedia's default settings are 'en.wikipedia.org' with a path of 'w'.
 
@@ -351,6 +351,12 @@ sub revert {
     );
 }
 
+=item undo($pagename,$edit_summary,$old_revision_id)
+
+Reverts the specified page to $old_revision_id, with an edit summary of $edit_summary, using the undo function.
+
+=cut
+
 sub undo {
     my $self     = shift;
     my $pagename = shift;
@@ -530,8 +536,7 @@ sub get_all_pages_in_category {
 
 =item linksearch($link)
 
-Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys "link" for the
- outbound link name, and "page" for the page the link is on.
+Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys "link" for the outbound link name, and "page" for the page the link is on.
 
 =cut
 
@@ -575,8 +580,6 @@ sub purge_page {
 
 get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as Talk:.
 
-=back
-
 =cut
 
 sub get_namespace_names {
@@ -591,7 +594,176 @@ sub get_namespace_names {
 	return %return;
 }
 
+=item links_to_image($page)
+
+Gets a list of pages which include a certain image.
+
+=cut
+
+sub links_to_image {
+	my $self	= shift;
+	my $page	= shift;
+	my $url = "http://$self->{host}/$self->{path}/index.php?title=$page";
+	print "Retrieving $url\n" if $self->{debug};
+	my $res = $self->{mech}->get($url);
+	$res->decoded_content=~/div class=\"linkstoimage\" id=\"linkstoimage\"(.+?)\<\/ul\>/is;
+	my $list=$1;
+	my @list;
+	while ($list=~/title=\"(.+?)\"/ig) {
+		push @list, $1;
+	}
+	return @list;
+}
+
+=item test_blocked($user)
+
+Checks if a user is currently blocked.
+
+=cut
+
+sub test_blocked {
+	my $self	  = shift;
+	my $user	  = shift;
+
+	my $res = $self->_get("Special%3AIpblocklist&ip=$user", "", "", 1);
+	if ($res->decoded_content=~/not blocked/i) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+=item test_image_exists($page)
+
+Checks if an image exists at $page.
+
+=cut
+
+sub test_image_exists {
+	my $self	= shift;
+	my $page	= shift;
+
+	my $res = $self->_get($page);
+	if ($res->decoded_content=~/No file by this name exists/i) {
+	return 0;
+	} else {
+	return 1;
+	}
+}
+
+=item delete_page($page[, $summary])
+
+Deletes the page with the specified summary.
+
+=cut
+
+sub delete_page {
+	my $self	= shift;
+	my $page	= shift;
+	my $summary = shift;
+	my $res	 = $self->_get( $page, 'delete' );
+	unless ($res) { return; }
+	my $options = {
+		   fields	=> {
+				wpReason  => $summary,
+			},
+		};
+	$res = $self->{mech}->submit_form( %{$options});
+	return $res;
+}
+
+=item delete_page($page, $revision[, $summary])
+
+Deletes the specified revision of the image with the specified summary.
+
+=cut
+
+sub delete_old_image {
+	my $self	= shift;
+	my $page	= shift;
+	my $id	= shift;
+	my $summary = shift;
+	my $image	= $page;
+	$image=~s/\s/_/g;
+	$image=~s/\%20/_/g;
+	$image=~s/Image://gi;
+	my $res	 = $self->_get( $page, 'delete', "&oldimage=$id%21$image" );
+	unless ($res) { return; }
+	my $options = {
+		   fields	=> {
+				wpReason  => $summary,
+			},
+		};
+	$res = $self->{mech}->submit_form( %{$options});
+	return $res;
+}
+
+=item block($user, $length, $summary, $anononly, $autoblock, $blockaccountcreation, $blockemail)
+
+Blocks the user with the specified options.  All options optional except $user and $length. Last four are true/false. Defaults to empty summary, all options disabled.
+
+=cut
+
+sub block {
+	my $self	= shift;
+	my $user	= shift;
+	my $length  = shift;
+	my $summary = shift;
+	my $anononly= shift;
+	my $autoblock=shift;
+	my $blockac = shift;
+	my $blockemail=shift;
+	my $res	 = $self->_get( "Special:Blockip/$user" );
+	unless ($res) { return; }
+	my $options = {
+		   fields	=> {
+				wpBlockAddress  => $user,
+				wpBlockExpiry  => 'other',
+				wpAnonOnly  => $anononly,
+				wpCreateAccount => $blockac,
+				wpEnableAutoblock => $autoblock,
+				wpEmailBan => $blockemail,
+				wpBlockReason  => $summary,
+				wpBlockOther  => $length,
+			},
+		};
+	$res = $self->{mech}->submit_form( %{$options});
+	return $res;
+}
+
+=item protect($page, $reason, $editlvl, $movelvl, $time, $cascade)
+
+Protects (or unprotects) the page. $editlvl and $movelvl may be '', 'autoconfirmed', or 'sysop'. $cascade is true/false.
+
+=cut
+
+sub protect {
+	my $self	= shift;
+	my $page	= shift;
+	my $reason	= shift;
+	my $editlvl	= shift;
+	my $movelvl = shift;
+	my $time	= shift;
+	my $cascade	= shift;
+	my $res	 = $self->_get( $page, 'protect' );
+	unless ($res) { return; }
+	my $options = {
+		   fields	=> {
+				mwProtect-level-edit  => $editlvl,
+				mwProtect-level-move  => $movelvl,
+				mwProtectUnchained  => 1,
+				mwProtect-cascade => $cascade,
+				mwProtect-expiry => $time,
+				mwProtect-reason => $reason,
+			},
+		};
+	$res = $self->{mech}->submit_form( %{$options});
+	return $res;
+}
+
 1;
+
+=back
 
 =head1 ERROR HANDLING
 
