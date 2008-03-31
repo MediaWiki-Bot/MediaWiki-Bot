@@ -362,7 +362,7 @@ sub undo {
     my $pagename = shift;
     my $summary  = shift;
     my $revid    = shift;
-    my $after    = shift;
+    my $after    = shift || '';
 
     return $self->_put(
         $pagename,
@@ -484,6 +484,7 @@ sub get_pages_in_category {
     my $res = $self->_get( $category, 'view' );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $content = $res->decoded_content;
+    open(FH, '>/home/st47/public_html/wtf.html');print FH $content;close FH;
     while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
     {
         push @pages, 'Category:' . $1;
