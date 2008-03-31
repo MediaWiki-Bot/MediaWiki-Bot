@@ -9,7 +9,7 @@ use Carp;
 use Encode;
 use URI::Escape qw(uri_escape_utf8);
 
-our $VERSION = '1.00';
+our $VERSION = '1.1';
 
 =head1 NAME
 
@@ -121,6 +121,9 @@ sub _put {
     } elsif ( ($res->decoded_content)=~m/The specified assertion \(.+?\) failed/) {
         $self->{errstr} = "Error editing $page: Assertion failed";
         return 2;
+    } elsif ( ($res->decoded_content)=~m/undone\<\/a\> due to conflicting intermediate edits/) {
+        $self->{errstr} = "Error editing $page: Undo failed";
+        return 3;
     } else {
         $res = $self->{mech}->submit_form( %{$options} );
         return $res;
@@ -345,6 +348,22 @@ sub revert {
             fields    => { wpSummary => $summary, },
         },
         "&oldid=$revid"
+    );
+}
+
+sub undo {
+    my $self     = shift;
+    my $pagename = shift;
+    my $summary  = shift;
+    my $revid    = shift;
+
+    return $self->_put(
+        $pagename,
+        {
+            form_name => 'editform',
+            fields    => { wpSummary => $summary, },          
+        },
+        "&undo=$revid"
     );
 }
 
