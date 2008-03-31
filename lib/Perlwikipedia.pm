@@ -112,6 +112,7 @@ sub _put {
     my $page    = shift;
     my $options = shift;
     my $extra   = shift;
+    my $type    = shift;
     my $res     = $self->_get( $page, 'edit', $extra );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     if ( ( $res->decoded_content ) =~ m/<textarea .+?readonly="readonly"/ ) {
@@ -121,7 +122,7 @@ sub _put {
     } elsif ( ($res->decoded_content)=~m/The specified assertion \(.+?\) failed/) {
         $self->{errstr} = "Error editing $page: Assertion failed";
         return 2;
-    } elsif ( ($res->decoded_content)=~m/undone\<\/a\> due to conflicting intermediate edits/) {
+    } elsif ( ($res->decoded_content)!~/<div id=\"wikiDiff\">/ and $type eq 'undo') {
         $self->{errstr} = "Error editing $page: Undo failed";
         return 3;
     } else {
@@ -370,7 +371,8 @@ sub undo {
             form_name => 'editform',
             fields    => { wpSummary => $summary, },          
         },
-        "&undo$after=$revid"
+        "&undo$after=$revid",
+	"undo" #For the error detection in _put.
     );
 }
 
