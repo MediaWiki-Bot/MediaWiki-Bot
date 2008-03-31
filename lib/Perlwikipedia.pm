@@ -122,7 +122,7 @@ sub _put {
     } elsif ( ($res->decoded_content)=~m/The specified assertion \(.+?\) failed/) {
         $self->{errstr} = "Error editing $page: Assertion failed";
         return 2;
-    } elsif ( ($res->decoded_content)!~/<div id=\"wikiDiff\">/ and $type eq 'undo') {
+    } elsif ( ($res->decoded_content)!~/class=\"diff-lineno\">/ and $type eq 'undo') {
         $self->{errstr} = "Error editing $page: Undo failed";
         return 3;
     } else {
