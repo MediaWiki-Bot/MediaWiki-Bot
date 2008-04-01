@@ -486,31 +486,46 @@ sub get_pages_in_category {
     my $res = $self->_get( $category, 'view' );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $content = $res->decoded_content;
-    open(FH, '>/home/st47/public_html/wtf.html');print FH $content;close FH;
-    while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
-    {
-        push @pages, 'Category:' . $1;
+    if ($content=~/<div id=\"mw-subcategories\">/i) {
+        $content=~s/.+<div id=\"mw-subcategories\">//is;
+        while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
+        {
+            push @pages, 'Category:' . $1;
+        }
     }
-    while ( $content =~
-        m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
-        push @pages, $1;
-    }
-	while ( $content =~
-		m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
-    	push @pages, $1;
-	}
-	while ( $res = $self->{mech}->follow_link( text => 'next 200' ) && ref($res) eq 'HTTP::Response' && $res->is_success ) {
-        sleep 1;    #Cheap hack to make sure we don't bog down the server
-        $content = $self->{mech}->decoded_content();
-
+    if ($content=~/<div id=\"mw-pages\">/i) {
+	$content=~s/.+<div id=\"mw-pages\">//is;
         while ( $content =~
             m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
             push @pages, $1;
         }
-		while ( $content =~
-			m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
-			push @pages, $1;
-		}
+        while ( $content =~
+            m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
+            push @pages, $1;
+        }
+    }
+    while ( $res = $self->{mech}->follow_link( text => 'next 200' ) && ref($res) eq 'HTTP::Response' && $res->is_success ) {
+        sleep 1;    #Cheap hack to make sure we don't bog down the server
+        $content = $self->{mech}->decoded_content();
+
+    if ($content=~/<div id=\"mw-subcategories\">/i) {
+        $content=~s/.+<div id=\"mw-subcategories\">//is;
+        while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
+        {
+            push @pages, 'Category:' . $1;
+        }
+    }
+    if ($content=~/<div id=\"mw-pages\">/i) {
+	$content=~s/.+<div id=\"mw-pages\">//is;
+        while ( $content =~
+            m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
+            push @pages, $1;
+        }
+        while ( $content =~
+            m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
+            push @pages, $1;
+        }
+    }
     }
     return @pages;
 }
