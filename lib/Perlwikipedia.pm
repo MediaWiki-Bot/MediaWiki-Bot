@@ -119,10 +119,10 @@ sub _put {
         $self->{errstr} = "Error editing $page: Page is protected";
         carp $self->{errstr} if $self->{debug};
         return 1;
-    } elsif ( ($res->decoded_content)=~m/The specified assertion \(.+?\) failed/) {
+    } elsif ( ($res->decoded_content) =~ m/The specified assertion \(.+?\) failed/) {
         $self->{errstr} = "Error editing $page: Assertion failed";
         return 2;
-    } elsif ( ($res->decoded_content)!~/class=\"diff-lineno\">/ and $type eq 'undo') {
+    } elsif ( ($res->decoded_content) !~ /class=\"diff-lineno\">/ and $type eq 'undo') {
         $self->{errstr} = "Error editing $page: Undo failed";
         return 3;
     } else {
@@ -782,7 +782,7 @@ sub protect {
 
 =item get_pages_in_namespace($namespace_id,$page_limit)
 
-Returns an array containing the names of all pages in the specified namespace. Setting a page limit is optional.
+Returns an array containing the names of all pages in the specified namespace. The variable $namespace_id must be a number, not a namespace name. Setting $page_limit is optional.
 
 =cut
 
@@ -804,8 +804,8 @@ sub get_pages_in_namespace {
 	return 1 unless ( ref($res) eq 'HTTP::Response' && $res->is_success );
  	my $xml = XMLin( $res->decoded_content );
 
-	# If more than 1 page is found then they are stored in an array
-	# but if 1 page is found it is stored in a single hash.
+	# If more than 1 page is found then their corresponding hashes are stored in
+	# an array but if 1 page is found it is stored in a single hash, no array.
 	my $pages = $xml->{query}->{allpages}->{p};
 	if ( ref $pages eq "ARRAY" ) {
 		foreach my $page ( @$pages ) {
@@ -814,7 +814,7 @@ sub get_pages_in_namespace {
 	} elsif (ref $pages eq "HASH" ) {
 		push @return, $pages->{title};
 	}
-	return @return;
+	@return;
 }
 
 1;
