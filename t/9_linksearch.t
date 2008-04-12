@@ -15,7 +15,8 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
-$wikipedia->set_wiki("wiki.xyrael.net","mediawiki");
+$wikipedia->set_wiki("wiki.xyrael.net","w");
+
 SKIP: {
 	skip("Special:Linksearch isn't enabled on all wikis",1);
 	my @pages = $wikipedia->linksearch("*.example.com");
