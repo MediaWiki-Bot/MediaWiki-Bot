@@ -74,7 +74,7 @@ sub _get {
 
     if ( ref($res) eq 'HTTP::Response' && $res->is_success() ) {
         if ( $res->decoded_content =~
-m/The action you have requested is limited to users in the group (.+)\./
+    m/The action you have requested is limited to users in the group (.+)\./
           ) {
             my $group = $1;
             $group =~ s/<.+?>//g;
@@ -133,7 +133,7 @@ sub _put {
 
 =item set_wiki([$wiki_host[,$wiki_path]])
 
-set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell Perlwikipedia to use http://de.wikipedia.org/w/index.php. Perlwikipedia's default settings are 'en.wikipedia.org' with a path of 'w'.
+set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell Perlwikipedia to use http://de.wikipedia.org/w/index.php. The Perlwikipedia default settings are 'en.wikipedia.org' with a path of 'w'.
 
 =cut
 
@@ -235,7 +235,7 @@ sub edit {
 
 =item get_history($pagename,$limit)
 
-Returns an array containing the history of the specified page, with $limit number of revisions. The array's structure contains 'revid','user','comment','timestamp_date', and 'timestamp_time'.
+Returns an array containing the history of the specified page, with $limit number of revisions. The array structure contains 'revid','user','comment','timestamp_date', and 'timestamp_time'.
 
 =cut
 
@@ -407,7 +407,7 @@ sub get_last {
 
 =item update_rc([$limit])
 
-Returns an array containing the Recent Changes to the wiki's Main namespace. The array's structure contains 'pagename', 'revid', 'oldid', 'timestamp_date', and 'timestamp_time'.
+Returns an array containing the Recent Changes to the wiki Main namespace. The array structure contains 'pagename', 'revid', 'oldid', 'timestamp_date', and 'timestamp_time'.
 
 =cut
 
@@ -440,7 +440,7 @@ sub update_rc {
 
 =item what_links_here($pagename)
 
-Returns an array containing a list of all pages linking to the given page. The array's structure contains 'title' and 'type', the type being a transclusion, redirect, or neither.
+Returns an array containing a list of all pages linking to the given page. The array structure contains 'title' and 'type', the type being a transclusion, redirect, or neither.
 
 =cut
 
@@ -584,7 +584,7 @@ sub linksearch {
 
 =item purge_page($pagename)
 
-Purges the server's cache of the specified page.
+Purges the server cache of the specified page.
 
 =cut
 
