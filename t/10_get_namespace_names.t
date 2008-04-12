@@ -15,7 +15,7 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
-$wikipedia->set_wiki("wiki.xyrael.net","mediawiki");
+$wikipedia->set_wiki("wiki.xyrael.net","w");
 
 my %namespaces = $wikipedia->get_namespace_names;
 
