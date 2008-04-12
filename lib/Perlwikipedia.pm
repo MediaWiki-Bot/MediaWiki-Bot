@@ -780,6 +780,43 @@ sub protect {
 	return $res;
 }
 
+=item get_pages_in_namespace($namespace_id,$page_limit)
+
+Returns an array containing the names of all pages in the specified namespace. Setting a page limit is optional.
+
+=cut
+
+sub get_pages_in_namespace {
+	my $self = shift;
+	my $namespace = shift;
+	my $page_limit = shift;
+
+ 	my @return;
+	my $query;
+
+	if ($page_limit) {
+		$query = "action=query&list=allpages&apnamespace=$namespace&format=xml&aplimit=$page_limit";
+	} else {
+		$query = "action=query&list=allpages&apnamespace=$namespace&format=xml";
+	}  
+	  
+ 	my $res = $self->_get_api($query);
+	return 1 unless ( ref($res) eq 'HTTP::Response' && $res->is_success );
+ 	my $xml = XMLin( $res->decoded_content );
+
+	# If more than 1 page is found then they are stored in an array
+	# but if 1 page is found it is stored in a single hash.
+	my $pages = $xml->{query}->{allpages}->{p};
+	if ( ref $pages eq "ARRAY" ) {
+		foreach my $page ( @$pages ) {
+			push @return, $page->{title};
+		} 
+	} elsif (ref $pages eq "HASH" ) {
+		push @return, $pages->{title};
+	}
+	return @return;
+}
+
 1;
 
 =back
