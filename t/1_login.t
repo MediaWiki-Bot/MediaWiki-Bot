@@ -15,5 +15,5 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
-is($wikipedia->set_wiki("wiki.xyrael.net","wiki"),0 );
+is($wikipedia->set_wiki("wiki.xyrael.net","w"),0 );
 is( $wikipedia->login("Perlwikipedia testing",'fMh0/dk'), 0 );
