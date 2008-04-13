@@ -597,7 +597,7 @@ sub purge_page {
 
 =item get_namespace_names
 
-get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as Talk:.
+get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as "Talk".
 
 =cut
 
@@ -782,7 +782,7 @@ sub protect {
 
 =item get_pages_in_namespace($namespace_id,$page_limit)
 
-Returns an array containing the names of all pages in the specified namespace. The variable $namespace_id must be a number, not a namespace name. Setting $page_limit is optional.
+Returns an array containing the names of all pages in the specified namespace. The $namespace_id must be a number, not a namespace name. Setting $page_limit is optional.
 
 =cut
 
