@@ -27,9 +27,11 @@ $editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
 
 Perlwikipedia is a framework that can be used to write Wikipedia bots.
 
+Many of the methods use the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
+
 =head1 AUTHOR
 
-The Perlwikipedia team (Alex Rowe, Jmax, Oleg Alexandrov) and others
+The Perlwikipedia team (Alex Rowe, Jmax, Oleg Alexandrov) and others.
 
 =head1 METHODS
 
