@@ -305,11 +305,12 @@ sub get_text {
     my $revid    = shift || '';
     my $section  = shift || '';
     my $recurse  = shift || 0;
+    my $dontescape=shift || 0;
 
     my $wikitext = '';
     my $res;
 
-    $res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section" );
+    $res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section", $dontescape );
 
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     if ($recurse) {
@@ -656,7 +657,7 @@ sub test_blocked {
 
 =item test_image_exists($page)
 
-Checks if an image exists at $page.
+Checks if an image exists at $page. 0 means no, 1 means yes, local, 2 means on commons.
 
 =cut
 
@@ -667,6 +668,8 @@ sub test_image_exists {
 	my $res = $self->_get($page);
 	if ($res->decoded_content=~/No file by this name exists/i) {
 	return 0;
+	} elsif ($res->decoded_content=~/This is a file from the \<a href=.+commons:Main_Page"\>Wikimedia Commons/is) {
+	return 2;
 	} else {
 	return 1;
 	}
