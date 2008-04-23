@@ -219,7 +219,8 @@ sub edit {
     my $assert   = shift || $self->{assert};
     my $res;
 
-	$text = encode( 'utf8', $text );
+    $text = encode( 'utf8', $text );
+    $summary = encode( 'utf8', $summary );
 
     my $options  = {
                     form_name => 'editform',
