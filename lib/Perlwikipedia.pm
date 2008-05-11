@@ -508,9 +508,9 @@ sub get_pages_in_category {
             push @pages, $1;
         }
     }
-    while ( $res = $self->{mech}->follow_link( text => 'next 200' ) && ref($res) eq 'HTTP::Response' && $res->is_success ) {
+    while ( ($res = $self->{mech}->follow_link( text => 'next 200' ))  && ref($res) eq 'HTTP::Response' && $res->is_success) {
         sleep 1;    #Cheap hack to make sure we don't bog down the server
-        $content = $self->{mech}->decoded_content();
+        $content = $res->decoded_content();
 
     if ($content=~/<div id=\"mw-subcategories\">/i) {
         $content=~s/.+<div id=\"mw-subcategories\">//is;
