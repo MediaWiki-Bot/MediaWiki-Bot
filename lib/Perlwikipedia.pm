@@ -35,6 +35,12 @@ The Perlwikipedia team (Alex Rowe, Jmax, Oleg Alexandrov) and others.
 
 =head1 METHODS
 
+=head1 TO DO
+
+Add has_category method.
+
+Add has_namespace method.
+
 =over 4
 
 =item new()
@@ -117,14 +123,15 @@ sub _put {
     my $type    = shift;
     my $res     = $self->_get( $page, 'edit', $extra );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
-    if ( ( $res->decoded_content ) =~ m/<textarea .+?readonly="readonly"/ ) {
+	 my $content = $res->decoded_content;
+    if ( $content =~ m/<textarea .+?readonly="readonly"/ ) {
         $self->{errstr} = "Error editing $page: Page is protected";
         carp $self->{errstr} if $self->{debug};
         return 1;
-    } elsif ( ($res->decoded_content) =~ m/The specified assertion \(.+?\) failed/) {
+    } elsif ( $content =~ m/The specified assertion \(.+?\) failed/) {
         $self->{errstr} = "Error editing $page: Assertion failed";
         return 2;
-    } elsif ( ($res->decoded_content) !~ /class=\"diff-lineno\">/ and $type eq 'undo') {
+    } elsif ( $content !~ /class=\"diff-lineno\">/ and $type eq 'undo') {
         $self->{errstr} = "Error editing $page: Undo failed";
         return 3;
     } else {
@@ -175,16 +182,12 @@ sub login {
             return 1;
         }
     }
-    my $res = $self->_put(
-        'Special:Userlogin',
-        {
-            form_name => 'userlogin',
-            fields    => {
-                wpName     => $editor,
-                wpPassword => $password,
-                wpRemember => 1,
-            },
-        }
+    my $res = $self->_put( 'Special:Userlogin',
+									{ form_name => 'userlogin',
+									  fields    => { wpName     => $editor,
+									   				  wpPassword => $password,
+														  wpRemember => 1 },
+									}
     );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     my $content = $res->decoded_content();
@@ -296,40 +299,43 @@ sub get_history {
 
 =item get_text($pagename,[$revid,$section_number])
 
-Returns the text of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section.
+Returns the text of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. If the page does not exist then 0 is returned.
 
 =cut
 
 sub get_text {
-    my $self     = shift;
-    my $pagename = shift;
-    my $revid    = shift || '';
-    my $section  = shift || '';
-    my $recurse  = shift || 0;
-    my $dontescape=shift || 0;
+	my $self     = shift;
+	my $pagename = shift;
+	my $revid    = shift || '';
+	my $section  = shift || '';
+	my $recurse  = shift || 0;
+	my $dontescape=shift || 0;
 
-    my $wikitext = '';
-    my $res;
+	my $wikitext = '';
+	my $res;
 
-    $res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section", $dontescape );
+	$res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section", $dontescape );
 
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-    if ($recurse) {
-    	until ( ref($res) eq 'HTTP::Response' && $res->is_success && $res->decoded_content =~ m/var wgAction = "edit"/ ) {
-    	    my $real_title;
-    	    if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
-    	        $real_title = $1;
-    	    }
-    	    $res = $self->_get( $real_title, 'edit' );
+	unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
+	if ($recurse) {
+    	until ( ref($res) eq 'HTTP::Response' && $res->is_success 
+				  && $res->decoded_content =~ m/var wgAction = "edit"/ ) {
+			my $real_title;
+			if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
+				$real_title = $1;
+			}
+			$res = $self->_get( $real_title, 'edit' );
     	}
-    }
-    if ( $res->decoded_content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
-		$wikitext = $1;
-    } else {
+	}
+
+	my $content = $res->decoded_content;
+	if ( $content =~ /You've followed a link to a page that doesn't exist yet/ ) {
     	$self->{errstr} = "Could not get_text for $pagename";
-        carp $self->{errstr} if $self->{debug};
-		return 1;
-    }
+		carp $self->{errstr} if $self->{debug};
+		return 0;
+	} elsif ( $content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
+		$wikitext = $1;
+	}
 
 	return decode_entities($wikitext);
 }
