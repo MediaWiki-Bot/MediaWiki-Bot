@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 #########################
 
@@ -16,5 +16,10 @@ use Perlwikipedia;
 $wikipedia=Perlwikipedia->new("make test");
 
 my @pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia bots");
+
+ok( defined $pages[0] );
+
+#This tests categories with more than one page.
+@pages = $wikipedia->get_all_pages_in_category("Category:Wikipedia external links cleanup ");
 
 ok( defined $pages[0] );
