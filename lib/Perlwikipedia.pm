@@ -333,7 +333,6 @@ sub get_text {
     	    $res = $self->_get( $real_title, 'edit' );
     	}
     }
-print $res->decoded_content;
     if ( $res->decoded_content =~ /<textarea.+?\s?>(.{2,})<\/textarea>/s ) {
 		$wikitext = $1;
     } elsif ( $res->decoded_content =~ /div class="mw-newarticletext"/ or $res->decoded_content=~/div class="permissions-errors".+id="noarticletext"/) {
