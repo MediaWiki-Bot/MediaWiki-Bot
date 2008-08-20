@@ -123,15 +123,14 @@ sub _put {
     my $type    = shift;
     my $res     = $self->_get( $page, 'edit', $extra );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
-	 my $content = $res->decoded_content;
-    if ( $content =~ m/<textarea .+?readonly="readonly"/ ) {
+    if ( ( $res->decoded_content ) =~ m/<textarea .+?readonly="readonly"/ ) {
         $self->{errstr} = "Error editing $page: Page is protected";
         carp $self->{errstr} if $self->{debug};
         return 1;
-    } elsif ( $content =~ m/The specified assertion \(.+?\) failed/) {
+    } elsif ( ($res->decoded_content) =~ m/The specified assertion \(.+?\) failed/) {
         $self->{errstr} = "Error editing $page: Assertion failed";
         return 2;
-    } elsif ( $content !~ /class=\"diff-lineno\">/ and $type eq 'undo') {
+    } elsif ( ($res->decoded_content) !~ /class=\"diff-lineno\">/ and $type eq 'undo') {
         $self->{errstr} = "Error editing $page: Undo failed";
         return 3;
     } else {
@@ -182,11 +181,15 @@ sub login {
             return 1;
         }
     }
-    my $res = $self->_put( 'Special:Userlogin',
-									{ form_name => 'userlogin',
-									  fields    => { wpName     => $editor,
+    my $res = $self->_put(
+        'Special:Userlogin',
+        {
+            form_name => 'userlogin',
+            fields    => {
+                wpName     => $editor,
 									   				  wpPassword => $password,
-														  wpRemember => 1 },
+                wpRemember => 1,
+            },
 									}
     );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
@@ -318,8 +321,7 @@ sub get_text {
 
 	unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
 	if ($recurse) {
-    	until ( ref($res) eq 'HTTP::Response' && $res->is_success 
-				  && $res->decoded_content =~ m/var wgAction = "edit"/ ) {
+    	until ( ref($res) eq 'HTTP::Response' && $res->is_success && $res->decoded_content =~ m/var wgAction = "edit"/ ) {
 			my $real_title;
 			if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
 				$real_title = $1;
@@ -782,8 +784,8 @@ sub protect {
 		   fields	=> {
 				'mwProtect-level-edit'  => $editlvl,
 				'mwProtect-level-move'  => $movelvl,
-				'mwProtectUnchained'  => 1,
-				'mwProtect-cascade' => $cascade,
+#				'mwProtectUnchained'  => 1,
+#				'mwProtect-cascade' => $cascade,
 				'mwProtect-expiry' => $time,
 				'mwProtect-reason' => $reason,
 			},
