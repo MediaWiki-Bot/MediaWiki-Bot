@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 2;
+use Test::More tests => 1;
 
 #########################
 
@@ -16,11 +16,6 @@ use strict;
 use Perlwikipedia;
 
 my $wikibot = Perlwikipedia->new;
-$wikibot->set_wiki("wiki.xyrael.net","w");
-$wikibot->login("Perlwikipedia testing",'fMh0/dk');
 
-my $result = $wikibot->get_text("Main Page");
-like( $result, qr/Main Page/, "Main Page found" );
-
-$result = $wikibot->get_text("egaP niaM");
-is( $result, 2, "No page found" );
+my $result = $wikibot->last_active("User:Jimbo Wales");
+like($result, qr/20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, "last active");

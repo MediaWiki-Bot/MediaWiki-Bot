@@ -35,17 +35,11 @@ The Perlwikipedia team (Alex Rowe, Jmax, Oleg Alexandrov) and others.
 
 =head1 METHODS
 
-=head1 TO DO
-
-Add has_category method.
-
-Add has_namespace method.
-
 =over 4
 
-=item new()
+=item new([$agent[, $assert[, $operator]]])
 
-Calling Perlwikipedia->new will create a new Perlwikipedia object
+Calling Perlwikipedia->new will create a new Perlwikipedia object. $agent sets a custom useragent, $assert sets a parameter for the assertedit extension, common is "&assert=bot", $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent.
 
 =cut
 
@@ -53,6 +47,8 @@ sub new {
     my $package = shift;
     my $agent   = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
     my $assert  = shift || undef;
+    my $operator= shift || undef;
+    if ($operator) {$operator=~s/User://i;} #strip off namespace
 
     my $self = bless {}, $package;
     $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp, stack_depth => 1 );
@@ -62,6 +58,7 @@ sub new {
     $self->{debug}  = 0;
     $self->{errstr} = '';
     $self->{assert} = $assert;
+    $self->{operator}=$operator;
     return $self;
 }
 
@@ -79,7 +76,6 @@ sub _get {
     $url .= $extra if $extra;
     print "Retrieving $url\n" if $self->{debug};
     my $res = $self->{mech}->get($url);
-
     if ( ref($res) eq 'HTTP::Response' && $res->is_success() ) {
         if ( $res->decoded_content =~
     m/The action you have requested is limited to users in the group (.+)\./
@@ -187,10 +183,10 @@ sub login {
             form_name => 'userlogin',
             fields    => {
                 wpName     => $editor,
-									   				  wpPassword => $password,
+                wpPassword => $password,
                 wpRemember => 1,
             },
-									}
+        }
     );
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     my $content = $res->decoded_content();
@@ -239,6 +235,15 @@ sub edit {
     $options->{fields}->{wpMinoredit} = 1 if ($is_minor);
 
     $res = $self->_put($page, $options, $assert);
+    if ($res==2 and $self->operator) {
+        print "edit failed as $self->agent\n";
+        unless ($self->get_text("User 
+talk:$self->operator")=~/Error with \Q$self->agent\E/) {
+            print "Sending warning!\n";
+            $self->edit("User talk:$self->operator", $self->get_text("User talk:$self->operator")."\n\n==Error with $self->agent==\n$self->agent needs to be logged in! ~~~~", '', 0, 
+'&assert=');
+        }
+    }
     return $res;
 }
 
@@ -302,42 +307,42 @@ sub get_history {
 
 =item get_text($pagename,[$revid,$section_number])
 
-Returns the text of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. If the page does not exist then 0 is returned.
+Returns the text of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. Returns 2 if page does not exist.
 
 =cut
 
 sub get_text {
-	my $self     = shift;
-	my $pagename = shift;
-	my $revid    = shift || '';
-	my $section  = shift || '';
-	my $recurse  = shift || 0;
-	my $dontescape=shift || 0;
+    my $self     = shift;
+    my $pagename = shift;
+    my $revid    = shift || '';
+    my $section  = shift || '';
+    my $recurse  = shift || 0;
+    my $dontescape=shift || 0;
 
-	my $wikitext = '';
-	my $res;
+    my $wikitext = '';
+    my $res;
 
-	$res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section", $dontescape );
-
-	unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-	if ($recurse) {
+    $res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section", $dontescape );
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
+    if ($recurse) {
     	until ( ref($res) eq 'HTTP::Response' && $res->is_success && $res->decoded_content =~ m/var wgAction = "edit"/ ) {
-			my $real_title;
-			if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
-				$real_title = $1;
-			}
-			$res = $self->_get( $real_title, 'edit' );
+    	    my $real_title;
+    	    if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
+    	        $real_title = $1;
+    	    }
+    	    $res = $self->_get( $real_title, 'edit' );
     	}
-	}
-
-	my $content = $res->decoded_content;
-	if ( $content =~ /You've followed a link to a page that doesn't exist yet/ ) {
-    	$self->{errstr} = "Could not get_text for $pagename";
-		carp $self->{errstr} if $self->{debug};
-		return 0;
-	} elsif ( $content =~ /<textarea.+?\s?>(.+)<\/textarea>/s ) {
+    }
+print $res->decoded_content;
+    if ( $res->decoded_content =~ /<textarea.+?\s?>(.{2,})<\/textarea>/s ) {
 		$wikitext = $1;
-	}
+    } elsif ( $res->decoded_content =~ /div class="mw-newarticletext"/ or $res->decoded_content=~/div class="permissions-errors".+id="noarticletext"/) {
+		return 2;
+    } else {
+    	$self->{errstr} = "Could not get_text for $pagename";
+        carp $self->{errstr} if $self->{debug};
+		return 1;
+    }
 
 	return decode_entities($wikitext);
 }
@@ -705,7 +710,7 @@ sub delete_page {
 	return $res;
 }
 
-=item delete_page($page, $revision[, $summary])
+=item delete_old_image($page, $revision[, $summary])
 
 Deletes the specified revision of the image with the specified summary.
 
@@ -829,6 +834,192 @@ sub get_pages_in_namespace {
 		push @return, $pages->{title};
 	}
 	@return;
+}
+
+=item count_contributions($user)
+
+Uses the API to count $user's contributions.
+
+=cut
+
+sub count_contributions {
+	my $self=shift;
+	my $username=shift;
+	$username=~s/User://i; #strip namespace
+	my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/query.php?what=contribcounter&titles=User:$username&format=xml");
+	if ($res->is_success()) {
+		$res->content=~/<count>(.+?)<\/count>/i;
+		return $1;
+	} else {
+		carp "Error requesting contribs for $username: ".$res->status_line();
+		return 0;
+	}
+}
+
+=item last_active($user)
+
+Returns the last active time of $user in YYYY-MM-DDTHH:MM:SSZ
+
+=cut
+
+sub last_active {
+	my $self=shift;
+	my $username=shift;
+	unless ($username=~/User:/i) {$username="User:".$username;}
+	my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/query.php?what=usercontribs&titles=$username&uclimit=1&format=xml");
+	if ($res->is_success()) {
+		$res->content=~/timestamp="(.+?)"/i;
+		return $1;
+	} else {
+		carp "Error requesting contribs for $username: ".$res->status_line();
+		return 0;
+	}
+}
+
+=item recent_edit_to_page($page)
+
+Returns timestamp and username for most recent edit to $page.
+
+=cut
+
+sub recent_edit_to_page {
+	my $self=shift;
+	my $page=shift;
+	my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/query.php?what=revisions&titles=$page&rvlimit=1&format=xml");
+	if ($res->is_success()) {
+		$res->content=~/timestamp="(.+?)"/i;
+		my $timestamp=$1;
+		$res->content=~/user="(.+?)"/i;
+		return ($timestamp, $1);
+	} else {
+		carp "Error requesting contribs for $page: ".$res->status_line();
+		return 1;
+	}
+}
+
+=item get_users($page, $limit, $revision, $direction)
+
+Gets the most recent editors to $page, up to $limit, starting from $revision and goint in $direction.
+
+=cut
+
+sub get_users {
+	my $self	  = shift;
+	my $pagename  = shift;
+	my $limit	 = shift || 5;
+	my $rvstartid = shift || '';
+	my $direction = shift;
+
+	my @return;
+	my @revisions;
+	
+	if ( $limit > 50 ) {
+		$self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
+		carp $self->{errstr};
+		return 1;
+	}
+	my $query = "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml";
+	if ( $rvstartid ) {
+		$query .= "&rvstartid=$rvstartid";
+	}
+	if ( $direction ) {
+		$query .= "&rvdir=$direction";
+	}
+	my $res = $self->_get_api($query);
+
+	unless ($res) { return 1; }
+	my $xml = XMLin( $res->decoded_content );
+
+	unless ($xml->{query}->{pages}->{page}->{revisions}->{rev}) {return}
+
+	if ( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq "HASH" ) {
+		$revisions[0] = $xml->{query}->{pages}->{page}->{revisions}->{rev};
+	}
+	else {
+		@revisions = @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} };
+	}
+	
+	foreach my $hash ( @revisions ) {
+		my $revid = $hash->{revid};
+		my $user  = $hash->{user};
+		my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
+		$timestamp_time=~s/Z$//;
+		my $comment = $hash->{comment};
+		unless ($user=~/[^0123456789\s]/) {next}
+		push ( @return, $user );
+	}
+	return @return;
+}
+
+=item test_block_hist($user)
+
+Returns 1 if $user has been blocked.
+
+=cut
+
+sub test_block_hist {
+	my $self	  = shift;
+	my $user	  = shift;
+
+	$user=~s/User://i;
+	my $res = $self->_get("Special:Log&type=block&page=User:$user", "", "", 1);
+	if ($res->decoded_content=~/no matching/i) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+=item expandtemplates($page[, $text])
+
+Expands templates on $page, using $text if provided, otherwise loading the page text automatically.
+
+=cut
+
+sub expandtemplates {
+	my $self	= shift;
+	my $page	= shift;
+	my $text	= shift || undef;
+
+	unless ($text) {
+		$text=$self->get_text($page);
+	}
+
+	my $res = $self->_get( "Special:ExpandTemplates" );
+	my $options = {
+		fields	=> {
+			contexttitle	=> $page,
+			input		=> $text,
+			removecomments  => undef,
+		},
+	};
+	$res = $self->{mech}->submit_form( %{$options});
+	$res->decoded_content=~/\<textarea id=\"output\"(.+?)\<\/textarea\>/si;
+	return $1;
+}
+
+=item undelete($page, $summary)
+
+Undeletes $page with $summary.
+
+=cut
+
+sub undelete {
+	my $self	= shift;
+	my $page	= shift;
+	my $summary = shift;
+	my $res	 = $self->_get( "Special:Undelete", "", "&target=$page" );
+	unless ($res) { return; }
+	if ($res->decoded_content=~/There is no revision history for this page/i) {
+		return 1;
+	}
+	my $options = {
+		   fields	=> {
+				wpComment  => $summary,
+			},
+		};
+	$res = $self->{mech}->submit_form( %{$options}, button=>"restore");
+	return $res;
 }
 
 1;
