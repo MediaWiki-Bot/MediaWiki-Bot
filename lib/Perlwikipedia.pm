@@ -51,6 +51,7 @@ sub new {
     my $assert  = shift || undef;
     my $operator= shift || undef;
     if ($operator) {$operator=~s/User://i;} #strip off namespace
+    $assert=~s/\&?assert=// if $assert;
 
     my $self = bless {}, $package;
     $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp, stack_depth => 1 );
@@ -175,6 +176,7 @@ sub login {
         if ($cookies_exist) {
             $self->{mech}->{cookie_jar}->load($cookies);
             print "Loaded MediaWiki cookies from file $cookies\n" if $self->{debug};
+	    $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
             return 0;
         } else {
             $self->{errstr} = "Cannot load MediaWiki cookies from file $cookies";
@@ -182,6 +184,7 @@ sub login {
             return 1;
         }
     }
+
     my $res = $self->_put(
         'Special:Userlogin',
         {
@@ -193,6 +196,7 @@ sub login {
             },
         }
     );
+    $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     my $content = $res->decoded_content();
     if ( $content =~ m/var wgUserName = "$editor"/ ) {
@@ -213,7 +217,7 @@ sub login {
 
 =item edit($pagename,$page_text,[$edit_summary],[$is_minor],[$assert])
 
-Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified, and adding an assertion, if requested. Assertions should be of the form "&assert=user".
+Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified, and adding an assertion, if requested. Assertions should be of the form "user".
 
 =cut
 
@@ -226,29 +230,39 @@ sub edit {
     my $assert   = shift || $self->{assert};
     my $res;
 
-    $text = encode( 'utf8', $text );
-    $summary = encode( 'utf8', $summary );
+    $assert=~s/\&?assert=// if $assert;
+    $text = encode( 'utf8', $text ) if $text;
+    $summary = encode( 'utf8', $summary ) if $summary;
 
-    my $options  = {
-                    form_name => 'editform',
-                    fields    => {
-                                  wpSummary   => $summary,
-                                  wpTextbox1  => $text,
-                                 },
-                   };
 
-    $options->{fields}->{wpMinoredit} = 1 if ($is_minor);
-
-    $res = $self->_put($page, $options, $assert);
-    if ($res==2 and $self->operator) {
-        print "edit failed as $self->agent\n";
-        unless ($self->get_text("User 
-talk:$self->operator")=~/Error with \Q$self->agent\E/) {
-            print "Sending warning!\n";
-            $self->edit("User talk:$self->operator", $self->get_text("User talk:$self->operator")."\n\n==Error with $self->agent==\n$self->agent needs to be logged in! ~~~~", '', 0, 
-'&assert=');
+	$res = $self->{api}->api( {
+		action=>'query',
+		titles=>$page,
+		prop=>'info|revisions',
+		intoken=>'edit' } );
+	my ($id, $data)=%{$res->{query}->{pages}};
+	my $edittoken=$data->{edittoken};
+	my $lastedit=$data->{revisions}[0]->{timestamp};
+	$res = $self->{api}->api( {
+		action=>'edit',
+		title=>$page,
+		token=>$edittoken,
+		text=>$text,
+		summary=>$summary,
+		minor=>$is_minor,
+		basetimestamp=>$lastedit,
+		assert=>$assert } );
+	if ($res->{edit}->{result} eq 'Failure') {
+	        print "edit failed as ".$self->{mech}->{agent}."\n";
+		if ($self->{operator}) {
+			print "Operator is $self->{operator}\n";
+		        unless ($self->get_text("User talk:$self->{operator}")=~/Error with \Q$self->{mech}->{agent}\E/) {
+				print "Sending warning!\n";
+				$self->edit("User talk:$self->{operator}", $self->get_text("User talk:$self->{operator}")."\n\n==Error with $self->{agent}==\n$self->{agent} needs to be logged in! ~~~~", '', 0, 'assert=');
+			}
+		}
+		return 2;
         }
-    }
     return $res;
 }
 
