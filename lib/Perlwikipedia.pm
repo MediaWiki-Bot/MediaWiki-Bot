@@ -8,8 +8,10 @@ use XML::Simple;
 use Carp;
 use Encode;
 use URI::Escape qw(uri_escape_utf8);
+use MediaWiki::API;
+use Data::Dumper;
 
-our $VERSION = '1.2';
+our $VERSION = '1.3';
 
 =head1 NAME
 
@@ -59,6 +61,9 @@ sub new {
     $self->{errstr} = '';
     $self->{assert} = $assert;
     $self->{operator}=$operator;
+    $self->{api}    = MediaWiki::API->new();
+    $self->{api}->{config}->{api_url} = 'http://en.wikipedia.org/w/api.php';
+
     return $self;
 }
 
@@ -406,19 +411,15 @@ sub get_last {
     my $revertto = 0;
 	$pagename = uri_escape_utf8( $pagename );
 
-    my $res =
-      $self->_get_api(
-"action=query&prop=revisions&titles=$pagename&rvlimit=20&rvprop=ids|user&rvexcludeuser=$editor&format=xml"
-      );
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-    my $xml = XMLin( $res->decoded_content );
-    if( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq 'ARRAY' ) {
-		$revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}[0]->{revid};
-	}
-	else {
-		$revertto = $xml->{query}->{pages}->{page}->{revisions}->{rev}->{revid};
-	}
-    return $revertto;
+	my $res = $self->{api}->api( {
+		action=>'query',
+		titles=>$pagename,
+		prop=>'revisions',
+		rvlimit=>20,
+		rvprop=>'ids|user',
+		rvexcludeuser=>$editor } );
+	my ($id, $data)=%{$res->{query}->{pages}};
+	return $data->{revisions}[0]->{revid};
 }
 
 =item update_rc([$limit])
@@ -428,30 +429,29 @@ Returns an array containing the Recent Changes to the wiki Main namespace. The a
 =cut
 
 sub update_rc {
-    my $self = shift;
-    my $limit = shift || 5;
-    my @rc_table;
+	my $self = shift;
+	my $limit = shift || 5;
+	my @rc_table;
 
-    my $res =
-      $self->_get_api(
-        "action=query&list=recentchanges&rcnamespace=0&rclimit=$limit&format=xml");
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-
-    my $xml = XMLin( $res->decoded_content );
-    foreach my $hash ( @{ $xml->{query}->{recentchanges}->{rc} } ) {
-    	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
-    	$timestamp_time =~ s/Z$//;
-    	push( @rc_table, {
-    			pagename       => $hash->{title},
-    			revid	       => $hash->{revid},
-    			oldid	       => $hash->{old_revid},
-    			timestamp_date => $timestamp_date,
-    			timestamp_time => $timestamp_time,
-    			}
-    	);
-    }
-
-    return @rc_table;
+	my $res = $self->{api}->list( {
+		action=>'query',
+		list=>'recentchanges',
+		rcnamespace=>0,
+		rclimit=>$limit },
+		{ max=>$limit } );
+	foreach my $hash (@{$res}) {
+	    	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
+	    	$timestamp_time =~ s/Z$//;
+	    	push( @rc_table, {
+	    			pagename       => $hash->{title},
+	    			revid	       => $hash->{revid},
+	    			oldid	       => $hash->{old_revid},
+	    			timestamp_date => $timestamp_date,
+	    			timestamp_time => $timestamp_time,
+	    		}
+	    	);
+	}
+	return @rc_table;
 }
 
 =item what_links_here($pagename)
@@ -620,11 +620,12 @@ get_namespace_names returns a hash linking the namespace id, such as 1, to its n
 sub get_namespace_names {
 	my $self = shift;
 	my %return;
-	my $res = $self->_get_api("action=query&meta=siteinfo&siprop=namespaces&format=xml");
-	my $xml = XMLin( $res->decoded_content );
-
-	foreach my $id ( keys %{ $xml->{query}->{namespaces}->{ns} } ) {
-		$return{$id} = $xml->{query}->{namespaces}->{ns}->{$id}->{content};
+	my $res = $self->{api}->api( {
+		action=>'query',
+		meta=>'siteinfo',
+		siprop=>'namespaces'} );
+	foreach my $id (keys %{$res->{query}->{namespaces}}) {
+		$return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
 	}
 	return %return;
 }
@@ -800,39 +801,36 @@ sub protect {
 
 =item get_pages_in_namespace($namespace_id,$page_limit)
 
-Returns an array containing the names of all pages in the specified namespace. The $namespace_id must be a number, not a namespace name. Setting $page_limit is optional.
+Returns an array containing the names of all pages in the specified namespace. The $namespace_id must be a number, not a namespace name. Setting $page_limit is optional. If $page_limit is over 500, it will be rounded up to the next multiple of 500.
 
 =cut
 
 sub get_pages_in_namespace {
 	my $self = shift;
 	my $namespace = shift;
-	my $page_limit = shift;
+	my $page_limit = shift || 5;
 
  	my @return;
-	my $query;
+	my $max;
 
-	if ($page_limit) {
-		$query = "action=query&list=allpages&apnamespace=$namespace&format=xml&aplimit=$page_limit";
+	if ($page_limit<=500) {
+		$max=1;
 	} else {
-		$query = "action=query&list=allpages&apnamespace=$namespace&format=xml";
-	}  
-	  
- 	my $res = $self->_get_api($query);
-	return 1 unless ( ref($res) eq 'HTTP::Response' && $res->is_success );
- 	my $xml = XMLin( $res->decoded_content );
-
-	# If more than 1 page is found then their corresponding hashes are stored in
-	# an array but if 1 page is found it is stored in a single hash, no array.
-	my $pages = $xml->{query}->{allpages}->{p};
-	if ( ref $pages eq "ARRAY" ) {
-		foreach my $page ( @$pages ) {
-			push @return, $page->{title};
-		} 
-	} elsif (ref $pages eq "HASH" ) {
-		push @return, $pages->{title};
+		$max=($page_limit-1)/500+1;
+		$page_limit=500;
 	}
-	@return;
+
+	my $res = $self->{api}->list( {
+		action=>'query',
+		list=>'allpages',
+		apnamespace=>$namespace,
+		aplimit=>$page_limit },
+		{ max=>$max } );
+
+	foreach (@{$res}) {
+		push @return, $_->{title};
+	}
+	return @return;
 }
 
 =item count_contributions($user)
@@ -845,14 +843,13 @@ sub count_contributions {
 	my $self=shift;
 	my $username=shift;
 	$username=~s/User://i; #strip namespace
-	my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/query.php?what=contribcounter&titles=User:$username&format=xml");
-	if ($res->is_success()) {
-		$res->content=~/<count>(.+?)<\/count>/i;
-		return $1;
-	} else {
-		carp "Error requesting contribs for $username: ".$res->status_line();
-		return 0;
-	}
+	my $res = $self->{api}->list( {
+		action=>'query',
+		list=>'users',
+		ususers=>$username,
+		usprop=>'editcount' },
+		{ max=>1 } );
+	return ${$res}[0]->{'editcount'};
 }
 
 =item last_active($user)
@@ -865,14 +862,13 @@ sub last_active {
 	my $self=shift;
 	my $username=shift;
 	unless ($username=~/User:/i) {$username="User:".$username;}
-	my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/query.php?what=usercontribs&titles=$username&uclimit=1&format=xml");
-	if ($res->is_success()) {
-		$res->content=~/timestamp="(.+?)"/i;
-		return $1;
-	} else {
-		carp "Error requesting contribs for $username: ".$res->status_line();
-		return 0;
-	}
+	my $res = $self->{api}->list( {
+		action=>'query',
+		list=>'usercontribs',
+		ucuser=>$username,
+		uclimit=>1 },
+		{ max=>1 } );
+	return ${$res}[0]->{'timestamp'};
 }
 
 =item recent_edit_to_page($page)
@@ -884,16 +880,14 @@ Returns timestamp and username for most recent edit to $page.
 sub recent_edit_to_page {
 	my $self=shift;
 	my $page=shift;
-	my $res = $self->{mech}->get("http://$self->{host}/$self->{path}/query.php?what=revisions&titles=$page&rvlimit=1&format=xml");
-	if ($res->is_success()) {
-		$res->content=~/timestamp="(.+?)"/i;
-		my $timestamp=$1;
-		$res->content=~/user="(.+?)"/i;
-		return ($timestamp, $1);
-	} else {
-		carp "Error requesting contribs for $page: ".$res->status_line();
-		return 1;
-	}
+	my $res = $self->{api}->api( {
+		action=>'query',
+		prop=>'revisions',
+		titles=>$page,
+		rvlimit=>1 },
+		{ max=>1 } );
+	my ($id, $data)=%{$res->{query}->{pages}};
+	return $data->{revisions}[0]->{timestamp};
 }
 
 =item get_users($page, $limit, $revision, $direction)
@@ -906,7 +900,7 @@ sub get_users {
 	my $self	  = shift;
 	my $pagename  = shift;
 	my $limit	 = shift || 5;
-	my $rvstartid = shift || '';
+	my $rvstartid = shift;
 	my $direction = shift;
 
 	my @return;
@@ -917,35 +911,17 @@ sub get_users {
 		carp $self->{errstr};
 		return 1;
 	}
-	my $query = "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml";
-	if ( $rvstartid ) {
-		$query .= "&rvstartid=$rvstartid";
-	}
-	if ( $direction ) {
-		$query .= "&rvdir=$direction";
-	}
-	my $res = $self->_get_api($query);
-
-	unless ($res) { return 1; }
-	my $xml = XMLin( $res->decoded_content );
-
-	unless ($xml->{query}->{pages}->{page}->{revisions}->{rev}) {return}
-
-	if ( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq "HASH" ) {
-		$revisions[0] = $xml->{query}->{pages}->{page}->{revisions}->{rev};
-	}
-	else {
-		@revisions = @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} };
-	}
-	
-	foreach my $hash ( @revisions ) {
-		my $revid = $hash->{revid};
-		my $user  = $hash->{user};
-		my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
-		$timestamp_time=~s/Z$//;
-		my $comment = $hash->{comment};
-		unless ($user=~/[^0123456789\s]/) {next}
-		push ( @return, $user );
+	my $res = $self->{api}->api( {
+		action=>'query',
+		prop=>'revisions',
+		titles=>$pagename,
+		rvprop=>'ids|timestamp|user|comment',
+		rvlimit=>$limit
+	} );
+	my ($id)=keys %{$res->{query}->{pages}};
+	my $array=$res->{query}->{pages}->{$id}->{revisions};
+	foreach (@{$array}) {
+		push @return, $_->{user};
 	}
 	return @return;
 }

@@ -11,10 +11,11 @@ use Test::More tests => 1;
 
 # Insert your test code below, the Test::More module is use()ed here so read
 # its man page ( perldoc Test::More ) for help writing this test script.
+
+use strict;
 use Perlwikipedia;
 
-$wikipedia=Perlwikipedia->new;
+my $wikibot = Perlwikipedia->new("PWP test");
 
-$revid = $wikipedia->get_last("Main_Page", "Not a real editor");
-
-ok($revid > 0);
+my %result = $wikibot->get_namespace_names();
+is($result{1}, "Talk", "namespace");

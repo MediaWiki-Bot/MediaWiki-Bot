@@ -20,7 +20,7 @@ my $page_limit = 1;
 
 my $wikipedia = Perlwikipedia->new;
 
-$wikipedia->set_wiki("wiki.xyrael.net","w");
+#$wikipedia->set_wiki("wiki.xyrael.net","w");
 
 my @pages = $wikipedia->get_pages_in_namespace($namespace_id);
 
