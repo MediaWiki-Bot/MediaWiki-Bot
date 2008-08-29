@@ -9,9 +9,8 @@ use Carp;
 use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
-use Data::Dumper;
 
-our $VERSION = '1.3';
+our $VERSION = '1.3.1';
 
 =head1 NAME
 
@@ -149,10 +148,11 @@ set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_
 
 sub set_wiki {
     my $self = shift;
-    my $host = shift;
-    my $path = shift;
+    my $host = shift || 'en.wikipedia.org';
+    my $path = shift || 'w';
     $self->{host} = $host if $host;
     $self->{path} = $path if $path;
+    $self->{api}->{config}->{api_url} = "http://$host/$path/api.php";
     print "Wiki set to http://$self->{host}/$self->{path}\n" if $self->{debug};
     return 0;
 }
@@ -231,8 +231,8 @@ sub edit {
     my $res;
 
     $assert=~s/\&?assert=// if $assert;
-    $text = encode( 'utf8', $text ) if $text;
-    $summary = encode( 'utf8', $summary ) if $summary;
+#    $text = encode( 'utf8', $text ) if $text;
+#    $summary = encode( 'utf8', $summary ) if $summary;
 
 
 	$res = $self->{api}->api( {
@@ -252,7 +252,7 @@ sub edit {
 		minor=>$is_minor,
 		basetimestamp=>$lastedit,
 		assert=>$assert } );
-	if ($res->{edit}->{result} eq 'Failure') {
+	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
 	        print "edit failed as ".$self->{mech}->{agent}."\n";
 		if ($self->{operator}) {
 			print "Operator is $self->{operator}\n";
@@ -338,30 +338,22 @@ sub get_text {
     my $recurse  = shift || 0;
     my $dontescape=shift || 0;
 
-    my $wikitext = '';
-    my $res;
+	my $hash = {
+		action=>'query',
+		titles=>$pagename,
+		prop=>'revisions',
+		rvprop=>'content',
+	};
 
-    $res = $self->_get( $pagename, 'edit', "&oldid=$revid&section=$section", $dontescape );
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-    if ($recurse) {
-    	until ( ref($res) eq 'HTTP::Response' && $res->is_success && $res->decoded_content =~ m/var wgAction = "edit"/ ) {
-    	    my $real_title;
-    	    if ( $res->decoded_content =~ m/var wgTitle = "(.+?)"/ ) {
-    	        $real_title = $1;
-    	    }
-    	    $res = $self->_get( $real_title, 'edit' );
-    	}
-    }
-    if ( $res->decoded_content =~ /<textarea.+?\s?>(.{2,})<\/textarea>/s ) {
-		$wikitext = $1;
-    } elsif ( $res->decoded_content =~ /div class="mw-newarticletext"/ or $res->decoded_content=~/div class="permissions-errors".+id="noarticletext"/) {
-		return 2;
-    } else {
-    	$self->{errstr} = "Could not get_text for $pagename";
-        carp $self->{errstr} if $self->{debug};
-		return 1;
-    }
+	$hash->{rvsection}=$section if ($section);
+	$hash->{rvstartid}=$revid if ($revid);
 
+	my $res = $self->{api}->api( $hash );
+	my ($id, $data)=%{$res->{query}->{pages}};
+
+	if ($id==-1) {return 2}
+
+	my $wikitext=$data->{revisions}[0]->{'*'};
 	return decode_entities($wikitext);
 }
 
@@ -713,14 +705,21 @@ sub delete_page {
 	my $self	= shift;
 	my $page	= shift;
 	my $summary = shift;
-	my $res	 = $self->_get( $page, 'delete' );
-	unless ($res) { return; }
-	my $options = {
-		   fields	=> {
-				wpReason  => $summary,
-			},
-		};
-	$res = $self->{mech}->submit_form( %{$options});
+
+
+	my $res = $self->{api}->api( {
+		action=>'query',
+		titles=>$page,
+		prop=>'info|revisions',
+		intoken=>'delete' } );
+	my ($id, $data)=%{$res->{query}->{pages}};
+	my $edittoken=$data->{deletetoken};
+	$res = $self->{api}->api( {
+		action=>'delete',
+		title=>$page,
+		token=>$edittoken,
+		reason=>$summary } );
+
 	return $res;
 }
 
@@ -767,19 +766,26 @@ sub block {
 	my $blockemail=shift;
 	my $res	 = $self->_get( "Special:Blockip/$user" );
 	unless ($res) { return; }
-	my $options = {
-		   fields	=> {
-				wpBlockAddress  => $user,
-				wpBlockExpiry  => 'other',
-				wpAnonOnly  => $anononly,
-				wpCreateAccount => $blockac,
-				wpEnableAutoblock => $autoblock,
-				wpEmailBan => $blockemail,
-				wpBlockReason  => $summary,
-				wpBlockOther  => $length,
-			},
-		};
-	$res = $self->{mech}->submit_form( %{$options});
+
+	$res = $self->{api}->api( {
+		action=>'query',
+		titles=>'Main_Page',
+		prop=>'info|revisions',
+		intoken=>'block' } );
+	my ($id, $data)=%{$res->{query}->{pages}};
+	my $edittoken=$data->{blocktoken};
+	my $hash = {
+		action=>'block',
+		user=>$user,
+		token=>$edittoken,
+		expiry=>$length,
+		reason=>$summary };
+	$hash->{anononly}=$anononly if ($anononly);
+	$hash->{autoblock}=$autoblock if ($autoblock);
+	$hash->{nocreate}=$blockac if ($blockac);
+	$hash->{noemail}=$blockemail if ($blockemail);
+	$res = $self->{api}->api( $hash );
+
 	return $res;
 }
 
@@ -925,13 +931,18 @@ sub get_users {
 		carp $self->{errstr};
 		return 1;
 	}
-	my $res = $self->{api}->api( {
+	my $hash = {
 		action=>'query',
 		prop=>'revisions',
 		titles=>$pagename,
 		rvprop=>'ids|timestamp|user|comment',
 		rvlimit=>$limit
-	} );
+	};
+
+	$hash->{rvstartid}=$rvstartid if ($rvstartid);
+	$hash->{direction}=$direction if ($direction);
+
+	my $res = $self->{api}->api( $hash );
 	my ($id)=keys %{$res->{query}->{pages}};
 	my $array=$res->{query}->{pages}->{$id}->{revisions};
 	foreach (@{$array}) {

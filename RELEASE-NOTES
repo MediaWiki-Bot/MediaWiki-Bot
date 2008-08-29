@@ -1,5 +1,21 @@
 Revision history for Perlwikipedia
 
+1.3.1 August 28 2008
+	Changes made since 1.3:
+		* Maintenance: update manifest, readme
+		* More MediaWiki::API: blocking, deleting, get_text
+		* Add localization for MediaWiki::API. This is important...
+		* Update tests to test for loading of sections of pages
+		* AssertEdit assertaions can now be passed as 'bot' OR as '&assert=bot'
+	Bugs fixed since 1.3:
+		* MediaWiki::API didn't localise with set_wiki()
+		* Unicode issues with MediaWiki::API editing fixed
+		* Fix one warning in edit() - undefined value in string eq near line 252
+
+1.3 August 2008
+	Changes made since 1.2:
+		* Convert over to use MediaWiki::API
+-----
 1.01 THIS IS AN UPCOMING RELEASE!
 	Changes made since 1.0:
 		* Standardized all functions to return 1 and set $object->{errstr} in the event of an error

@@ -1,4 +1,4 @@
-Perlwikipedia version 1.0
+Perlwikipedia version 1.3
 ==========================
 
 This is Perlwikipedia, a Perl module designed to interface with the
@@ -27,6 +27,8 @@ XML::Simple
 HTML::Entities
 URI::Escape
 Carp
+Encode
+MediaWiki::API
 
 COPYRIGHT AND LICENCE
 

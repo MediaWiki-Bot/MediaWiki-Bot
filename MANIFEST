@@ -18,3 +18,8 @@ t/08_get_pages_in_category.t
 t/09_linksearch.t
 t/10_get_namespace_names.t
 t/11_get_pages_in_namespace.t
+t/12_get_text.t
+t/13_count_contributions.t
+t/14_last_active.t
+t/15_test_block_hist.t
+t/16_get_namespace_names.t
