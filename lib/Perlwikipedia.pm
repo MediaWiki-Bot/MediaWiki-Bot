@@ -234,31 +234,37 @@ sub edit {
 #    $text = encode( 'utf8', $text ) if $text;
 #    $summary = encode( 'utf8', $summary ) if $summary;
 
-
 	$res = $self->{api}->api( {
 		action=>'query',
 		titles=>$page,
 		prop=>'info|revisions',
 		intoken=>'edit' } );
+	use Data::Dumper; print Dumper($res);
 	my ($id, $data)=%{$res->{query}->{pages}};
 	my $edittoken=$data->{edittoken};
 	my $lastedit=$data->{revisions}[0]->{timestamp};
-	$res = $self->{api}->api( {
+
+	my $savehash = {
 		action=>'edit',
 		title=>$page,
 		token=>$edittoken,
 		text=>$text,
 		summary=>$summary,
 		minor=>$is_minor,
-		basetimestamp=>$lastedit,
-		assert=>$assert } );
+		basetimestamp=>$lastedit};
+
+	$savehash->{assert}=$assert if ($assert);
+
+	$res = $self->{api}->api( $savehash );
 	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
 	        print "edit failed as ".$self->{mech}->{agent}."\n";
 		if ($self->{operator}) {
 			print "Operator is $self->{operator}\n";
-		        unless ($self->get_text("User talk:$self->{operator}")=~/Error with \Q$self->{mech}->{agent}\E/) {
+			my $optalk=$self->get_text("User talk:".$self->{operator});
+		        unless ($optalk=~/Error with \Q$self->{mech}->{agent}\E/) {
 				print "Sending warning!\n";
-				$self->edit("User talk:$self->{operator}", $self->get_text("User talk:$self->{operator}")."\n\n==Error with $self->{agent}==\n$self->{agent} needs to be logged in! ~~~~", '', 0, 'assert=');
+				$self->edit("User talk:$self->{operator}", $optalk."\n\n==Error with ".$self->{mech}->{agent}."==\n".$self->{mech}->{agent}." needs to be logged in! ~~~~", 'bot issue', 0, 'assert=');
+
 			}
 		}
 		return 2;
@@ -354,6 +360,7 @@ sub get_text {
 	if ($id==-1) {return 2}
 
 	my $wikitext=$data->{revisions}[0]->{'*'};
+#	use Data::Dumper;print Dumper($data);
 	return decode_entities($wikitext);
 }
 
@@ -840,12 +847,14 @@ sub get_pages_in_namespace {
 		$page_limit=500;
 	}
 
-	my $res = $self->{api}->list( {
-		action=>'query',
-		list=>'allpages',
-		apnamespace=>$namespace,
-		aplimit=>$page_limit },
-		{ max=>$max } );
+	my $hash = {
+                action=>'query',
+                list=>'allpages',
+                apnamespace=>$namespace,
+                aplimit=>$page_limit
+	};
+
+	my $res = $self->{api}->list( $hash, { max=>$max } );
 
 	foreach (@{$res}) {
 		push @return, $_->{title};
