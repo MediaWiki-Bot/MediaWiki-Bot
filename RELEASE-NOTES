@@ -1,5 +1,12 @@
 Revision history for Perlwikipedia
 
+1.3.2 August 30 2008
+	Changes made since 1.3.1:
+		* Now logging in via API if password is supplied
+	Bugs fixed since 1.3.1:
+		* Fixed an encoding issue in page saving
+	Notes:
+		* Anonymous editing is currently broken. This is an upstream issue which I am working to resolve
 1.3.1 August 28 2008
 	Changes made since 1.3:
 		* Maintenance: update manifest, readme

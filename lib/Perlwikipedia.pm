@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.3.1';
+our $VERSION = '1.3.2';
 
 =head1 NAME
 
@@ -185,33 +185,19 @@ sub login {
         }
     }
 
-    my $res = $self->_put(
-        'Special:Userlogin',
-        {
-            form_name => 'userlogin',
-            fields    => {
-                wpName     => $editor,
-                wpPassword => $password,
-                wpRemember => 1,
-            },
-        }
-    );
-    $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
-    my $content = $res->decoded_content();
-    if ( $content =~ m/var wgUserName = "$editor"/ ) {
-        print qq/Login as "$editor" succeeded.\n/ if $self->{debug};
-        return 0;
+	my $res = $self->{api}->api( {
+		action=>'login',
+		lgname=>$editor,
+		lgpassword=>$password } );
+#	use Data::Dumper; print Dumper($res);
+#    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
+
+    $self->{mech}->{cookie_jar} = $self->{api}->{ua}->{cookie_jar};
+    my $result = $res->{login}->{result};
+    if ($result eq "Success") {
+	return 0;
     } else {
-        if ( $content =~ m/There is no user by the name/ ) {
-            $self->{errstr} = qq/Login as "$editor" failed: User "$editor" does not exist/;
-        } elsif ( $content =~ m/Incorrect password entered/ ) {
-            $self->{errstr} = qq/Login as "$editor" failed: Bad password/;
-        } elsif ( $content =~ m/Password entered was blank/ ) {
-            $self->{errstr} = qq/Login as "$editor" failed: Blank password/;
-        }
-		carp $self->{errstr} if $self->{debug};
-		return 1;
+	return 1;
     }
 }
 
@@ -239,7 +225,7 @@ sub edit {
 		titles=>$page,
 		prop=>'info|revisions',
 		intoken=>'edit' } );
-	use Data::Dumper; print Dumper($res);
+#	use Data::Dumper; print Dumper($res);
 	my ($id, $data)=%{$res->{query}->{pages}};
 	my $edittoken=$data->{edittoken};
 	my $lastedit=$data->{revisions}[0]->{timestamp};
@@ -254,8 +240,10 @@ sub edit {
 		basetimestamp=>$lastedit};
 
 	$savehash->{assert}=$assert if ($assert);
+#	use Data::Dumper; print Dumper($savehash);
 
 	$res = $self->{api}->api( $savehash );
+#	use Data::Dumper; print Dumper($res);
 	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
 	        print "edit failed as ".$self->{mech}->{agent}."\n";
 		if ($self->{operator}) {
@@ -361,7 +349,7 @@ sub get_text {
 
 	my $wikitext=$data->{revisions}[0]->{'*'};
 #	use Data::Dumper;print Dumper($data);
-	return decode_entities($wikitext);
+	return $wikitext;
 }
 
 =item revert($pagename,$edit_summary,$old_revision_id)
@@ -847,14 +835,12 @@ sub get_pages_in_namespace {
 		$page_limit=500;
 	}
 
-	my $hash = {
-                action=>'query',
-                list=>'allpages',
-                apnamespace=>$namespace,
-                aplimit=>$page_limit
-	};
-
-	my $res = $self->{api}->list( $hash, { max=>$max } );
+	my $res = $self->{api}->list( {
+		action=>'query',
+		list=>'allpages',
+		apnamespace=>$namespace,
+		aplimit=>$page_limit },
+		{ max=>$max } );
 
 	foreach (@{$res}) {
 		push @return, $_->{title};
