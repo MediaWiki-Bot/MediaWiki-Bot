@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 2;
+use Test::More tests => 5;
 
 #########################
 
@@ -14,12 +14,22 @@ use Test::More tests => 2;
 use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new("make test");
+$wikipedia->set_wiki('wiki.xyrael.net', 'w');
 
-my @pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia bots");
+my @pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia test nest2");
 
-ok( defined $pages[0] );
+ok( defined $pages[0], "Get small category" );
 
 #This tests categories with more than one page.
-@pages = $wikipedia->get_all_pages_in_category("Category:Wikipedia external links cleanup ");
+$wikipedia->set_wiki('en.wikipedia.org', 'w');
+@pages = $wikipedia->get_all_pages_in_category("Category:Wikipedia external links cleanup");
 
-ok( defined $pages[0] );
+ok( defined $pages[0], "Get big category" );
+cmp_ok ( scalar(@pages), ">", 500, "Get big category, enough elements");
+
+$wikipedia->set_wiki('wiki.xyrael.net', 'w');
+@pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia test nest1");
+is ( scalar(@pages), 3, "Nested categories, one level");
+
+@pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia test");
+is ( scalar(@pages), 5, "Nested categories, two levels");

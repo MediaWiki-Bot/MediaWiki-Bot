@@ -15,6 +15,6 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new("make test");
 
-my @links = $wikipedia->what_links_here("Main Page");
+my @links = $wikipedia->what_links_here("Kaczyna");
 
 ok( defined $links[0]->{title} );

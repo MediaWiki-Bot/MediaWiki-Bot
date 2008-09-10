@@ -10,7 +10,9 @@ WriteMakefile(
     				HTML::Entities => 1.35,
     				URI::Escape    => 3.28,
     				XML::Simple    => 2.16,
-    				Carp =>	       => perl-5.8.8
+    				Carp 	       => 0,
+				Encode         => 0,
+				MediaWiki::API => 0.13
     },
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Perlwikipedia.pm', # retrieve abstract from module

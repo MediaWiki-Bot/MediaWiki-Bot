@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.3.2';
+our $VERSION = '1.3.3';
 
 =head1 NAME
 
@@ -237,13 +237,15 @@ sub edit {
 		text=>$text,
 		summary=>$summary,
 		minor=>$is_minor,
-		basetimestamp=>$lastedit};
+		basetimestamp=>$lastedit,
+		bot=>1};
 
 	$savehash->{assert}=$assert if ($assert);
 #	use Data::Dumper; print Dumper($savehash);
 
 	$res = $self->{api}->api( $savehash );
 #	use Data::Dumper; print Dumper($res);
+	if (!$res) {carp "API returned null result for edit"}
 	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
 	        print "edit failed as ".$self->{mech}->{agent}."\n";
 		if ($self->{operator}) {
@@ -343,6 +345,7 @@ sub get_text {
 	$hash->{rvstartid}=$revid if ($revid);
 
 	my $res = $self->{api}->api( $hash );
+#	use Data::Dumper; print Dumper($res);
 	my ($id, $data)=%{$res->{query}->{pages}};
 
 	if ($id==-1) {return 2}
@@ -499,52 +502,19 @@ sub get_pages_in_category {
     my $self     = shift;
     my $category = shift;
 
-    my @pages;
-    my $res = $self->_get( $category, 'view' );
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-    my $content = $res->decoded_content;
-    if ($content=~/<div id=\"mw-subcategories\">/i) {
-        $content=~s/.+<div id=\"mw-subcategories\">//is;
-        while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
-        {
-            push @pages, 'Category:' . $1;
-        }
-    }
-    if ($content=~/<div id=\"mw-pages\">/i) {
-	$content=~s/.+<div id=\"mw-pages\">//is;
-        while ( $content =~
-            m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
-            push @pages, $1;
-        }
-        while ( $content =~
-            m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
-            push @pages, $1;
-        }
-    }
-    while ( ($res = $self->{mech}->follow_link( text => 'next 200' ))  && ref($res) eq 'HTTP::Response' && $res->is_success) {
-        sleep 1;    #Cheap hack to make sure we don't bog down the server
-        $content = $res->decoded_content();
+    my @return;
+	my $res = $self->{api}->list( {
+		action=>'query',
+		list=>'categorymembers',
+		cmtitle=>$category,
+		aplimit=>500 },
+#		{ max=>100 }
+		 );
 
-    if ($content=~/<div id=\"mw-subcategories\">/i) {
-        $content=~s/.+<div id=\"mw-subcategories\">//is;
-        while ( $content =~ m{href="(?:[^"]+)/Category:[^"]+">([^<]*)</a></div>}ig )
-        {
-            push @pages, 'Category:' . $1;
-        }
-    }
-    if ($content=~/<div id=\"mw-pages\">/i) {
-	$content=~s/.+<div id=\"mw-pages\">//is;
-        while ( $content =~
-            m{<li><a href="(?:[^"]+)" title="([^"]+)">[^<]*</a></li>}ig ) {
-            push @pages, $1;
-        }
-        while ( $content =~
-            m{<div class="gallerytext">\n<a href="[^"]+" title="([^"]+)">[^<]+</a>}ig ) {
-            push @pages, $1;
-        }
-    }
-    }
-    return @pages;
+	foreach (@{$res}) {
+		push @return, $_->{title};
+	}
+	return @return;
 }
 
 =item get_all_pages_in_category($category_name)
@@ -681,9 +651,10 @@ sub test_image_exists {
 	my $page	= shift;
 
 	my $res = $self->_get($page);
+#	print $res->decoded_content."\n";
 	if ($res->decoded_content=~/No file by this name exists/i) {
 	return 0;
-	} elsif ($res->decoded_content=~/This is a file from the \<a href=.+commons:Main_Page"\>Wikimedia Commons/is) {
+	} elsif ($res->decoded_content=~/This is a file from the \<a href=.+commons:Main[\s_]Page"\>Wikimedia Commons/is) {
 	return 2;
 	} else {
 	return 1;

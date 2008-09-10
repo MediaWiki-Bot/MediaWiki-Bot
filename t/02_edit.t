@@ -16,17 +16,16 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
-$wikipedia->set_wiki( "wiki.xyrael.net","w" );
+#$wikipedia->set_wiki( "wiki.xyrael.net","w" );
 
 SKIP: {
 	skip("Skipping edit test for now",2);
-	$wikipedia->login("Perlwikipedia testing");
 
 	my $rand = rand();
-	my $status = $wikipedia->edit("Perlwikipedia test",$rand,"Perlwikipedia tests");
-	ok( $status->isa("HTTP::Response") );
+	my $status = $wikipedia->edit("User:ST47/test",$rand,"Perlwikipedia tests");
+#	ok( $status->isa("HTTP::Response") );
 
-	my $text = $wikipedia->get_text("Perlwikipedia test");
+	my $text = $wikipedia->get_text("User:ST47/test");
 	$text =~ s/\n//;
 	is($text,$rand);
 }

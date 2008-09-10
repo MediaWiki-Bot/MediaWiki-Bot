@@ -1,5 +1,15 @@
 Revision history for Perlwikipedia
 
+1.3.3 September 10 2008
+	Changes made since 1.3.2:
+		* get_pages_in_category now uses the API
+		* Test 8 has been modified to test nested categories
+		* Test 7 is now faster, but still effective
+		* Bug checking added on edit for anon edit bug
+		* Bots now use the bot flag when editing, as was done before switching to API editing
+	Notes:
+		* Regarding anonymous editing: MediaWiki bug 15420 has been marked as FIXED by Roan Kattouw. Waiting for that to be scapped so I can test it and enable the editing tests.
+		* Before I updated get_pages_in_category, it seemed to have some encoding errors: returning escape sequences where it shouldn't. I'll be looking into its status on that front.
 1.3.2 August 30 2008
 	Changes made since 1.3.1:
 		* Now logging in via API if password is supplied
