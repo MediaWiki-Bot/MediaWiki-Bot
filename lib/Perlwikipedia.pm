@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.3.3';
+our $VERSION = '1.3.4';
 
 =head1 NAME
 
@@ -275,7 +275,6 @@ sub get_history {
     my $rvstartid = shift || '';
     my $direction = shift;
 
-	$pagename = uri_escape_utf8( $pagename );
     my @return;
     my @revisions;
 
@@ -284,26 +283,23 @@ sub get_history {
         carp $self->{errstr} if $self->{debug};
         return 1;
     }
-    my $query = "action=query&prop=revisions&titles=$pagename&rvlimit=$limit&rvprop=ids|timestamp|user|comment&format=xml";
-    if ( $rvstartid ) {
-    	$query .= "&rvstartid=$rvstartid";
-    }
-    if ( $direction ) {
-    	$query .= "&rvdir=$direction";
-    }
-    my $res = $self->_get_api($query);
 
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-    my $xml = XMLin( $res->decoded_content );
+	my $hash = {
+		action=>'query',
+		prop=>'revisions',
+		titles=>$pagename,
+		rvprop=>'ids|timestamp|user|comment',
+		rvlimit=>$limit
+	};
 
-    if ( ref( $xml->{query}->{pages}->{page}->{revisions}->{rev} ) eq "HASH" ) {
-    	$revisions[0] = $xml->{query}->{pages}->{page}->{revisions}->{rev};
-    }
-    else {
-    	@revisions = @{ $xml->{query}->{pages}->{page}->{revisions}->{rev} };
-    }
+	$hash->{rvstartid}=$rvstartid if ($rvstartid);
+	$hash->{direction}=$direction if ($direction);
 
-    foreach my $hash ( @revisions ) {
+	my $res = $self->{api}->api( $hash );
+	my ($id)=keys %{$res->{query}->{pages}};
+	my $array=$res->{query}->{pages}->{$id}->{revisions};
+
+    foreach my $hash ( @{$array} ) {
     	my $revid = $hash->{revid};
     	my $user  = $hash->{user};
     	my ( $timestamp_date, $timestamp_time ) = split( /T/, $hash->{timestamp} );
@@ -507,7 +503,7 @@ sub get_pages_in_category {
 		action=>'query',
 		list=>'categorymembers',
 		cmtitle=>$category,
-		aplimit=>500 },
+		cmlimit=>500 },
 #		{ max=>100 }
 		 );
 
@@ -598,7 +594,11 @@ sub get_namespace_names {
 	foreach my $id (keys %{$res->{query}->{namespaces}}) {
 		$return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
 	}
-	return %return;
+	if ($return{1} or $_[0]>1) {
+		return %return;
+	} else {
+		return $self->get_namespace_names($_[0]+1);
+	}
 }
 
 =item links_to_image($page)
@@ -835,7 +835,13 @@ sub count_contributions {
 		ususers=>$username,
 		usprop=>'editcount' },
 		{ max=>1 } );
-	return ${$res}[0]->{'editcount'};
+	my $return = ${$res}[0]->{'editcount'};
+
+	if ($return or $_[0]>1) {
+		return $return;
+	} else {
+		return $self->count_contributions($username, $_[0]+1);
+	}
 }
 
 =item last_active($user)

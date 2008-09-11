@@ -1,5 +1,11 @@
 Revision history for Perlwikipedia
 
+1.3.4 September 11 2008
+	Changes made since 1.3.3:
+		* Some triage after the first CPAN test results came in:
+		* Appearantly, get_pages_in_category was running test file 08, test 2, very slowly because I was loading a 1000+ page category in sets of 10 pages at a time. This has been remedied, the limit is now 500.
+		* Cannot reproduce a bug in get_namespace_names and another in count_contributions - so instead, if we get weird results, we run the sub again.
+		* There is a bug in get_history which was causing weird errors on some test machines. I've switched it to use MediaWiki::API.
 1.3.3 September 10 2008
 	Changes made since 1.3.2:
 		* get_pages_in_category now uses the API
