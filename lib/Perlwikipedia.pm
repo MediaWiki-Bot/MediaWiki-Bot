@@ -1,3 +1,4 @@
+# $Id$
 package Perlwikipedia;
 
 use strict;
