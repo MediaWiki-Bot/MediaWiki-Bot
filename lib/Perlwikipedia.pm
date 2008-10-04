@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.3.4';
+our $VERSION = '1.3.5';
 
 =head1 NAME
 
@@ -766,7 +766,7 @@ sub protect {
 	my $page	= shift;
 	my $reason	= shift;
 	my $editlvl	= shift;
-	my $movelvl = shift;
+	my $movelvl 	= shift;
 	my $time	= shift;
 	my $cascade	= shift;
 	my $res	 = $self->_get( $page, 'protect' );
@@ -775,12 +775,12 @@ sub protect {
 		   fields	=> {
 				'mwProtect-level-edit'  => $editlvl,
 				'mwProtect-level-move'  => $movelvl,
-#				'mwProtectUnchained'  => 1,
 #				'mwProtect-cascade' => $cascade,
 				'mwProtect-expiry' => $time,
 				'mwProtect-reason' => $reason,
 			},
 		};
+	$options->{'mwProtect-cascade'}=$cascade if ($cascade);
 	$res = $self->{mech}->submit_form( %{$options});
 	return $res;
 }
@@ -912,7 +912,7 @@ sub get_users {
 	};
 
 	$hash->{rvstartid}=$rvstartid if ($rvstartid);
-	$hash->{direction}=$direction if ($direction);
+	$hash->{rvdir}=$direction if ($direction);
 
 	my $res = $self->{api}->api( $hash );
 	my ($id)=keys %{$res->{query}->{pages}};

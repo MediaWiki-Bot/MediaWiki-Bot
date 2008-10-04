@@ -1,5 +1,10 @@
 Revision history for Perlwikipedia
 
+1.3.5 October 4 2008
+	Changes made since 1.3.4:
+		* Allowing cascade protection now. This may or may not work, since there are some changes being made to the protection API.
+		* Anonymous editing should work. If you still can not use this framework to edit, I need to be contacted. To this end, I've enabled an editing test, hopefully cpan-testers sends me good results :)
+		* Fix a stupid mistake I made regarding the names of certain parameters to get_history
 1.3.4 September 11 2008
 	Changes made since 1.3.3:
 		* Some triage after the first CPAN test results came in:

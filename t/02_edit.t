@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 2;
+use Test::More tests => 1;
 
 #########################
 
@@ -19,7 +19,7 @@ $wikipedia=Perlwikipedia->new;
 #$wikipedia->set_wiki( "wiki.xyrael.net","w" );
 
 SKIP: {
-	skip("Skipping edit test for now",2);
+#	skip("Skipping edit test for now",2);
 
 	my $rand = rand();
 	my $status = $wikipedia->edit("User:ST47/test",$rand,"Perlwikipedia tests");
