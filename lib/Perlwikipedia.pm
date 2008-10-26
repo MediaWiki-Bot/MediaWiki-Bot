@@ -794,7 +794,7 @@ Returns an array containing the names of all pages in the specified namespace. T
 sub get_pages_in_namespace {
 	my $self = shift;
 	my $namespace = shift;
-	my $page_limit = shift || 5;
+	my $page_limit = shift || 500;
 
  	my @return;
 	my $max;
