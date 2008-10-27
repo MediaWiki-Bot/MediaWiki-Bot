@@ -1,5 +1,16 @@
 Revision history for Perlwikipedia
 
+1.3.6 October 27 2008
+	Changes made since 1.3.5:
+		* Added maxlag compatibility. (Thanks to the developers of MediaWiki::API for their implementation) The settings are as follows:
+			* Maxlag parameter: Dafault 5 seconds, can be configured when creating the object
+			* Delay: 1 second
+			* Retries: Until success
+		* Make test 98 fail gracefully on platforms without the test suite
+		* Fix some really weird spacing in the Makefile.PL
+	Notes:
+		* The other maxlag options, along with lots of other defaults, will probably be modifiable in 1.4 with a sort of config sub. This will allow the custom configuration of options for WWW::Mechanize and MediaWiki::API, so you don't need to go sourcediving or remember the order for the parameters to the constructor.
+		* Since wiki.xyrael.net is down, tests 1, 8, 10, 11
 1.3.5 October 4 2008
 	Changes made since 1.3.4:
 		* Allowing cascade protection now. This may or may not work, since there are some changes being made to the protection API.

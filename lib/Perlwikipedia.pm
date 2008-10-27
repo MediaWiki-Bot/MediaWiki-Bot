@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.3.5';
+our $VERSION = '1.3.6';
 
 =head1 NAME
 
@@ -49,6 +49,7 @@ sub new {
     my $agent   = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
     my $assert  = shift || undef;
     my $operator= shift || undef;
+    my $maxlag  = shift || 5;
     if ($operator) {$operator=~s/User://i;} #strip off namespace
     $assert=~s/\&?assert=// if $assert;
 
@@ -63,6 +64,12 @@ sub new {
     $self->{operator}=$operator;
     $self->{api}    = MediaWiki::API->new();
     $self->{api}->{config}->{api_url} = 'http://en.wikipedia.org/w/api.php';
+    $self->{api}->{config}->{max_lag} = $maxlag;
+    $self->{api}->{config}->{max_lag_delay} = 1;
+    $self->{api}->{config}->{max_retries} = 5;
+    $self->{api}->{config}->{max_lag_retries} = -1;
+    $self->{api}->{config}->{retry_delay} = 30;
+
 
     return $self;
 }

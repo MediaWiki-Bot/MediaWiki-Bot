@@ -15,5 +15,8 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
+SKIP: {
+skip("wiki.xyrael.net is down",2);
 is($wikipedia->set_wiki("wiki.xyrael.net","w"),0 );
 is( $wikipedia->login("Perlwikipedia testing",'fMh0/dk'), 0 );
+}

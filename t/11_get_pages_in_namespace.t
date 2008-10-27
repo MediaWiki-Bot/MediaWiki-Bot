@@ -17,6 +17,8 @@ use Perlwikipedia;
 
 my $namespace_id = "10";
 my $page_limit = 1;
+SKIP: {
+skip("wiki.xyrael.net is down",3);
 
 my $wikipedia = Perlwikipedia->new;
 
@@ -35,3 +37,4 @@ $namespace_id = "non-existent";
 @pages = $wikipedia->get_pages_in_namespace($namespace_id);
 
 is( scalar @pages, 0, "No pages retrieved" );
+}

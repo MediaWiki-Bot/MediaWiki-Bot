@@ -6,12 +6,12 @@ WriteMakefile(
     NAME              => 'Perlwikipedia',
     VERSION_FROM      => 'lib/Perlwikipedia.pm', # finds $VERSION
     PREREQ_PM         => { WWW::Mechanize => '1.30',
-								   HTML::Entities => 1.35,
-								   URI::Escape    => 3.28,
-								   XML::Simple    => 2.16,
-								   Carp 	       => 0,
-								   Encode         => 0,
-								   MediaWiki::API => 0.13
+			   HTML::Entities => 1.35,
+			   URI::Escape    => 3.28,
+			   XML::Simple    => 2.16,
+			   Carp 	       => 0,
+			   Encode         => 0,
+			   MediaWiki::API => 0.16
 								 },
 	 ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
 	 (ABSTRACT_FROM    => 'lib/Perlwikipedia.pm', # retrieve abstract from module

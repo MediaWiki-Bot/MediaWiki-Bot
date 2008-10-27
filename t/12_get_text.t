@@ -16,19 +16,14 @@ use strict;
 use Perlwikipedia;
 
 my $wikibot = Perlwikipedia->new;
-$wikibot->set_wiki("wiki.xyrael.net","w");
-$wikibot->login("Perlwikipedia testing",'fMh0/dk');
 
 my $result = $wikibot->get_text("Main Page");
 like( $result, qr/Main Page/, "Main Page found" );
 
-$wikibot->set_wiki("en.wikipedia.org","w");
-#This test fails on wiki.xyrael because of their API version.
 $result = $wikibot->get_text("God");
 my $resultsection = $wikibot->get_text("God", '', 3);
 isnt($resultsection, 2, "Section load pass/fail");
 isnt(length($result), length($resultsection), "Section loaded content correct");
 
-$wikibot->set_wiki("wiki.xyrael.net","w");
 $result = $wikibot->get_text("egaP niaM");
 is( $result, 2, "No page found" );
