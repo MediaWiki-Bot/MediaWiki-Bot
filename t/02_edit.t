@@ -16,7 +16,7 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
-#$wikipedia->set_wiki( "wiki.xyrael.net","w" );
+#$wikipedia->set_wiki( "wiki.xyrael.net","wiki" );
 
 SKIP: {
 #	skip("Skipping edit test for now",2);

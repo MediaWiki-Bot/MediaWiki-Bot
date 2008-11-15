@@ -1001,6 +1001,33 @@ sub undelete {
 	return $res;
 }
 
+
+=item get_allusers($limit)
+
+Returns an array of all users. Default limit is 500.
+
+=cut
+
+sub get_allusers {
+    my $self  = shift;
+    my $limit = shift;
+	 my @return = ();
+
+	 $limit = 500 unless $limit;
+
+	 my $res = $self->{api}->api( {
+		action =>'query',
+		meta   =>'siteinfo',
+		list   =>'allusers',
+		limit  => $limit } );
+
+	for my $ref ( @{$res->{query}->{allusers}} ) {
+		push @return, $ref->{name};
+	}
+	@return;
+}
+
+
 1;
 
 =back
