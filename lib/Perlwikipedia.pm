@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.3.6_01';
+our $VERSION = '1.3.8';
 
 =head1 NAME
 
@@ -66,7 +66,7 @@ sub new {
     $self->{api}->{config}->{api_url} = 'http://en.wikipedia.org/w/api.php';
     $self->{api}->{config}->{max_lag} = $maxlag;
     $self->{api}->{config}->{max_lag_delay} = 1;
-    $self->{api}->{config}->{max_retries} = 5;
+    $self->{api}->{config}->{retries} = 5;
     $self->{api}->{config}->{max_lag_retries} = -1;
     $self->{api}->{config}->{retry_delay} = 30;
 
