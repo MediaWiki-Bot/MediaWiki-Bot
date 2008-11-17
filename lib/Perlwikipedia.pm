@@ -1016,10 +1016,10 @@ sub get_allusers {
 	 $limit = 500 unless $limit;
 
 	 my $res = $self->{api}->api( {
-		action =>'query',
-		meta   =>'siteinfo',
-		list   =>'allusers',
-		limit  => $limit } );
+		action  =>'query',
+		meta    =>'siteinfo',
+		list    =>'allusers',
+		aulimit => $limit } );
 
 	for my $ref ( @{$res->{query}->{allusers}} ) {
 		push @return, $ref->{name};
