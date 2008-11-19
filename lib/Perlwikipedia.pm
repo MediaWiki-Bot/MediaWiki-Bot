@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.3.8';
+our $VERSION = '1.4.0';
 
 =head1 NAME
 
@@ -191,15 +191,27 @@ sub login {
             return 1;
         }
     }
-
-	my $res = $self->{api}->api( {
-		action=>'login',
-		lgname=>$editor,
-		lgpassword=>$password } );
+#####THE FOLLOWING CODE IS ONLY DEPRECATED FOR A LITTLE WHILE, I HOPE.
+#	my $res = $self->{api}->api( {
+#		action=>'login',
+#		lgname=>$editor,
+#		lgpassword=>$password } );
 #	use Data::Dumper; print Dumper($res);
 #    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
-
-    $self->{mech}->{cookie_jar} = $self->{api}->{ua}->{cookie_jar};
+#####THE FOLLOWING IS RIPPED FROM MEDIAWIKI::API
+#####SORRY, IT'S THE ONLY WAY...
+	my $query={
+		action=>'login',
+		lgname=>$editor,
+		lgpassword=>$password };
+        my $res = $self->{api}->{ua}->post( $self->{api}->{config}->{api_url}, $query );
+#####END RIPPAGE. A BUG HAS BEEN FILED SO THAT WE DON'T HAVE TO COMMIT THIS ATROCITY.
+    $self->{mech}->{cookie_jar}->extract_cookies($res);
+use Data::Dumper;
+open(API, ">./api");open(MECH, ">./mech");
+print API Dumper($self->{api}->{ua});
+print MECH Dumper($self->{mech});
+close(API); close(MECH);
     my $result = $res->{login}->{result};
     if ($result eq "Success") {
 	return 0;
@@ -719,6 +731,8 @@ sub delete_old_image {
 			},
 		};
 	$res = $self->{mech}->submit_form( %{$options});
+#use Data::Dumper;print Dumper($res);
+#print $res->decoded_content."\n";
 	return $res;
 }
 
@@ -1000,33 +1014,6 @@ sub undelete {
 	$res = $self->{mech}->submit_form( %{$options}, button=>"restore");
 	return $res;
 }
-
-
-=item get_allusers($limit)
-
-Returns an array of all users. Default limit is 500.
-
-=cut
-
-sub get_allusers {
-    my $self  = shift;
-    my $limit = shift;
-	 my @return = ();
-
-	 $limit = 500 unless $limit;
-
-	 my $res = $self->{api}->api( {
-		action  =>'query',
-		meta    =>'siteinfo',
-		list    =>'allusers',
-		aulimit => $limit } );
-
-	for my $ref ( @{$res->{query}->{allusers}} ) {
-		push @return, $ref->{name};
-	}
-	@return;
-}
-
 
 1;
 
