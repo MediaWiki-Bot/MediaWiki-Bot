@@ -1,5 +1,8 @@
 Revision history for Perlwikipedia
 
+1.4.1 DCOLLINS November 27 2008
+	Changes made since 1.4.0:
+		* Remove my tsting code from sub login, now using an updated version of MediaWiki::API to handle cookies properly. MediaWiki::API 0.20 or higher now required.
 1.4.0 DCOLLINS November 18 2008
 	Changes made since 1.3.8:
 		* Fix a bug in get_allusers() by bosborne

@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.4.0';
+our $VERSION = '1.4.1';
 
 =head1 NAME
 
@@ -191,27 +191,14 @@ sub login {
             return 1;
         }
     }
-#####THE FOLLOWING CODE IS ONLY DEPRECATED FOR A LITTLE WHILE, I HOPE.
-#	my $res = $self->{api}->api( {
-#		action=>'login',
-#		lgname=>$editor,
-#		lgpassword=>$password } );
-#	use Data::Dumper; print Dumper($res);
-#    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
-#####THE FOLLOWING IS RIPPED FROM MEDIAWIKI::API
-#####SORRY, IT'S THE ONLY WAY...
-	my $query={
+
+	my $res = $self->{api}->api( {
 		action=>'login',
 		lgname=>$editor,
-		lgpassword=>$password };
-        my $res = $self->{api}->{ua}->post( $self->{api}->{config}->{api_url}, $query );
-#####END RIPPAGE. A BUG HAS BEEN FILED SO THAT WE DON'T HAVE TO COMMIT THIS ATROCITY.
-    $self->{mech}->{cookie_jar}->extract_cookies($res);
-use Data::Dumper;
-open(API, ">./api");open(MECH, ">./mech");
-print API Dumper($self->{api}->{ua});
-print MECH Dumper($self->{mech});
-close(API); close(MECH);
+		lgpassword=>$password } );
+	use Data::Dumper; print Dumper($res);
+#    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
+    $self->{mech}->{cookie_jar}->extract_cookies($MediaWiki::API->{response});
     my $result = $res->{login}->{result};
     if ($result eq "Success") {
 	return 0;

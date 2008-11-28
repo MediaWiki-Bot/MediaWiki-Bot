@@ -11,8 +11,7 @@ WriteMakefile(
 			   XML::Simple    => 2.16,
 			   Carp 	       => 0,
 			   Encode         => 0,
-			   MediaWiki::API => 0.16
-								 },
+			   MediaWiki::API => 0.20 },
 	 ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
 	 (ABSTRACT_FROM    => 'lib/Perlwikipedia.pm', # retrieve abstract from module
     AUTHOR            => 'Perlwikipedia team') : () ),
