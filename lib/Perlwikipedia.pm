@@ -1002,6 +1002,31 @@ sub undelete {
 	return $res;
 }
 
+=item get_allusers($limit)
+
+Returns an array of all users. Default limit is 500.
+
+=cut
+
+sub get_allusers {
+	my $self  = shift;
+	my $limit = shift;
+	my @return = ();
+
+	$limit = 500 unless $limit;
+
+	my $res = $self->{api}->api( { action  =>'query',
+											 meta    =>'siteinfo',
+											 list    =>'allusers',
+											 aulimit => $limit } );
+
+	for my $ref ( @{$res->{query}->{allusers}} ) {
+		push @return, $ref->{name};
+	}
+	return @return;
+}
+
+
 1;
 
 =back
@@ -1013,4 +1038,3 @@ All Perlwikipedia functions will return either 0 or 1 if they do not return data
 =cut
 
 __END__
-
