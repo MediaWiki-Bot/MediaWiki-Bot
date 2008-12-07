@@ -1,5 +1,9 @@
 Revision history for Perlwikipedia
 
+1.4.2 DCOLLINS December 07 2008
+	Changes made since 1.4.1:
+		* Apparently I accidentally removed get_allusers? Fixed that.
+		* Some CPAN testers have been reporting a failure to make the test edit in t/02_edit.t so I added a call to Data::Dumper.
 1.4.1 DCOLLINS November 27 2008
 	Changes made since 1.4.0:
 		* Remove my tsting code from sub login, now using an updated version of MediaWiki::API to handle cookies properly. MediaWiki::API 0.20 or higher now required.
