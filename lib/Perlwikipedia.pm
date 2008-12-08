@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.4.2';
+our $VERSION = '1.5.0';
 
 =head1 NAME
 
@@ -355,6 +355,45 @@ sub get_text {
 	my $wikitext=$data->{revisions}[0]->{'*'};
 #	use Data::Dumper;print Dumper($data);
 	return $wikitext;
+}
+
+=item get_pages(@pages)
+
+Returns the text of the specified pages in a hashref. Content of '2' means page does not exist.
+
+=cut
+
+sub get_pages {
+    my $self     = shift;
+    my @pages    = @_;
+    my %return;
+
+	my $hash = {
+		action=>'query',
+		titles=>join('|', @pages),
+		prop=>'revisions',
+		rvprop=>'content',
+	};
+
+#	use Data::Dumper; print Dumper($hash);
+	my $res = $self->{api}->api( $hash );
+#	use Data::Dumper; print Dumper($res);
+	foreach my $id (keys %{$res->{query}->{pages}}) {
+		if (defined($res->{query}->{pages}->{$id}->{missing})) {
+			$return{$res->{query}->{pages}->{$id}->{title}}=
+				2;
+			next;
+		}
+		if (defined($res->{query}->{pages}->{$id}->{revisions})) {
+			my @revisions=@{$res->{query}->{pages}->{$id}->{revisions}};
+			$return{$res->{query}->{pages}->{$id}->{title}}=
+				$revisions[0]->{'*'};
+			next;
+		}
+	}
+
+#	use Data::Dumper;print Dumper(\%return);
+	return \%return;
 }
 
 =item revert($pagename,$edit_summary,$old_revision_id)

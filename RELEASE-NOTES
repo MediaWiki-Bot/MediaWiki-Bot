@@ -1,5 +1,8 @@
 Revision history for Perlwikipedia
 
+1.5.0 DCOLLINS December 08 2008
+	Changes made since 1.4.1:
+		* Added a sub get_pages(), which accepts a list of pages and gets each page's text in one go and returns a hash. Much faster than get_text() for more than one page.
 1.4.2 DCOLLINS December 07 2008
 	Changes made since 1.4.1:
 		* Apparently I accidentally removed get_allusers? Fixed that.
