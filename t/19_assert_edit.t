@@ -14,7 +14,7 @@ use Test::More tests => 1;
 
 use Perlwikipedia;
 
-$wikipedia=Perlwikipedia->new;
+$wikipedia=Perlwikipedia->new("Perlwikipedia tests", "admin");
 
 #$wikipedia->set_wiki( "wiki.xyrael.net","w" );
 
@@ -23,11 +23,11 @@ SKIP: {
 
 	my $rand = rand();
 	my $status = $wikipedia->edit("User:ST47/test",$rand,"Perlwikipedia tests");
-	eval { use Data::Dumper; print STDERR Dumper($status); };
-	if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
+#	eval { use Data::Dumper; print STDERR Dumper($status); };
+#	if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
 #	ok( $status->isa("HTTP::Response") );
 
 	my $text = $wikipedia->get_text("User:ST47/test");
 	$text =~ s/\n//;
-	is($text,$rand);
+	isnt($text,$rand,"Intentionally bad assertion");
 }

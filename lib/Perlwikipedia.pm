@@ -717,7 +717,6 @@ sub delete_page {
 	my $page	= shift;
 	my $summary = shift;
 
-
 	my $res = $self->{api}->api( {
 		action=>'query',
 		titles=>$page,
@@ -812,23 +811,28 @@ sub protect {
 	my $self	= shift;
 	my $page	= shift;
 	my $reason	= shift;
-	my $editlvl	= shift;
-	my $movelvl 	= shift;
-	my $time	= shift;
+	my $editlvl	= shift || 'all';
+	my $movelvl 	= shift || 'all';
+	my $time	= shift || 'infinite';
 	my $cascade	= shift;
-	my $res	 = $self->_get( $page, 'protect' );
-	unless ($res) { return; }
-	my $options = {
-		   fields	=> {
-				'mwProtect-level-edit'  => $editlvl,
-				'mwProtect-level-move'  => $movelvl,
-#				'mwProtect-cascade' => $cascade,
-				'mwProtect-expiry' => $time,
-				'mwProtect-reason' => $reason,
-			},
-		};
-	$options->{'mwProtect-cascade'}=$cascade if ($cascade);
-	$res = $self->{mech}->submit_form( %{$options});
+
+	my $res = $self->{api}->api( {
+		action=>'query',
+		titles=>$page,
+		prop=>'info|revisions',
+		intoken=>'protect' } );
+#use Data::Dumper;print STDERR Dumper($res);
+	my ($id, $data)=%{$res->{query}->{pages}};
+	my $edittoken=$data->{protecttoken};
+	$res = $self->{api}->api( {
+		action=>'protect',
+		title=>$page,
+		token=>$edittoken,
+		reason=>$reason,
+		protections=>"edit=$editlvl|move=$movelvl",
+		expiry=>$time,
+		cascade=>$cascade } );
+
 	return $res;
 }
 
@@ -1055,9 +1059,8 @@ sub get_allusers {
 	$limit = 500 unless $limit;
 
 	my $res = $self->{api}->api( { action  =>'query',
-											 meta    =>'siteinfo',
-											 list    =>'allusers',
-											 aulimit => $limit } );
+		 list    =>'allusers',
+		 aulimit => $limit } );
 
 	for my $ref ( @{$res->{query}->{allusers}} ) {
 		push @return, $ref->{name};
