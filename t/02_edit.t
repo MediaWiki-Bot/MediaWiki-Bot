@@ -27,6 +27,7 @@ SKIP: {
 	if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
 #	ok( $status->isa("HTTP::Response") );
 
+	sleep 1;
 	my $text = $wikipedia->get_text("User:ST47/test");
 	$text =~ s/\n//;
 	is($text,$rand);
