@@ -70,7 +70,6 @@ sub new {
     $self->{api}->{config}->{max_lag_retries} = -1;
     $self->{api}->{config}->{retry_delay} = 30;
 
-
     return $self;
 }
 
@@ -251,11 +250,14 @@ sub edit {
 
 	$res = $self->{api}->api( $savehash );
 #	use Data::Dumper; print Dumper($res);
-	if (!$res) {carp "API returned null result for edit"}
+	if (!$res) {
+		carp "API returned null result or error for edit";
+		carp "Error code: " . $self->{api}->{error}->{code} ."\n";
+		carp $self->{api}->{error}->{details}."\n";
+	}
 	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
-	        print "edit failed as ".$self->{mech}->{agent}."\n";
+	        carp "edit failed as ".$self->{mech}->{agent}."\n";
 		if ($self->{operator}) {
-			print "Operator is $self->{operator}\n";
 			my $optalk=$self->get_text("User talk:".$self->{operator});
 		        unless ($optalk=~/Error with \Q$self->{mech}->{agent}\E/) {
 				print "Sending warning!\n";
@@ -815,7 +817,10 @@ sub protect {
 	my $movelvl 	= shift || 'all';
 	my $time	= shift || 'infinite';
 	my $cascade	= shift;
-
+	
+	if ($cascade and ($editlvl ne 'sysop' or $movelvl ne 'sysop')) {
+		carp "Can't set cascading unless both editlvl and movelvl are sysop."
+	}
 	my $res = $self->{api}->api( {
 		action=>'query',
 		titles=>$page,
@@ -824,14 +829,14 @@ sub protect {
 #use Data::Dumper;print STDERR Dumper($res);
 	my ($id, $data)=%{$res->{query}->{pages}};
 	my $edittoken=$data->{protecttoken};
-	$res = $self->{api}->api( {
-		action=>'protect',
+	my $hash={	action=>'protect',
 		title=>$page,
 		token=>$edittoken,
 		reason=>$reason,
 		protections=>"edit=$editlvl|move=$movelvl",
-		expiry=>$time,
-		cascade=>$cascade } );
+		expiry=>$time };
+	$hash->{'cascade'}=$cascade if ($cascade);
+	$res = $self->{api}->api( $hash );
 
 	return $res;
 }
