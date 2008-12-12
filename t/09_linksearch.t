@@ -15,11 +15,14 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
-$wikipedia->set_wiki("wiki.xyrael.net","w");
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
 
 SKIP: {
-	skip("Special:Linksearch isn't enabled on all wikis",1);
-	my @pages = $wikipedia->linksearch("*.example.com");
+skip('Linksearch not enabled on all wikis', 1);
 
-	ok( defined $pages[0] );
+my @pages = $wikipedia->linksearch("*.example.com");
+
+ok( defined $pages[0] );
 }

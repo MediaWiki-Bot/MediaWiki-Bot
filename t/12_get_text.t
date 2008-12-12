@@ -15,15 +15,19 @@ use Test::More tests => 4;
 use strict;
 use Perlwikipedia;
 
-my $wikibot = Perlwikipedia->new;
+my $wikipedia = Perlwikipedia->new;
 
-my $result = $wikibot->get_text("Main Page");
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
+my $result = $wikipedia->get_text("Main Page");
 like( $result, qr/Main Page/, "Main Page found" );
 
-$result = $wikibot->get_text("God");
-my $resultsection = $wikibot->get_text("God", '', 3);
+$result = $wikipedia->get_text("God");
+my $resultsection = $wikipedia->get_text("God", '', 3);
 isnt($resultsection, 2, "Section load pass/fail");
 isnt(length($result), length($resultsection), "Section loaded content correct");
 
-$result = $wikibot->get_text("egaP niaM");
+$result = $wikipedia->get_text("egaP niaM");
 is( $result, 2, "No page found" );

@@ -18,17 +18,14 @@ $wikipedia=Perlwikipedia->new;
 
 #$wikipedia->set_wiki( "wiki.xyrael.net","w" );
 
-SKIP: {
-#	skip("Skipping edit test for now",2);
+my $rand = rand();
+my $status = $wikipedia->edit("User:ST47/test",$rand,"Perlwikipedia tests");
+eval { use Data::Dumper; print STDERR Dumper($status); };
+if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
+#ok( $status->isa("HTTP::Response") );
 
-	my $rand = rand();
-	my $status = $wikipedia->edit("User:ST47/test",$rand,"Perlwikipedia tests");
-	eval { use Data::Dumper; print STDERR Dumper($status); };
-	if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
-#	ok( $status->isa("HTTP::Response") );
+sleep 1;
+my $text = $wikipedia->get_text("User:ST47/test");
+$text =~ s/\n//;
+is($text,$rand);
 
-	sleep 1;
-	my $text = $wikipedia->get_text("User:ST47/test");
-	$text =~ s/\n//;
-	is($text,$rand);
-}

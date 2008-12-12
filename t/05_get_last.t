@@ -15,6 +15,10 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
 $revid = $wikipedia->get_last("Main_Page", "Not a real editor");
 
 ok($revid > 0);

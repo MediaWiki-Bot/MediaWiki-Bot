@@ -15,7 +15,11 @@ use Test::More tests => 1;
 use strict;
 use Perlwikipedia;
 
-my $wikibot = Perlwikipedia->new("PWP test");
+my $wikipedia = Perlwikipedia->new("PWP test");
 
-my %result = $wikibot->get_namespace_names();
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
+my %result = $wikipedia->get_namespace_names();
 is($result{1}, "Talk", "namespace");

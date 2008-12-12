@@ -15,9 +15,13 @@ use Test::More tests => 6;
 use strict;
 use Perlwikipedia;
 
-my $wikibot = Perlwikipedia->new;
+my $wikipedia = Perlwikipedia->new;
 
-my $result = $wikibot->get_pages("Main Page", "Wikipedia");
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
+my $result = $wikipedia->get_pages("Main Page", "Wikipedia");
 
 is( keys %{$result}, 2, "Got the right number of pages returned");
 isnt( $result->{'Wikipedia'}, 2, "Article doesn't not exist");

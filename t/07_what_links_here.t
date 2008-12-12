@@ -14,7 +14,13 @@ use Test::More tests => 1;
 use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new("make test");
+$article="WMIZ";
 
-my @links = $wikipedia->what_links_here("Kaczyna");
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+	$article="Main Page"; #Fallback
+}
+
+my @links = $wikipedia->what_links_here($article);
 
 ok( defined $links[0]->{title} );

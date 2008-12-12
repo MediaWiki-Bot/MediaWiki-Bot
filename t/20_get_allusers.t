@@ -17,6 +17,10 @@ use Perlwikipedia;
 
 my $wikipedia = Perlwikipedia->new;
 
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
 SKIP:{
 skip("Mediawiki bug, limit is broken, off by one error", 1);
 my @array=$wikipedia->get_allusers(10);

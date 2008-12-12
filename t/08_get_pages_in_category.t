@@ -18,6 +18,10 @@ skip("wiki.xyrael.net is down",5);
 $wikipedia=Perlwikipedia->new("make test");
 $wikipedia->set_wiki('wiki.xyrael.net', 'w');
 
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
 my @pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia test nest2");
 
 ok( defined $pages[0], "Get small category" );

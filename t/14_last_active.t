@@ -15,7 +15,11 @@ use Test::More tests => 1;
 use strict;
 use Perlwikipedia;
 
-my $wikibot = Perlwikipedia->new;
+my $wikipedia = Perlwikipedia->new;
 
-my $result = $wikibot->last_active("User:Jimbo Wales");
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
+my $result = $wikipedia->last_active("User:Jimbo Wales");
 like($result, qr/20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, "last active");

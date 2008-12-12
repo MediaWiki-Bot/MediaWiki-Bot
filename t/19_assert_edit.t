@@ -16,7 +16,9 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new("Perlwikipedia tests", "admin");
 
-#$wikipedia->set_wiki( "wiki.xyrael.net","w" );
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
 
 SKIP: {
 #	skip("Skipping edit test for now",2);

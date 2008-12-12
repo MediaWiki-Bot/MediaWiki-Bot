@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 2;
+use Test::More tests => 1;
 
 #########################
 
@@ -14,12 +14,12 @@ use Test::More tests => 2;
 use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
-SKIP: {
-skip("wiki.xyrael.net is down",2);
 
-$wikipedia->set_wiki("wiki.xyrael.net","w");
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
 
 my %namespaces = $wikipedia->get_namespace_names;
 
 is( $namespaces{1}, "Talk" );
-}
+

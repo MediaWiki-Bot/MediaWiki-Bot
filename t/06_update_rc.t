@@ -15,6 +15,10 @@ use Perlwikipedia;
 
 $wikipedia=Perlwikipedia->new;
 
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
 @rc = $wikipedia->update_rc(2);
 
 ok(defined $rc[0]->{pagename});

@@ -15,7 +15,11 @@ use Test::More tests => 1;
 use strict;
 use Perlwikipedia;
 
-my $wikibot = Perlwikipedia->new("PWP test");
+my $wikipedia = Perlwikipedia->new("PWP test");
 
-my $result = $wikibot->test_block_hist("User:Jimbo Wales");
+if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+}
+
+my $result = $wikipedia->test_block_hist("User:Jimbo Wales");
 is($result, 1, "block history");
