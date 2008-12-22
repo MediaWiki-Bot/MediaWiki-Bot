@@ -13,10 +13,7 @@ use Test::More tests => 2;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use Perlwikipedia;
 
-$wikipedia=Perlwikipedia->new;
+$wikipedia=Perlwikipedia->new ("STWP");
 
-SKIP: {
-skip("wiki.xyrael.net is down",2);
-is($wikipedia->set_wiki("wiki.xyrael.net","w"),0 );
-is( $wikipedia->login("Perlwikipedia testing",'fMh0/dk'), 0 );
-}
+is( $wikipedia->login("Perlwikipedia testing",'test'), 0 );
+ok( $wikipedia->_get("Main Page")->decoded_content=~/Perlwikipedia.testing/, "Login propagation");
