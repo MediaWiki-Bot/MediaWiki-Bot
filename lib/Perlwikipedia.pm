@@ -10,7 +10,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.5.0';
+our $VERSION = '1.5.1';
 
 =head1 NAME
 

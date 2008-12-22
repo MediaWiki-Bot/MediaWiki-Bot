@@ -1,7 +1,18 @@
 Revision history for Perlwikipedia
 
-1.5.0 DCOLLINS December 08 2008
-	Changes made since 1.4.1:
+1.5.1 DCOLLINS r173 December 21 2008
+	Changes made since 1.5.0:
+		* Fixed the bug where logins wouldn't transfer from API to wiki again, now part of test 01.
+		* Added tests for AssertEdit, maxlag, get_allusers, get_pages
+		* Added sub set_highlimits for api queries, since PWP can't tell if you're a bot
+		* Sub test_image_exists can now tell if an image page exists but has no image. Also uses API.
+		* Added defaults for protection, now uses API. In-house tests exist for protection and deletion.
+		* Some variable normalizing in tests.
+		* Added testing environment variables: PWPMakeTestSetWikiHost, PWPMakeTestSetWikiDir
+		* Reenabled tests for get_namespace_names, get_pages_in_namespace
+		* Some fixes for potential race conditions on database replication for tests, should not be necessary in real production code
+1.5.0 DCOLLINS r164 December 08 2008
+	Changes made since 1.4.2:
 		* Added a sub get_pages(), which accepts a list of pages and gets each page's text in one go and returns a hash. Much faster than get_text() for more than one page.
 		* Switched sub protect over to API, cascading works now
 		* Add a few more tests
