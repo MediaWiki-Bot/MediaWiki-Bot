@@ -1,6 +1,7 @@
 package Perlwikipedia;
 
 use strict;
+use warnings;
 use WWW::Mechanize;
 use HTML::Entities;
 use URI::Escape;
