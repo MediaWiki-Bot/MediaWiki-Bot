@@ -265,11 +265,11 @@ sub edit {
 #	use Data::Dumper; print Dumper($res);
 	if (!$res) {
 		carp "API returned null result or error for edit";
-		carp "Error code: " . $self->{api}->{error}->{code} ."\n";
-		carp $self->{api}->{error}->{details}."\n";
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
 	}
 	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
-	        carp "edit failed as ".$self->{mech}->{agent}."\n";
+	        carp "edit failed as ".$self->{mech}->{agent};
 		if ($self->{operator}) {
 			my $optalk=$self->get_text("User talk:".$self->{operator});
 		        unless ($optalk=~/Error with \Q$self->{mech}->{agent}\E/) {
@@ -366,7 +366,7 @@ sub get_text {
 		carp "API returned null result or error for get_text";
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
-use Data::Dumper; print Dumper($hash);
+#use Data::Dumper; print Dumper($hash);
 	}
 #	use Data::Dumper; print Dumper($res);
 	my ($id, $data)=%{$res->{query}->{pages}};
@@ -399,9 +399,9 @@ sub get_pages {
 #	use Data::Dumper; print Dumper($hash);
 	my $res = $self->{api}->api( $hash );
 	if (!$res) {
-		carp "API returned null result or error for edit";
-		carp "Error code: " . $self->{api}->{error}->{code} ."\n";
-		carp $self->{api}->{error}->{details}."\n";
+		carp "API returned null result or error for get_pages";
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
 	}
 #	use Data::Dumper; print Dumper($res);
 	foreach my $id (keys %{$res->{query}->{pages}}) {
