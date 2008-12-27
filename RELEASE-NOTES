@@ -1,7 +1,9 @@
 Revision history for Perlwikipedia
 
 Current svn
+1.5.2 DCOLLINS r178 December 27 2008
 	Changes made since 1.5.1:
+		* Add support for 'plugins' which add additional features to Perlwikipedia. See Perlwikipedia::Plugin::ImageTester on CPAN for an example.
 		* Loosened requirements for test_image_exists to determine that an image is on commons: the missing key is not always present.
 1.5.1 DCOLLINS r173 December 21 2008
 	Changes made since 1.5.0:

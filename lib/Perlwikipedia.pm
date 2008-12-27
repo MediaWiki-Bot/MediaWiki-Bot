@@ -11,7 +11,16 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-our $VERSION = '1.5.1';
+use Module::Pluggable	search_path => [ qw(Perlwikipedia::Plugin) ],
+			'require'   => 1;
+
+foreach my $plugin (__PACKAGE__->plugins) {
+	print "Found plugin $plugin\n";
+	$plugin->import();
+}
+
+
+our $VERSION = '1.5.2';
 
 =head1 NAME
 
