@@ -15,4 +15,5 @@ WriteMakefile(
 	 ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
 	 (ABSTRACT_FROM    => 'lib/Perlwikipedia.pm', # retrieve abstract from module
     AUTHOR            => 'Perlwikipedia team') : () ),
+    LICENSE           => 'gpl',
 );
