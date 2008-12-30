@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl Perlwikipedia.t'
+# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
 
 #########################
 
@@ -12,14 +12,14 @@ use Test::More tests => 1;
 # Insert your test code below, the Test::More module is use()ed here so read
 # its man page ( perldoc Test::More ) for help writing this test script.
 
-use Perlwikipedia;
+use MediaWiki::Bot;
 
-$wikipedia=Perlwikipedia->new;
+$wikipedia=MediaWiki::Bot->new;
 
 #$wikipedia->set_wiki( "wiki.xyrael.net","w" );
 
 my $rand = rand();
-my $status = $wikipedia->edit("User:ST47/test",$rand,"Perlwikipedia tests");
+my $status = $wikipedia->edit("User:ST47/test",$rand,"MediaWiki::Bot tests");
 eval { use Data::Dumper; print STDERR Dumper($status); };
 if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
 #ok( $status->isa("HTTP::Response") );

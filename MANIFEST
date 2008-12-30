@@ -4,7 +4,8 @@ Makefile.PL
 MANIFEST
 README
 RELEASE-NOTES
-lib/Perlwikipedia.pm
+lib/MediaWiki/Bot.pm
+lib/PWP.pm
 misc/Login.pl
 gpl.txt
 t/00_initialize.t

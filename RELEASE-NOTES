@@ -1,9 +1,17 @@
-Revision history for Perlwikipedia
+Revision history for MediaWiki::Bot
 
 Current svn
+2.0.0 DOLLLINS r179 December 30 2008
+	Changes made since 1.5.2:
+		* I was going to make this 1.5.3, but then I realized I shouldn't hide something this big behind a sub-minor release. For reasons of having the module included in the module list on CPAN, making everything be a bit neater, and for all-around happiness, I've moved Perlwikipedia into the preexisting MediaWiki:: namespace. The module is now called MediaWiki::Bot.
+		* You can also now use "PWP" instead of "MediaWiki::Bot" in your code. The distribution on CPAN and in the svn repo includes an alias.
+		* Plugins are now loaded automatically if installed. This means you don't have to do as much arcane magic. The plugins will be listed under MediaWiki::Bot::Plugin:: in CPAN and are not currently in svn. If you have a task that you would like to make into a plugin and publish on CPAN, please get in touch with me at DCOLLINS@cpan.org
+	Plugin notes since the last release:
+		* Added the ImageTester plugin to CPAN. Purpose is to analyze and tag copyrighted images which do not follow en.wikipedia's policies
+		* Added the CUP plugin to CPAN as a basic example of what a plugin does. This is used by the bot that will run the WikiCup stats, and these methods can be called just like any other methods in the main module
 1.5.2 DCOLLINS r178 December 27 2008
 	Changes made since 1.5.1:
-		* Add support for 'plugins' which add additional features to Perlwikipedia. See Perlwikipedia::Plugin::ImageTester on CPAN for an example.
+		* Add support for 'plugins' which add additional features to MediaWiki::Bot. See MediaWiki::Bot::Plugin::ImageTester on CPAN for an example.
 		* Loosened requirements for test_image_exists to determine that an image is on commons: the missing key is not always present.
 1.5.1 DCOLLINS r173 December 21 2008
 	Changes made since 1.5.0:
@@ -31,7 +39,7 @@ Current svn
 1.4.0 DCOLLINS November 18 2008
 	Changes made since 1.3.8:
 		* Fix a bug in get_allusers() by bosborne
-		* Fix a bug which made some methods, such as delete_old_image, attempt to execute logged-out because the method used to transfer cookies from the API useragent, which does the logging in, to the Perlwikipedia useragent, which does the other stuff, was not functional. This bug only affected non-api methods and has been fixed through a nasty hack, which I hope can be made cleaner in the coming weeks.
+		* Fix a bug which made some methods, such as delete_old_image, attempt to execute logged-out because the method used to transfer cookies from the API useragent, which does the logging in, to the MediaWiki::Bot useragent, which does the other stuff, was not functional. This bug only affected non-api methods and has been fixed through a nasty hack, which I hope can be made cleaner in the coming weeks.
 1.3.8 DCOLLINS November 16 2008
 	Changes made since 1.3.7:
 		* New method: get_allusers($limit) by bosborne

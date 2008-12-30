@@ -1,4 +1,4 @@
-package Perlwikipedia;
+package MediaWiki::Bot;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
-use Module::Pluggable	search_path => [ qw(Perlwikipedia::Plugin) ],
+use Module::Pluggable	search_path => [ qw(MediaWiki::Bot::Plugin) ],
 			'require'   => 1;
 
 foreach my $plugin (__PACKAGE__->plugins) {
@@ -24,19 +24,19 @@ our $VERSION = '1.5.2';
 
 =head1 NAME
 
-Perlwikipedia - a Wikipedia bot framework written in Perl
+MediaWiki::Bot - a Wikipedia bot framework written in Perl
 
 =head1 SYNOPSIS
 
-use Perlwikipedia;
+use MediaWiki::Bot;
 
-my $editor = Perlwikipedia->new('Account');
+my $editor = MediaWiki::Bot->new('Account');
 $editor->login('Account', 'password');
 $editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
 
 =head1 DESCRIPTION
 
-Perlwikipedia is a framework that can be used to write Wikipedia bots.
+MediaWiki::Bot is a framework that can be used to write Wikipedia bots.
 
 Many of the methods use the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
 
@@ -50,13 +50,14 @@ The Perlwikipedia team (Alex Rowe, Jmax, Oleg Alexandrov) and others.
 
 =item new([$agent[, $assert[, $operator]]])
 
-Calling Perlwikipedia->new will create a new Perlwikipedia object. $agent sets a custom useragent, $assert sets a parameter for the assertedit extension, common is "&assert=bot", $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent.
+Calling MediaWiki::Bot->new will create a new MediaWiki::Bot object. 
+$agent sets a custom useragent, $assert sets a parameter for the assertedit extension, common is "&assert=bot", $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent.
 
 =cut
 
 sub new {
     my $package = shift;
-    my $agent   = shift || 'Perlwikipedia'; #user-specified agent or default to 'Perlwikipedia'
+    my $agent   = shift || 'MediaWiki::Bot'; #user-specified agent or default
     my $assert  = shift || undef;
     my $operator= shift || undef;
     my $maxlag  = shift || 5;
@@ -85,7 +86,7 @@ sub new {
 
 =item set_highlimits([$flag])
 
-Tells Perlwikipedia to start using the APIHighLimits for certain queries.
+Tells MediaWiki::Bot to start using the APIHighLimits for certain queries.
 
 =cut
 
@@ -171,7 +172,7 @@ sub _put {
 
 =item set_wiki([$wiki_host[,$wiki_path]])
 
-set_wiki will cause the Perlwikipedia object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell Perlwikipedia to use http://de.wikipedia.org/w/index.php. The Perlwikipedia default settings are 'en.wikipedia.org' with a path of 'w'.
+set_wiki will cause the MediaWiki::Bot object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell it to use http://de.wikipedia.org/w/index.php. The default settings are 'en.wikipedia.org' with a path of 'w'.
 
 =cut
 
@@ -188,7 +189,7 @@ sub set_wiki {
 
 =item login($username,$password)
 
-Logs the Perlwikipedia object into the specified wiki. If the login was a success, it will return 'Success', otherwise, 'Fail'.
+Logs the object into the specified wiki. If the login was a success, it will return 'Success', otherwise, 'Fail'.
 
 =cut
 
@@ -196,7 +197,7 @@ sub login {
     my $self     = shift;
     my $editor   = shift;
     my $password = shift;
-    my $cookies  = ".perlwikipedia-$editor-cookies";
+    my $cookies  = ".mediawiki-bot-$editor-cookies";
     $self->{mech}->cookie_jar(
         { file => $cookies, autosave => 1 } );
     if ( !defined $password ) {
@@ -1140,7 +1141,7 @@ sub get_allusers {
 
 =head1 ERROR HANDLING
 
-All Perlwikipedia functions will return either 0 or 1 if they do not return data. If an error occurs in a function, $perlwikipedia_object->{errstr} is set to the error message and the function will return 1. A robust bot should check $perlwikipedia_object->{errstr} for messages after performing any action with the object.
+All MediaWiki::Bot functions will return either 0 or 1 if they do not return data. If an error occurs in a function, $object->{errstr} is set to the error message and the function will return 1. A robust bot should check $object->{errstr} for messages after performing any action with the object.
 
 =cut
 

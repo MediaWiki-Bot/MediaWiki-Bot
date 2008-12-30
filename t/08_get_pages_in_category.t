@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl Perlwikipedia.t'
+# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
 
 #########################
 
@@ -11,18 +11,18 @@ use Test::More tests => 5;
 
 # Insert your test code below, the Test::More module is use()ed here so read
 # its man page ( perldoc Test::More ) for help writing this test script.
-use Perlwikipedia;
+use MediaWiki::Bot;
 SKIP: {
 skip("wiki.xyrael.net is down",5);
 
-$wikipedia=Perlwikipedia->new("make test");
+$wikipedia=MediaWiki::Bot->new("make test");
 $wikipedia->set_wiki('wiki.xyrael.net', 'w');
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my @pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia test nest2");
+my @pages = $wikipedia->get_all_pages_in_category("Category:MediaWiki::Bot test nest2");
 
 ok( defined $pages[0], "Get small category" );
 
@@ -34,9 +34,9 @@ ok( defined $pages[0], "Get big category" );
 cmp_ok ( scalar(@pages), ">", 500, "Get big category, enough elements");
 
 $wikipedia->set_wiki('wiki.xyrael.net', 'w');
-@pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia test nest1");
+@pages = $wikipedia->get_all_pages_in_category("Category:MediaWiki::Bot test nest1");
 is ( scalar(@pages), 3, "Nested categories, one level");
 
-@pages = $wikipedia->get_all_pages_in_category("Category:Perlwikipedia test");
+@pages = $wikipedia->get_all_pages_in_category("Category:MediaWiki::Bot test");
 is ( scalar(@pages), 5, "Nested categories, two levels");
 }

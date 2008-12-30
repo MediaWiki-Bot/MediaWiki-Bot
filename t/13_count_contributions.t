@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl Perlwikipedia.t'
+# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
 
 #########################
 
@@ -13,9 +13,9 @@ use Test::More tests => 1;
 # its man page ( perldoc Test::More ) for help writing this test script.
 
 use strict;
-use Perlwikipedia;
+use MediaWiki::Bot;
 
-my $wikipedia = Perlwikipedia->new;
+my $wikipedia = MediaWiki::Bot->new;
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});

@@ -1,7 +1,7 @@
-Perlwikipedia version 1.3
+MediaWiki::Bot version 1.3
 ==========================
 
-This is Perlwikipedia, a Perl module designed to interface with the
+This is MediaWiki::Bot, a Perl module designed to interface with the
 online encyclopedia Wikipedia, and other MediaWiki-powered sites.
 
 INSTALLATION
@@ -13,7 +13,7 @@ To install this module type the following:
    make test
    make install
 
-The test scripts included with this distribution of Perlwikipedia
+The test scripts included with this distribution of MediaWiki::Bot
 require a working Internet connection. If the test phase will not
 complete because you do not have access to wiki.xyrael.net, you can
 (probably) safely install the module anyway.
@@ -32,7 +32,7 @@ MediaWiki::API
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2006, 2007 by the Perlwikipedia team
+Copyright (C) 2006, 2007 by the MediaWiki::Bot team
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
