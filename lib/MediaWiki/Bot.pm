@@ -219,7 +219,7 @@ sub login {
 		action=>'login',
 		lgname=>$editor,
 		lgpassword=>$password } );
-	use Data::Dumper; print Dumper($res);
+	#use Data::Dumper; print Dumper($res);
 #    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
     my $result = $res->{login}->{result};
