@@ -1,7 +1,10 @@
 Revision history for MediaWiki::Bot
 
 Current svn
-2.0.0 DOLLLINS r179 December 30 2008
+2.0.1 DCOLLINS r181 January 26 2008
+	Changes made since 2.0.0
+		* Removed some redundant error messages
+2.0.0 DCOLLINS r179 December 30 2008
 	Changes made since 1.5.2:
 		* I was going to make this 1.5.3, but then I realized I shouldn't hide something this big behind a sub-minor release. For reasons of having the module included in the module list on CPAN, making everything be a bit neater, and for all-around happiness, I've moved Perlwikipedia into the preexisting MediaWiki:: namespace. The module is now called MediaWiki::Bot.
 		* You can also now use "PWP" instead of "MediaWiki::Bot" in your code. The distribution on CPAN and in the svn repo includes an alias.

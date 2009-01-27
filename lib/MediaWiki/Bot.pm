@@ -20,7 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
 }
 
 
-our $VERSION = '1.5.2';
+our $VERSION = '2.0.1';
 
 =head1 NAME
 
@@ -42,7 +42,7 @@ Many of the methods use the MediaWiki API (L<http://en.wikipedia.org/w/api.php>)
 
 =head1 AUTHOR
 
-The Perlwikipedia team (Alex Rowe, Jmax, Oleg Alexandrov) and others.
+The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins) and others.
 
 =head1 METHODS
 
@@ -219,7 +219,7 @@ sub login {
 		action=>'login',
 		lgname=>$editor,
 		lgpassword=>$password } );
-	#use Data::Dumper; print Dumper($res);
+#	use Data::Dumper; print Dumper($res);
 #    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
     my $result = $res->{login}->{result};
@@ -275,7 +275,6 @@ sub edit {
 	$res = $self->{api}->api( $savehash );
 #	use Data::Dumper; print Dumper($res);
 	if (!$res) {
-		carp "API returned null result or error for edit";
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
 	}
@@ -374,7 +373,6 @@ sub get_text {
 
 	my $res = $self->{api}->api( $hash );
 	if (!$res) {
-		carp "API returned null result or error for get_text";
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
 #use Data::Dumper; print Dumper($hash);
@@ -410,7 +408,6 @@ sub get_pages {
 #	use Data::Dumper; print Dumper($hash);
 	my $res = $self->{api}->api( $hash );
 	if (!$res) {
-		carp "API returned null result or error for get_pages";
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
 	}
