@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 1;
+use Test::More tests => 4;
 
 #########################
 
@@ -14,9 +14,6 @@ use Test::More tests => 1;
 
 use strict;
 use MediaWiki::Bot;
-use locale;
-use POSIX qw(locale_h);
-setlocale(LC_ALL, "en_US.UTF-8");
 use utf8;
 
 my $editor = MediaWiki::Bot->new;
@@ -31,6 +28,12 @@ is($load, "$string", "Is our string the same as what we load?");
 my $old=$editor->get_text("User:ST47/unicode2");
 my $rand=rand();
 $editor->edit("User:ST47/unicode2", "$rand\n$string\n", "PWP test");
+sleep .5;
 my $new=$editor->get_text("User:ST47/unicode2");
 isnt($new, $old, "Successfully saved test string");
 is($new, "$rand\n$string", "Loaded correct data");
+$rand=rand();
+$editor->edit("User:ST47/unicode2", "$rand\n$load\n", "PWP test");
+sleep .5;
+$new=$editor->get_text("User:ST47/unicode2");
+is($new, "$rand\n$string", "Saved data from load correctly");

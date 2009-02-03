@@ -10,10 +10,6 @@ use Carp;
 use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
-use utf8;
-use locale;
-use POSIX qw(locale_h);
-setlocale(LC_ALL, "en_US.UTF-8");
 
 use Module::Pluggable	search_path => [ qw(MediaWiki::Bot::Plugin) ],
 			'require'   => 1;

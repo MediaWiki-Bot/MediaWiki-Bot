@@ -1,7 +1,7 @@
 Revision history for MediaWiki::Bot
 
 Current svn
-2.1.0 DCOLLINS r183 February 3 2009
+2.1.0 DCOLLINS r184 February 3 2009
 	Changes made since 2.0.1
 		* Some more unicode changes
 		* If unicode doesn't work, TELL ME
