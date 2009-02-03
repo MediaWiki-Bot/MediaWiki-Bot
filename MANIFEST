@@ -29,6 +29,7 @@ t/17_maxlag.t
 t/18_get_pages.t
 t/19_assert_edit.t
 t/20_get_allusers.t
+t/21_unicode.t
 t/97_pod.t
 t/98_pod_coverage.t
 t/99_pod_kwalitee.t

@@ -1,7 +1,8 @@
 Revision history for MediaWiki::Bot
 
 Current svn
-2.0.1 DCOLLINS r181 January 26 2008
+2.1.0 DCOLLINS r182 February 3 2009
+2.0.1 DCOLLINS r181 January 26 2009
 	Changes made since 2.0.0
 		* Removed some redundant error messages
 2.0.0 DCOLLINS r179 December 30 2008
