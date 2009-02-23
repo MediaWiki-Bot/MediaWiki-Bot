@@ -817,7 +817,7 @@ sub delete_old_image {
 	return $res;
 }
 
-=item block($user, $length, $summary, $anononly, $autoblock, $blockaccountcreation, $blockemail)
+=item block($user, $length, $summary, $anononly, $autoblock, $blockaccountcreation, $blockemail, $blocktalk)
 
 Blocks the user with the specified options.  All options optional except $user and $length. Last four are true/false. Defaults to empty summary, all options disabled.
 
@@ -832,16 +832,22 @@ sub block {
 	my $autoblock=shift;
 	my $blockac = shift;
 	my $blockemail=shift;
-	my $res	 = $self->_get( "Special:Blockip/$user" );
-	unless ($res) { return; }
-
-	$res = $self->{api}->api( {
-		action=>'query',
-		titles=>'Main_Page',
-		prop=>'info|revisions',
-		intoken=>'block' } );
+	my $blocktalk	= shift;
+	my $res;
+	my $edittoken;
+	
+	if ($self->{'blocktoken'}) {
+		$edittoken=$self->{'blocktoken'};
+	} else {
+		$res = $self->{api}->api( {
+			action=>'query',
+			titles=>'Main_Page',
+			prop=>'info|revisions',
+			intoken=>'block' } );
 	my ($id, $data)=%{$res->{query}->{pages}};
-	my $edittoken=$data->{blocktoken};
+	$edittoken=$data->{blocktoken};
+	$self->{'blocktoken'}=$edittoken;
+	}
 	my $hash = {
 		action=>'block',
 		user=>$user,
@@ -852,7 +858,48 @@ sub block {
 	$hash->{autoblock}=$autoblock if ($autoblock);
 	$hash->{nocreate}=$blockac if ($blockac);
 	$hash->{noemail}=$blockemail if ($blockemail);
+	$hash->{allowusertalk}=1 if (!$blocktalk);
 	$res = $self->{api}->api( $hash );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+	}
+
+	return $res;
+}
+
+=item unblock($user)
+
+Unblocks the user.
+
+=cut
+
+sub unblock {
+	my $self	= shift;
+	my $user	= shift;
+	my $res;
+	my $edittoken;
+	if ($self->{'unblocktoken'}) {
+		$edittoken=$self->{'unblocktoken'};
+	} else {
+		$res = $self->{api}->api( {
+			action=>'query',
+			titles=>'Main_Page',
+			prop=>'info|revisions',
+			intoken=>'unblock' } );
+		my ($id, $data)=%{$res->{query}->{pages}};
+		$edittoken=$data->{unblocktoken};
+		$self->{'unblocktoken'}=$edittoken;
+	}
+	my $hash = {
+		action=>'unblock',
+		user=>$user,
+		token=>$edittoken};
+	$res = $self->{api}->api( $hash );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+	}
 
 	return $res;
 }
