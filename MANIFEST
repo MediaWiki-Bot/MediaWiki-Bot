@@ -1,9 +1,9 @@
+Changes
 INSTALL
 LICENSE
 Makefile.PL
 MANIFEST
 README
-RELEASE-NOTES
 lib/MediaWiki/Bot.pm
 lib/PWP.pm
 misc/Login.pl

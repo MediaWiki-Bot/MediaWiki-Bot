@@ -1,6 +1,11 @@
 Revision history for MediaWiki::Bot
 
 Current svn
+2.1.1 DCOLLINS r184 February 24 2009
+	Changes made since 2.1.0
+		* Additions of sub unblock, some test changes
+	Notes
+		* Error checking is about to be updated. If an error occurs, any subs will return -1*the integer error number. See the updated documentation in 2.2.0.
 2.1.0 DCOLLINS r184 February 3 2009
 	Changes made since 2.0.1
 		* Some more unicode changes

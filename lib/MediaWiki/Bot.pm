@@ -20,7 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
 }
 
 
-our $VERSION = '2.1.0';
+our $VERSION = '2.1.2';
 
 =head1 NAME
 
