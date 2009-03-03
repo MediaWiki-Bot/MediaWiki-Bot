@@ -22,10 +22,14 @@ my $rand = rand();
 my $status = $wikipedia->edit("User:ST47/test",$rand,"MediaWiki::Bot tests");
 eval { use Data::Dumper; print STDERR Dumper($status); };
 if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
-#ok( $status->isa("HTTP::Response") );
+SKIP: {
+	if ($status==3 and $wikipedia->{error}->{code}==3) {
+		skip "You are blocked, cannot use editing tests", 1;
+	}
+	#ok( $status->isa("HTTP::Response") );
 
-sleep 1;
-my $text = $wikipedia->get_text("User:ST47/test");
-$text =~ s/\n//;
-is($text,$rand);
-
+	sleep 1;
+	my $text = $wikipedia->get_text("User:ST47/test");
+	$text =~ s/\n//;
+	is($text,$rand);
+}

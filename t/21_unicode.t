@@ -27,13 +27,18 @@ my $load=$editor->get_text("User:ST47/unicode1");
 is($load, "$string", "Is our string the same as what we load?");
 my $old=$editor->get_text("User:ST47/unicode2");
 my $rand=rand();
-$editor->edit("User:ST47/unicode2", "$rand\n$string\n", "PWP test");
-sleep .5;
-my $new=$editor->get_text("User:ST47/unicode2");
-isnt($new, $old, "Successfully saved test string");
-is($new, "$rand\n$string", "Loaded correct data");
-$rand=rand();
-$editor->edit("User:ST47/unicode2", "$rand\n$load\n", "PWP test");
-sleep .5;
-$new=$editor->get_text("User:ST47/unicode2");
-is($new, "$rand\n$string", "Saved data from load correctly");
+my $status=$editor->edit("User:ST47/unicode2", "$rand\n$string\n", "PWP test");
+SKIP: {
+	if ($status==3 and $editor->{error}->{code}==3) {
+		skip "You are blocked, cannot use editing tests", 3;
+	}
+	sleep .5;
+	my $new=$editor->get_text("User:ST47/unicode2");
+	isnt($new, $old, "Successfully saved test string");
+	is($new, "$rand\n$string", "Loaded correct data");
+	$rand=rand();
+	$editor->edit("User:ST47/unicode2", "$rand\n$load\n", "PWP test");
+	sleep .5;
+	$new=$editor->get_text("User:ST47/unicode2");
+	is($new, "$rand\n$string", "Saved data from load correctly");
+}

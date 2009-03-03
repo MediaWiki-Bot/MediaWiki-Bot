@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 #########################
 
@@ -36,5 +36,6 @@ $namespace_id = "non-existent";
 
 @pages = $wikipedia->get_pages_in_namespace($namespace_id);
 
-is( scalar @pages, 0, "No pages retrieved" );
+is($pages[0], 3, "Error code recieved" );
+is($wikipedia->{error}->{code}, 3, "Error code in MW:B object" );
 

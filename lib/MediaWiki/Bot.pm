@@ -20,7 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
 }
 
 
-our $VERSION = '2.1.2';
+our $VERSION = '2.2.0';
 
 =head1 NAME
 
@@ -219,6 +219,12 @@ sub login {
 		action=>'login',
 		lgname=>$editor,
 		lgpassword=>$password } );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 #	use Data::Dumper; print Dumper($res);
 #    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
@@ -277,6 +283,8 @@ sub edit {
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code} if $self->{error}->{code}!=2;
 	}
 	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
 	        carp "edit failed as ".$self->{mech}->{agent};
@@ -327,6 +335,12 @@ sub get_history {
 	$hash->{direction}=$direction if ($direction);
 
 	my $res = $self->{api}->api( $hash );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	my ($id)=keys %{$res->{query}->{pages}};
 	my $array=$res->{query}->{pages}->{$id}->{revisions};
 
@@ -375,6 +389,8 @@ sub get_text {
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
 #use Data::Dumper; print Dumper($hash);
 	}
 #	use Data::Dumper; print Dumper($res);
@@ -410,6 +426,8 @@ sub get_pages {
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
 	}
 #	use Data::Dumper; print Dumper($res);
 	foreach my $id (keys %{$res->{query}->{pages}}) {
@@ -497,6 +515,12 @@ sub get_last {
 		rvlimit=>20,
 		rvprop=>'ids|user',
 		rvexcludeuser=>$editor } );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	my ($id, $data)=%{$res->{query}->{pages}};
 	return $data->{revisions}[0]->{revid};
 }
@@ -549,6 +573,12 @@ sub what_links_here {
     my $res =
       $self->_get( 'Special:Whatlinkshere', 'view',
         "&target=$article&limit=5000" );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $content = $res->decoded_content;
     while (
@@ -585,7 +615,12 @@ sub get_pages_in_category {
 		cmlimit=>500 },
 #		{ max=>100 }
 		 );
-
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	foreach (@{$res}) {
 		push @return, $_->{title};
 	}
@@ -670,6 +705,12 @@ sub get_namespace_names {
 		action=>'query',
 		meta=>'siteinfo',
 		siprop=>'namespaces'} );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	foreach my $id (keys %{$res->{query}->{namespaces}}) {
 		$return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
 	}
@@ -742,6 +783,12 @@ sub test_image_exists {
 
 #	use Data::Dumper; print Dumper($hash);
 	my $res = $self->{api}->api($hash);
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 #	use Data::Dumper; print Dumper($res);
 	foreach my $id (keys %{$res->{query}->{pages}}) {
 		my $title=$res->{query}->{pages}->{$id}->{title};
@@ -785,7 +832,12 @@ sub delete_page {
 		title=>$page,
 		token=>$edittoken,
 		reason=>$summary } );
-
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	return $res;
 }
 
@@ -812,6 +864,12 @@ sub delete_old_image {
 			},
 		};
 	$res = $self->{mech}->submit_form( %{$options});
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 #use Data::Dumper;print Dumper($res);
 #print $res->decoded_content."\n";
 	return $res;
@@ -863,6 +921,8 @@ sub block {
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
 	}
 
 	return $res;
@@ -899,6 +959,8 @@ sub unblock {
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
 	}
 
 	return $res;
@@ -938,6 +1000,12 @@ sub protect {
 		expiry=>$time };
 	$hash->{'cascade'}=$cascade if ($cascade);
 	$res = $self->{api}->api( $hash );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 
 	return $res;
 }
@@ -973,7 +1041,12 @@ sub get_pages_in_namespace {
 		apnamespace=>$namespace,
 		aplimit=>$page_limit },
 		{ max=>$max } );
-
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	foreach (@{$res}) {
 		push @return, $_->{title};
 	}
@@ -996,6 +1069,12 @@ sub count_contributions {
 		ususers=>$username,
 		usprop=>'editcount' },
 		{ max=>1 } );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	my $return = ${$res}[0]->{'editcount'};
 
 	if ($return or $_[0]>1) {
@@ -1021,6 +1100,12 @@ sub last_active {
 		ucuser=>$username,
 		uclimit=>1 },
 		{ max=>1 } );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	return ${$res}[0]->{'timestamp'};
 }
 
@@ -1039,6 +1124,12 @@ sub recent_edit_to_page {
 		titles=>$page,
 		rvlimit=>1 },
 		{ max=>1 } );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	my ($id, $data)=%{$res->{query}->{pages}};
 	return $data->{revisions}[0]->{timestamp};
 }
@@ -1076,6 +1167,12 @@ sub get_users {
 	$hash->{rvdir}=$direction if ($direction);
 
 	my $res = $self->{api}->api( $hash );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	my ($id)=keys %{$res->{query}->{pages}};
 	my $array=$res->{query}->{pages}->{$id}->{revisions};
 	foreach (@{$array}) {
@@ -1096,6 +1193,12 @@ sub test_block_hist {
 
 	$user=~s/User://i;
 	my $res = $self->_get("Special:Log&type=block&page=User:$user", "", "", 1);
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	if ($res->decoded_content=~/no matching/i) {
 		return 0;
 	} else {
@@ -1142,7 +1245,12 @@ sub undelete {
 	my $page	= shift;
 	my $summary = shift;
 	my $res	 = $self->_get( "Special:Undelete", "", "&target=$page" );
-	unless ($res) { return; }
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	if ($res->decoded_content=~/There is no revision history for this page/i) {
 		return 1;
 	}
@@ -1152,6 +1260,12 @@ sub undelete {
 			},
 		};
 	$res = $self->{mech}->submit_form( %{$options}, button=>"restore");
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
 	return $res;
 }
 
@@ -1185,7 +1299,9 @@ sub get_allusers {
 
 =head1 ERROR HANDLING
 
-All MediaWiki::Bot functions will return either 0 or 1 if they do not return data. If an error occurs in a function, $object->{errstr} is set to the error message and the function will return 1. A robust bot should check $object->{errstr} for messages after performing any action with the object.
+All functions will return an integer error value in any handled error
+situation. Error codes are stored in $agent->{error}->{code}, error text
+in $agent->{error}->{details}.
 
 =cut
 
