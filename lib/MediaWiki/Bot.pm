@@ -287,7 +287,8 @@ sub edit {
 		return $self->{error}->{code} if $self->{error}->{code}!=2;
 	}
 	if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
-	        carp "edit failed as ".$self->{mech}->{agent};
+		if ($self->{mech}->{agent}) {
+	        carp "Assertion failed as ".$self->{mech}->{agent};
 		if ($self->{operator}) {
 			my $optalk=$self->get_text("User talk:".$self->{operator});
 		        unless ($optalk=~/Error with \Q$self->{mech}->{agent}\E/) {
@@ -297,6 +298,9 @@ sub edit {
 			}
 		}
 		return 2;
+		} else {
+		carp "Assertion failed";
+		}
         }
     return $res;
 }

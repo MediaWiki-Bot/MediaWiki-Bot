@@ -34,6 +34,7 @@ is( scalar @pages, $page_limit, "Correct number of pages retrieved" );
 
 $namespace_id = "non-existent";
 
+print STDERR "\nYou should recieve an error message below. This is an expected part of the test.\n";
 @pages = $wikipedia->get_pages_in_namespace($namespace_id);
 
 is($pages[0], 3, "Error code recieved" );
