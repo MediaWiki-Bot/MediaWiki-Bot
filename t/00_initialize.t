@@ -24,7 +24,7 @@ $wikipediaalias=PWP->new;
 ok(defined $wikipediaalias, "new() works");
 ok($wikipediaalias->isa("MediaWiki::Bot"), "Right class");
 
-print STDERR "\n#Thanks for using MediaWiki::API. If any of these tests fail,
+print STDERR "\r#Thanks for using MediaWiki::API. If any of these tests fail,
 #Or you need any other assistance with the module, please
 #Visit our IRC channel at irc.freenode.net #perlwikipedia
 #You can find support there, or report any bugs. If you can't
