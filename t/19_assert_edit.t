@@ -31,5 +31,6 @@ SKIP: {
 
 	my $text = $wikipedia->get_text("User:ST47/test");
 	$text =~ s/\n//;
+	print STDERR "\rYou should recieve another error message here regarding a failed assertion.\n";
 	isnt($text,$rand,"Intentionally bad assertion");
 }
