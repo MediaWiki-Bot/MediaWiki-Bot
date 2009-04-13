@@ -20,7 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
 }
 
 
-our $VERSION = '2.2.1';
+our $VERSION = '2.2.2';
 
 =head1 NAME
 
@@ -271,11 +271,11 @@ sub edit {
 		token=>$edittoken,
 		text=>$text,
 		summary=>$summary,
-		minor=>$is_minor,
 		basetimestamp=>$lastedit,
 		bot=>1};
 
 	$savehash->{assert}=$assert if ($assert);
+	$savehash->{minor}=$is_minor if ($is_minor);
 #	use Data::Dumper; print Dumper($savehash);
 
 	$res = $self->{api}->api( $savehash );
