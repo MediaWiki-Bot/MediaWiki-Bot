@@ -24,7 +24,7 @@ SKIP: {
 #	skip("Skipping edit test for now",2);
 
 	my $rand = rand();
-	print STDERR "\rYou should recieve another error message here regarding a failed assertion.\n";
+	print STDERR "\rYou should receive another error message here regarding a failed assertion.\n";
 	my $status = $wikipedia->edit("User:ST47/test",$rand,"MediaWiki::Bot tests");
 #	eval { use Data::Dumper; print STDERR Dumper($status); };
 #	if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
