@@ -1,8 +1,10 @@
 Changes
+Debian_CPANTS.txt
 INSTALL
 LICENSE
 Makefile.PL
 MANIFEST
+META.yml
 README
 lib/MediaWiki/Bot.pm
 lib/PWP.pm
