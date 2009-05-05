@@ -1,6 +1,15 @@
 Revision history for MediaWiki::Bot
 
 Current svn
+2.2.3 DCOLLINS r195 May 5 2009
+	Changes made since 2.1.1
+		* RELEASE-NOTES renamed to Changes
+		* Test suite now outputs a message when there is an expected error to be printed to terminal
+		* Some debugging code removed
+		* Simplify Unicode tests, now only run editing tests if not blocked
+		* More specific error detection in test 11 (get_pages_in_namespace)
+		* More verbose error handling in all code
+		* Add unblock capability
 2.1.1 DCOLLINS r184 February 24 2009
 	Changes made since 2.1.0
 		* Additions of sub unblock, some test changes
