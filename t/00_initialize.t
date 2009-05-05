@@ -24,10 +24,10 @@ $wikipediaalias=PWP->new;
 ok(defined $wikipediaalias, "new() works");
 ok($wikipediaalias->isa("MediaWiki::Bot"), "Right class");
 
-print STDERR "\r#Thanks for using MediaWiki::API. If any of these tests fail,
-#Or you need any other assistance with the module, please
-#Visit our IRC channel at irc.freenode.net #perlwikipedia
-#You can find support there, or report any bugs. If you can't
-#Use IRC, then either visit our web-based bug tracker at
-#http://code.google.com/p/perlwikipedia/ or email me at
-#DCOLLINS\@cpan.org --ST47\n";
+print STDERR "\r# Thanks for using MediaWiki::API. If any of these tests fail,
+# Or you need any other assistance with the module, please
+# Visit our IRC channel at irc.freenode.net #perlwikipedia
+# You can find support there, or report any bugs. If you can't
+# Use IRC, then either visit our web-based bug tracker at
+# http://code.google.com/p/perlwikipedia/ or email me at
+# DCOLLINS\@cpan.org --ST47\n";
