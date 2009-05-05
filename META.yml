@@ -4,7 +4,7 @@ version:             2.2.2
 abstract:            a Wikipedia bot framework written in Perl
 license:             gpl
 author:              
-    - Perlwikipedia team
+    - MediaWiki::Bot team
 generated_by:        ExtUtils::MakeMaker version 6.44
 distribution_type:   module
 requires:     
