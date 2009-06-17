@@ -6,8 +6,8 @@ WriteMakefile(
     NAME              => 'MediaWiki::Bot',
     VERSION_FROM      => 'lib/MediaWiki/Bot.pm', # finds $VERSION
     PREREQ_PM         => { WWW::Mechanize => '1.30',
-			   HTML::Entities => 1.35,
-			   URI::Escape    => 3.28,
+			   HTML::Entities => 3.28,
+			   URI::Escape    => 1.35,
 			   XML::Simple    => 2.16,
 			   Carp 	       => 0,
 			   Encode         => 0,
