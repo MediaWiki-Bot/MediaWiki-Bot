@@ -35,6 +35,7 @@ SKIP: {
 	my $rand2=rand();
 	$editor->edit("User:ST47/unicode3", "$rand2\n$load\n", "PWP test");
 	my $rand3=rand();
+	sleep 1;
 	$editor->edit("User:ST47/éółŽć", "$rand3\n$load\n", "PWP test");
 	sleep 1;
 	my $new=$editor->get_text("User:ST47/unicode2");
