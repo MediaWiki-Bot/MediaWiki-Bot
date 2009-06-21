@@ -225,8 +225,6 @@ sub login {
 		$self->{error}=$self->{api}->{error};
 		return $self->{error}->{code};
 	}
-#	use Data::Dumper; print Dumper($res);
-#    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
     my $result = $res->{login}->{result};
     if ($result eq "Success") {
@@ -252,15 +250,12 @@ sub edit {
     my $res;
 
     $assert=~s/\&?assert=// if $assert;
-#    $text = encode( 'utf8', $text ) if $text;
-#    $summary = encode( 'utf8', $summary ) if $summary;
 
 	$res = $self->{api}->api( {
 		action=>'query',
 		titles=>$page,
 		prop=>'info|revisions',
 		intoken=>'edit' } );
-#	use Data::Dumper; print Dumper($res);
 	my ($id, $data)=%{$res->{query}->{pages}};
 	my $edittoken=$data->{edittoken};
 	my $lastedit=$data->{revisions}[0]->{timestamp};
@@ -276,10 +271,8 @@ sub edit {
 
 	$savehash->{assert}=$assert if ($assert);
 	$savehash->{minor}=$is_minor if ($is_minor);
-#	use Data::Dumper; print Dumper($savehash);
 
 	$res = $self->{api}->api( $savehash );
-#	use Data::Dumper; print Dumper($res);
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};
 		carp $self->{api}->{error}->{details};
@@ -299,7 +292,7 @@ sub edit {
 		}
 		return 2;
 		} else {
-		carp "Assertion failed";
+			carp "Assertion failed";
 		}
         }
     return $res;
@@ -395,15 +388,12 @@ sub get_text {
 		carp $self->{api}->{error}->{details};
 		$self->{error}=$self->{api}->{error};
 		return $self->{error}->{code};
-#use Data::Dumper; print Dumper($hash);
 	}
-#	use Data::Dumper; print Dumper($res);
 	my ($id, $data)=%{$res->{query}->{pages}};
 
 	if ($id==-1) {return 2}
 
 	my $wikitext=$data->{revisions}[0]->{'*'};
-#	use Data::Dumper;print Dumper($data);
 	return $wikitext;
 }
 
@@ -425,7 +415,6 @@ sub get_pages {
 		rvprop=>'content',
 	};
 
-#	use Data::Dumper; print Dumper($hash);
 	my $res = $self->{api}->api( $hash );
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};
@@ -433,7 +422,6 @@ sub get_pages {
 		$self->{error}=$self->{api}->{error};
 		return $self->{error}->{code};
 	}
-#	use Data::Dumper; print Dumper($res);
 	foreach my $id (keys %{$res->{query}->{pages}}) {
 		if (defined($res->{query}->{pages}->{$id}->{missing})) {
 			$return{$res->{query}->{pages}->{$id}->{title}}=
@@ -448,7 +436,6 @@ sub get_pages {
 		}
 	}
 
-#	use Data::Dumper;print Dumper(\%return);
 	return \%return;
 }
 
@@ -617,7 +604,6 @@ sub get_pages_in_category {
 		list=>'categorymembers',
 		cmtitle=>$category,
 		cmlimit=>500 },
-#		{ max=>100 }
 		 );
 	if (!$res) {
 		carp "Error code: " . $self->{api}->{error}->{code};

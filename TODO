@@ -1,0 +1,24 @@
+./lib/MediaWiki/Bot.pm
+*sub _get_api
+**Make sure this sub is unused. If it is, remove it. If not, make it unused.
+*sub login
+**Find out whether saving the cookies still works anymore. The script login.pl should save cookies. sub login should load them if called without a password. The result should be logged in to both the API and the wiki. If loading the cookies doesn't work, either make it work, or if not possible, remove it.
+*sub edit
+**Unicode is tested by t_21, but only for the article text. Can we test it for edit summaries as well? How about usernames in the editing history? Add tests to ./t/t_21
+**Figure out how bot flag handling works. Bot flags should be enabled by default - or maybe a configuration setting like $self->{highlimits}??
+*sub get_history
+**Unicode handling?
+*sub get_pages
+**Does not handle things like "WP:TEST" correctly - it returns a hashkey of Wikipedia:TEST but not WP:TEST. (TODO test in t_18)
+**Does not handle more pages than are allowed automatically be running multiple queries using highlimits like get_pages_in_namespace does
+*sub get_pages_in_category
+**Does not handle more pages than are allowed automatically be running multiple queries using highlimits like get_pages_in_namespace does
+**Rewrite tests using the english wikipedia
+
+
+*New features
+**At some point I want to make a "Common Tasks" plugin...
+**Are all admin functions available?
+**Allow the patrolling of articles
+**Allow the checking of whether an article is patrolled
+**Allow the listing of new articles, make sure sub update_rc is fully configurable
