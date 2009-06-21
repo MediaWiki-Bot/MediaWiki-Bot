@@ -6,6 +6,7 @@ Makefile.PL
 MANIFEST
 META.yml
 README
+TODO
 lib/MediaWiki/Bot.pm
 lib/PWP.pm
 misc/Login.pl
