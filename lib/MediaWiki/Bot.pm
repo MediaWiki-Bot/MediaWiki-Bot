@@ -44,6 +44,23 @@ Many of the methods use the MediaWiki API (L<http://en.wikipedia.org/w/api.php>)
 
 The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins) and others.
 
+=head1 COPYING
+
+Copyright (C) 2006, 2007 by the MediaWiki::Bot team
+
+This library is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 =head1 METHODS
 
 =over 4
@@ -424,7 +441,7 @@ sub get_pages {
     my $self     = shift;
     my @pages    = @_;
     my %return;
-#    use Data::Dumper;
+
     my $hash = {
 	action=>'query',
 	titles=>join('|', @pages),
@@ -484,7 +501,6 @@ sub get_pages {
 	#only for those article names that remained after the first part
 	#if we're here we are dealing most likely with a WP:CSD type of article name
 	if($diff->{$title}==1) {
-#	    print "HEEREEEEE$title\n";
 	    my @pieces = split ':',$title;
 	    if(@pieces>1) {
 		$pieces[0] = $expand->{$pieces[0]};
@@ -498,8 +514,7 @@ sub get_pages {
 		}
 	    }
 	}
-    };
-#    print Dumper($diff);
+    }
     return \%return;
 }
 

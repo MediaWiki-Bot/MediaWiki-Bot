@@ -1,6 +1,11 @@
 Revision history for MediaWiki::Bot
 
 Current svn
+Vers. Rel.Mgr. SVN  Date
+2.3.0 DCOLLINS r206 June 23 2009
+	Changes made since 2.1.1
+		* Get_pages now makes sense when following namespace aliases. The title you give is the title you get back. Aliases are not expanded. Patch by Stefan Petrea.
+		* Unicode test will now take a bit longer but hopefully avoid any errors that shouldn't be there
 2.2.3 DCOLLINS r195 May 5 2009
 	Changes made since 2.1.1
 		* RELEASE-NOTES renamed to Changes
