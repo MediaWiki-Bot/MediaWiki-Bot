@@ -5,8 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 8;
-
+use Test::More tests => 9;
+use Data::Dumper;
 #########################
 
 # Insert your test code below, the Test::More module is use()ed here so read
@@ -21,16 +21,17 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my $result = $wikipedia->get_pages("Main Page", "Wikipedia", "This page had better not exist..........", "WP:CSD");
+my $result = $wikipedia->get_pages("Main Page", "Wikipedia", "This page had better not exist..........","WP:CSD","Mouse");
+#print Dumper [keys %$result];
+#print Dumper $result->{'Wikipedia:CSD'};
 
-is( keys %{$result}, 4, "Got the right number of pages returned");
+is( keys %{$result}, 5, "Got the right number of pages returned");
 isnt( $result->{'Wikipedia'}, 2, "Article doesn't not exist");
 is( $result->{'This page had better not exist..........'}, 2, "Article doesn't exist");
 ok( defined($result->{'Wikipedia'}), "Check for something not horribly wrong");
-TODO: {
-	local $TODO = "Namespace alias handling not yet implemented";
-	ok( defined($result->{'WP:CSD'}), "Namespace aliases work as expected");
-}
+ok( !defined($result->{'Wikipedia:CSD'}), "Should not return expanded names where an alias was requested");
+#print $result->{'Wikipedia:CSD'};
+ok( defined($result->{'WP:CSD'}), "Namespace aliases work as expected");
 like( $result->{'Wikipedia'}, qr/.{15}/, "Check for something at least resembling text in article");
 like( $result->{'Main Page'}, qr/Main Page/, "Got main page on multi-page get");
 like( $result->{'Wikipedia'}, qr/Wikipedia/, "Article about Wikipedia is not garbled and contains the string 'Wikipedia'");
