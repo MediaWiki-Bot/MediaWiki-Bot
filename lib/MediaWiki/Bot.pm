@@ -20,7 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
 }
 
 
-our $VERSION = '2.3.0';
+our $VERSION = '2.3.1';
 
 =head1 NAME
 
@@ -503,7 +503,7 @@ sub get_pages {
 	if($diff->{$title}==1) {
 	    my @pieces = split ':',$title;
 	    if(@pieces>1) {
-		$pieces[0] = $expand->{$pieces[0]};
+		$pieces[0] = ($expand->{$pieces[0]} || $pieces[0]);
 		my $v = $self->_get_one_page(join ':',@pieces);
 		print "Detected article name that needed expanding $title\n" if @{ $v->{revisions} }[0]->{'*'} && $self->{debug};
 
