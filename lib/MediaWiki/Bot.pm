@@ -200,6 +200,8 @@ sub set_wiki {
     $self->{host} = $host if $host;
     $self->{path} = $path if $path;
     $self->{api}->{config}->{api_url} = "http://$host/$path/api.php";
+	 $self->{api}->{config}->{upload_url} = "http://$host/$path/index.php/Special:Upload";
+
     print "Wiki set to http://$self->{host}/$self->{path}\n" if $self->{debug};
     return 0;
 }
@@ -275,6 +277,7 @@ sub edit {
 		intoken=>'edit' } );
 	my ($id, $data)=%{$res->{query}->{pages}};
 	my $edittoken=$data->{edittoken};
+	#my $edittoken=$id;
 	my $lastedit=$data->{revisions}[0]->{timestamp};
 
 	my $savehash = {
@@ -412,6 +415,36 @@ sub get_text {
 
 	my $wikitext=$data->{revisions}[0]->{'*'};
 	return $wikitext;
+}
+
+=item get_id($pagename)
+
+Returns the id of the specified page. Returns 2 if page does not exist.
+
+=cut
+
+sub get_id {
+    my $self     = shift;
+    my $pagename = shift;
+
+	my $hash = {
+		action=>'query',
+		titles=>$pagename,
+	};
+
+	my $res = $self->{api}->api( $hash );
+	if (!$res) {
+		carp "Error code: " . $self->{api}->{error}->{code};
+		carp $self->{api}->{error}->{details};
+		$self->{error}=$self->{api}->{error};
+		return $self->{error}->{code};
+	}
+
+	my ($id, $data) = %{$res->{query}->{pages}};
+
+	if ($id == -1) {return 2}
+
+	return $id;
 }
 
 =item get_pages(@pages)
@@ -1361,6 +1394,32 @@ sub get_allusers {
     return @return;
 }
 
+=item upload_file($filename)
+
+Uploads a file.
+
+=cut
+
+sub upload_file {
+	my $self = shift;
+	my $filename = shift;
+	my ($buffer,$data);
+
+	my $mw = $self->{api};
+
+	open FILE, "$filename" or die $!;
+	binmode FILE;
+
+	while ( read(FILE, $buffer, 65536) )  {
+		$data .= $buffer;
+	}
+	close FILE;
+
+	$mw->upload( { title => $filename,
+						summary => "Uploading file $filename",
+						data => $data } ) 
+	  or return $mw->{error}->{code} . ': ' . $mw->{error}->{details};
+}
 
 1;
 
