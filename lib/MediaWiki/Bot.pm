@@ -68,7 +68,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =item new([$agent[, $assert[, $operator]]])
 
 Calling MediaWiki::Bot->new will create a new MediaWiki::Bot object. 
-$agent sets a custom useragent, $assert sets a parameter for the assertedit extension, common is "&assert=bot", $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent.
+$agent sets a custom useragent, $assert sets a parameter for the assertedit extension, common is "&assert=bot", $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent. $protocol allows you to specify 'http' or 'https' (default is 'http'). For example:
+
+$bot = MediaWiki::Bot->new("MediaWiki::Bot", undef, undef, 5, "https");
 
 =cut
 
@@ -78,10 +80,21 @@ sub new {
     my $assert  = shift || undef;
     my $operator= shift || undef;
     my $maxlag  = shift || 5;
+
+	# added for https
+	my $protocol = shift || "http";
+	
     if ($operator) {$operator=~s/User://i;} #strip off namespace
     $assert=~s/\&?assert=// if $assert;
 
     my $self = bless {}, $package;
+
+	# added for https
+	$self->{protocol} = $protocol;
+	if ($self->{protocol} eq "https") {
+		use Crypt::SSLeay;
+	}
+	
     $self->{mech} = WWW::Mechanize->new( cookie_jar => {}, onerror => \&Carp::carp, stack_depth => 1 );
     $self->{mech}->agent("$agent/$VERSION");
     $self->{host}   = 'en.wikipedia.org';
@@ -124,7 +137,7 @@ sub _get {
     $page = uri_escape_utf8($page) unless $no_escape;
 
     my $url =
-      "http://$self->{host}/$self->{path}/index.php?title=$page&action=$action";
+      "$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page&action=$action";
     $url .= $extra if $extra;
     print "Retrieving $url\n" if $self->{debug};
     my $res = $self->{mech}->get($url);
@@ -150,10 +163,10 @@ sub _get {
 sub _get_api {
     my $self  = shift;
     my $query = shift;
-    print "Retrieving http://$self->{host}/$self->{path}/api.php?$query\n"
+    print "Retrieving $self->{protocol}://$self->{host}/$self->{path}/api.php?$query\n"
       if $self->{debug};
     my $res =
-      $self->{mech}->get("http://$self->{host}/$self->{path}/api.php?$query");
+      $self->{mech}->get("$self->{protocol}://$self->{host}/$self->{path}/api.php?$query");
     if ( ref($res) eq 'HTTP::Response' && $res->is_success() ) {
         return $res;
     } else {
@@ -199,10 +212,8 @@ sub set_wiki {
     my $path = shift || 'w';
     $self->{host} = $host if $host;
     $self->{path} = $path if $path;
-    $self->{api}->{config}->{api_url} = "http://$host/$path/api.php";
-	 $self->{api}->{config}->{upload_url} = "http://$host/$path/index.php/Special:Upload";
-
-    print "Wiki set to http://$self->{host}/$self->{path}\n" if $self->{debug};
+    $self->{api}->{config}->{api_url} = "$self->{protocol}://$host/$path/api.php";
+    print "Wiki set to $self->{protocol}://$self->{host}/$self->{path}\n" if $self->{debug};
     return 0;
 }
 
@@ -277,7 +288,6 @@ sub edit {
 		intoken=>'edit' } );
 	my ($id, $data)=%{$res->{query}->{pages}};
 	my $edittoken=$data->{edittoken};
-	#my $edittoken=$id;
 	my $lastedit=$data->{revisions}[0]->{timestamp};
 
 	my $savehash = {
@@ -832,7 +842,7 @@ Gets a list of pages which include a certain image.
 sub links_to_image {
     my $self	= shift;
     my $page	= shift;
-    my $url = "http://$self->{host}/$self->{path}/index.php?title=$page";
+    my $url = "$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page";
     print "Retrieving $url\n" if $self->{debug};
     my $res = $self->{mech}->get($url);
     $res->decoded_content=~/div class=\"linkstoimage\" id=\"linkstoimage\"(.+?)\<\/ul\>/is;
@@ -1394,32 +1404,6 @@ sub get_allusers {
     return @return;
 }
 
-=item upload_file($filename)
-
-Uploads a file.
-
-=cut
-
-sub upload_file {
-	my $self = shift;
-	my $filename = shift;
-	my ($buffer,$data);
-
-	my $mw = $self->{api};
-
-	open FILE, "$filename" or die $!;
-	binmode FILE;
-
-	while ( read(FILE, $buffer, 65536) )  {
-		$data .= $buffer;
-	}
-	close FILE;
-
-	$mw->upload( { title => $filename,
-						summary => "Uploading file $filename",
-						data => $data } ) 
-	  or return $mw->{error}->{code} . ': ' . $mw->{error}->{details};
-}
 
 1;
 
