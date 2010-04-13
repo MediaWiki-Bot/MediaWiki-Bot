@@ -249,14 +249,17 @@ sub login {
 		action=>'login',
 		lgname=>$editor,
 		lgpassword=>$password } );
-	if (!$res) {
-		carp "Error code: " . $self->{api}->{error}->{code};
-		carp $self->{api}->{error}->{details};
-		$self->{error}=$self->{api}->{error};
-		return $self->{error}->{code};
-	}
+	my $result = $res->{login}->{result};
+	if ($result eq "NeedToken") {
+        my $lgtoken=$res->{login}->{token};
+        $res = $self->{api}->api( {
+                action=>'login',
+                lgname=>$editor,
+                lgpassword=>$password,
+                lgtoken=>$lgtoken } );
+        $result = $res->{login}->{result};
+    }
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
-    my $result = $res->{login}->{result};
     if ($result eq "Success") {
 	return 0;
     } else {
