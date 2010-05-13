@@ -74,7 +74,7 @@ $bot = MediaWiki::Bot->new("MediaWiki::Bot", undef, undef, 5, "https");
 
 sub new {
     my $package  = shift;
-    my $agent    = shift || 'MediaWiki::Bot';  # User-specified agent or default
+    my $agent    = shift || "MediaWiki::Bot $VERSION";  # User-specified agent or default
     my $assert   = shift || undef;
     my $operator = shift || undef;
     my $maxlag   = shift || 5;
@@ -99,7 +99,7 @@ sub new {
             onerror => \&Carp::carp,
             stack_depth => 1
         );
-    $self->{mech}->agent("$agent/$VERSION");
+    $self->{mech}->agent($agent);
     $self->{host}                     = 'en.wikipedia.org';
     $self->{path}                     = 'w';
     $self->{debug}                    = 0;
