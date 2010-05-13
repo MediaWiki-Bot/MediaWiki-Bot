@@ -80,18 +80,16 @@ sub new {
     my $maxlag   = shift || 5;
 
     # Added for https
-    my $protocol = shift || "http";
+    my $protocol = shift || 'http';
 
-    if ($operator) {
-        $operator =~ s/^User://i;
-    }    # Strip off namespace
-    $assert =~ s/\&?assert=// if $assert;
+    $operator =~ s/^User://i if $operator; # Strip off namespace, if it is present
+    $assert =~ s/[&?]assert=// if $assert; # Strip out param part, leaving just the value for insertion in to the query string
 
     my $self = bless {}, $package;
 
     # Added for https
     $self->{protocol} = $protocol;
-    if ($self->{protocol} eq "https") {
+    if ($self->{protocol} eq 'https') {
         use Crypt::SSLeay;
     }
 
@@ -127,9 +125,9 @@ Tells MediaWiki::Bot to start using the APIHighLimits for certain queries.
 
 sub set_highlimits {
     my $self       = shift;
-    my $highlimits = shift;
-    unless (defined($highlimits)) { $highlimits = 1 }
+    my $highlimits = shift || 1;
     $self->{highlimits} = 1;
+    return;
 }
 
 =item set_wiki([$wiki_host[,$wiki_path]])
@@ -144,10 +142,8 @@ sub set_wiki {
     my $path = shift || 'w';
     $self->{host} = $host if $host;
     $self->{path} = $path if $path;
-    $self->{api}->{config}->{api_url} =
-        "$self->{protocol}://$host/$path/api.php";
-    print "Wiki set to $self->{protocol}://$self->{host}/$self->{path}\n"
-        if $self->{debug};
+    $self->{api}->{config}->{api_url} = "$self->{protocol}://$host/$path/api.php";
+    print "Wiki set to $self->{protocol}://$self->{host}/$self->{path}\n" if $self->{debug};
     return 0;
 }
 
@@ -168,14 +164,12 @@ sub login {
         my $cookies_exist = $self->{mech}->{cookie_jar}->as_string;
         if ($cookies_exist) {
             $self->{mech}->{cookie_jar}->load($cookies);
-            print "Loaded MediaWiki cookies from file $cookies\n"
-                if $self->{debug};
+            print "Loaded MediaWiki cookies from file $cookies\n" if $self->{debug};
             $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
             return 0;
         }
         else {
-            $self->{errstr} =
-                "Cannot load MediaWiki cookies from file $cookies";
+            $self->{errstr} = "Cannot load MediaWiki cookies from file $cookies";
             carp $self->{errstr};
             return 1;
         }
@@ -189,13 +183,13 @@ sub login {
         }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
+        carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
     }
     my $result = $res->{login}->{result};
-    if ($result eq "NeedToken") {
+    if ($result eq 'NeedToken') {
         my $lgtoken = $res->{login}->{token};
         $res = $self->{api}->api(
             {
@@ -206,7 +200,7 @@ sub login {
             }
         );
         if (!$res) {
-            carp "Error code: " . $self->{api}->{error}->{code};
+            carp 'Error code: ' . $self->{api}->{error}->{code};
             carp $self->{api}->{error}->{details};
             $self->{error} = $self->{api}->{error};
             return $self->{error}->{code};
@@ -214,7 +208,7 @@ sub login {
         $result = $res->{login}->{result};
     }
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
-    if ($result eq "Success") {
+    if ($result eq 'Success') {
         return 0;
     }
     else {
@@ -266,31 +260,35 @@ sub edit {
 
     $res = $self->{api}->api($savehash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
+        carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code} if $self->{error}->{code} != 2;
     }
     if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
         if ($self->{mech}->{agent}) {
-            carp "Assertion failed as " . $self->{mech}->{agent};
+            carp 'Assertion failed as ' . $self->{mech}->{agent};
             if ($self->{operator}) {
-                my $optalk = $self->get_text("User talk:" . $self->{operator});
+                my $optalk = $self->get_text('User talk:' . $self->{operator});
                 unless ($optalk =~ /Error with \Q$self->{mech}->{agent}\E/) {
                     print "Sending warning!\n";
-                    $self->edit("User talk:$self->{operator}",
+                    $self->edit(
+                        "User talk:$self->{operator}",
                         $optalk
                             . "\n\n==Error with "
                             . $self->{mech}->{agent} . "==\n"
                             . $self->{mech}->{agent}
-                            . " needs to be logged in! ~~~~", 'bot issue', 0,
-                        'assert=');
+                            . ' needs to be logged in! ~~~~',
+                        'bot issue',
+                        0,
+                        'assert='
+                    );
                 }
             }
             return 2;
         }
         else {
-            carp "Assertion failed";
+            carp 'Assertion failed';
         }
     }
     return $res;
@@ -313,8 +311,7 @@ sub get_history {
     my @revisions;
 
     if ($limit > 50) {
-        $self->{errstr} =
-"Error requesting history for $pagename: Limit may not be set to values above 50";
+        $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
         carp $self->{errstr} if $self->{debug};
         return 1;
     }
@@ -386,7 +383,7 @@ sub get_text {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
+        carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
@@ -416,7 +413,7 @@ sub get_id {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
+        carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
@@ -436,7 +433,7 @@ Also handles redirects or article names that use namespace aliases
 
 =cut
 
-sub _get_one_page {
+sub _get_one_page { # Internal use
     my ($self, $title) = @_;
     my $hash = {
         action => 'query',
@@ -468,7 +465,7 @@ sub get_pages {
     map { $diff->{$_} = 1; } @pages;
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
+        carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
@@ -494,7 +491,7 @@ sub get_pages {
                 $return{ $page->{title} } = $revisions;
             }
             elsif (length($revisions) < 150
-                && $revisions =~ /\#REDIRECT\s\[\[([^\[\]]*)\]\]/)
+                && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/)
             {
                 my $redirect_to = $1;
                 $redirect_to =~ s/\s/_/g;
@@ -519,7 +516,7 @@ sub get_pages {
     # Only for those article names that remained after the first part
     # If we're here we are dealing most likely with a WP:CSD type of article name
         if ($diff->{$title} == 1) {
-            my @pieces = split ':', $title;
+            my @pieces = split(/:/, $title);
             if (@pieces > 1) {
                 $pieces[0] = ($expand->{ $pieces[0] } || $pieces[0]);
                 my $v = $self->_get_one_page(join ':', @pieces);
@@ -527,10 +524,8 @@ sub get_pages {
                     if @{ $v->{revisions} }[0]->{'*'} && $self->{debug};
 
                 $return{$title} = @{ $v->{revisions} }[0]->{'*'};
-                if (@{ $v->{revisions} }[0]->{'*'} =~
-                    /\#REDIRECT\s\[\[([^\[\]]*)\]\]/)
-                {
-                    my $v = $self->_get_one_page($1);
+                if (@{ $v->{revisions} }[0]->{'*'} =~ m/\#REDIRECT\s\[\[([^\[\]]*)\]\]/) {
+                    $v = $self->_get_one_page($1);
                     $return{$title} = @{ $v->{revisions} }[0]->{'*'};
                 }
             }
@@ -581,7 +576,7 @@ sub undo {
             fields    => { wpSummary => $summary, },
         },
         "&undo$after=$revid",
-        "undo"    # For the error detection in _put.
+        'undo'    # For the error detection in _put.
     );
 }
 
@@ -610,7 +605,7 @@ sub get_last {
         }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
+        carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
@@ -674,7 +669,7 @@ sub what_links_here {
         "&target=$article&limit=5000"
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
+        carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
@@ -686,10 +681,10 @@ sub what_links_here {
         my $title = $1;
         my $type  = $2;
         if ($type !~ /\(redirect page\)/ && $type !~ /\(transclusion\)/) {
-            $type = "";
+            $type = '';
         }
-        if ($type =~ /\(redirect page\)/) { $type = "redirect"; }
-        if ($type =~ /\(transclusion\)/)  { $type = "transclusion"; }
+        if ($type =~ /\(redirect page\)/) { $type = 'redirect'; }
+        if ($type =~ /\(transclusion\)/)  { $type = 'transclusion'; }
 
         push @links, { title => $title, type => $type };
     }
@@ -796,7 +791,7 @@ sub purge_page {
     my $self = shift;
     my $page = shift;
     my $res  = $self->_get($page, 'purge');
-
+    return;
 }
 
 =item get_namespace_names
@@ -841,12 +836,10 @@ Gets a list of pages which include a certain image.
 sub links_to_image {
     my $self = shift;
     my $page = shift;
-    my $url =
-        "$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page";
+    my $url = "$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page";
     print "Retrieving $url\n" if $self->{debug};
     my $res = $self->{mech}->get($url);
-    $res->decoded_content =~
-        /div class=\"linkstoimage\" id=\"linkstoimage\"(.+?)\<\/ul\>/is;
+    $res->decoded_content =~ m/div class=\"linkstoimage\" id=\"linkstoimage\"(.+?)\<\/ul\>/is;
     my $list = $1;
     my @list;
 
@@ -1458,6 +1451,10 @@ sub get_allusers {
     }
     return @return;
 }
+
+################
+# Internal use #
+################
 
 sub _get {
     my $self      = shift;
