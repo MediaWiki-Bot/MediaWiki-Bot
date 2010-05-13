@@ -19,7 +19,7 @@ $wikipedia=MediaWiki::Bot->new("make test");
 $wikipedia->set_wiki('wiki.xyrael.net', 'w');
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
 my @pages = $wikipedia->get_all_pages_in_category("Category:MediaWiki::Bot test nest2");

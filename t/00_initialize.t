@@ -7,7 +7,7 @@
 
 use Test::More tests => 6;
 BEGIN { use_ok('MediaWiki::Bot');
-	use_ok('PWP'); };
+    use_ok('PWP'); };
 
 #########################
 

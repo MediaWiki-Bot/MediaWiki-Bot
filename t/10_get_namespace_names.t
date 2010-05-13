@@ -16,10 +16,9 @@ use MediaWiki::Bot;
 $wikipedia=MediaWiki::Bot->new;
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
 my %namespaces = $wikipedia->get_namespace_names;
 
 is( $namespaces{1}, "Talk" );
-

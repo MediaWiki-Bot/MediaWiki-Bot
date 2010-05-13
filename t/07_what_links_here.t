@@ -17,8 +17,8 @@ $wikipedia=MediaWiki::Bot->new("make test");
 $article="WMIZ";
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-	$article="Main Page" unless ($ENV{'PWPMakeTestSetWikiHost'}.$ENV{'PWPMakeTestSetWikiDir'} eq 'en.wikipedia.orgw');
+    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $article="Main Page" unless ($ENV{'PWPMakeTestSetWikiHost'}.$ENV{'PWPMakeTestSetWikiDir'} eq 'en.wikipedia.orgw');
 }
 
 my @links = $wikipedia->what_links_here($article);

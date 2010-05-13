@@ -18,7 +18,7 @@ use MediaWiki::Bot;
 my $wikipedia = MediaWiki::Bot->new;
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
 my $result = $wikipedia->get_pages("Main Page", "Wikipedia", "This page had better not exist..........","WP:CSD","Mouse");

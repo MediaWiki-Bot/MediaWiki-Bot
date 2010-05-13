@@ -17,20 +17,20 @@ use MediaWiki::Bot;
 $wikipedia=MediaWiki::Bot->new("MediaWiki::Bot tests", "admin");
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
 SKIP: {
-#	skip("Skipping edit test for now",2);
+#   skip("Skipping edit test for now",2);
 
-	my $rand = rand();
-	print STDERR "\rYou should receive another error message here regarding a failed assertion.\n";
-	my $status = $wikipedia->edit("User:ST47/test",$rand,"MediaWiki::Bot tests");
-#	eval { use Data::Dumper; print STDERR Dumper($status); };
-#	if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
-#	ok( $status->isa("HTTP::Response") );
+    my $rand = rand();
+    print STDERR "\rYou should receive another error message here regarding a failed assertion.\n";
+    my $status = $wikipedia->edit("User:ST47/test",$rand,"MediaWiki::Bot tests");
+#   eval { use Data::Dumper; print STDERR Dumper($status); };
+#   if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
+#   ok( $status->isa("HTTP::Response") );
 
-	my $text = $wikipedia->get_text("User:ST47/test");
-	$text =~ s/\n//;
-	isnt($text,$rand,"Intentionally bad assertion");
+    my $text = $wikipedia->get_text("User:ST47/test");
+    $text =~ s/\n//;
+    isnt($text,$rand,"Intentionally bad assertion");
 }

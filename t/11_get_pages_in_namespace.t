@@ -21,7 +21,7 @@ my $page_limit = 1;
 my $wikipedia = MediaWiki::Bot->new;
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-	$wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
 my @pages = $wikipedia->get_pages_in_namespace($namespace_id);
@@ -39,4 +39,3 @@ print STDERR "\rYou should receive an error message below. This is an expected p
 
 is($pages[0], 3, "Error code received" );
 is($wikipedia->{error}->{code}, 3, "Error code in MW:B object" );
-

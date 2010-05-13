@@ -18,7 +18,7 @@ $wikipedia=MediaWiki::Bot->new;
 $wikipedia->set_wiki("localhost","wiki");
 
 SKIP: {
-	skip("Skipping revert() for now",1);
-	my $res = $wikipedia->revert("MediaWiki::Bot test","MediaWiki::Bot tests","revid");
-	ok( $res->isa("HTTP::Response") );
+    skip("Skipping revert() for now",1);
+    my $res = $wikipedia->revert("MediaWiki::Bot test","MediaWiki::Bot tests","revid");
+    ok( $res->isa("HTTP::Response") );
 }
