@@ -96,8 +96,11 @@ sub new {
     }
 
     $self->{mech} =
-        WWW::Mechanize->new(cookie_jar => {}, onerror => \&Carp::carp,
-        stack_depth => 1);
+        WWW::Mechanize->new(
+            cookie_jar => {},
+            onerror => \&Carp::carp,
+            stack_depth => 1
+        );
     $self->{mech}->agent("$agent/$VERSION");
     $self->{host}                     = 'en.wikipedia.org';
     $self->{path}                     = 'w';
@@ -127,93 +130,6 @@ sub set_highlimits {
     my $highlimits = shift;
     unless (defined($highlimits)) { $highlimits = 1 }
     $self->{highlimits} = 1;
-}
-
-sub _get {
-    my $self      = shift;
-    my $page      = shift;
-    my $action    = shift || 'view';
-    my $extra     = shift;
-    my $no_escape = shift || 0;
-
-    $page = uri_escape_utf8($page) unless $no_escape;
-
-    my $url =
-"$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page&action=$action";
-    $url .= $extra if $extra;
-    print "Retrieving $url\n" if $self->{debug};
-    my $res = $self->{mech}->get($url);
-    if (ref($res) eq 'HTTP::Response' && $res->is_success()) {
-        if ($res->decoded_content =~
-m/The action you have requested is limited to users in the group (.+)\./
-            )
-        {
-            my $group = $1;
-            $group =~ s/<.+?>//g;
-            $self->{errstr} =
-qq/Error requesting $page: You must be in the user group "$group"/;
-            carp $self->{errstr} if $self->{debug};
-            return 1;
-        }
-        else {
-            return $res;
-        }
-    }
-    else {
-        $self->{errstr} = "Error requesting $page: " . $res->status_line();
-        carp $self->{errstr} if $self->{debug};
-        return 1;
-    }
-}
-
-sub _get_api {
-    my $self  = shift;
-    my $query = shift;
-    print
-"Retrieving $self->{protocol}://$self->{host}/$self->{path}/api.php?$query\n"
-        if $self->{debug};
-    my $res =
-        $self->{mech}
-        ->get("$self->{protocol}://$self->{host}/$self->{path}/api.php?$query");
-    if (ref($res) eq 'HTTP::Response' && $res->is_success()) {
-        return $res;
-    }
-    else {
-        $self->{errstr} =
-            "Error requesting api.php?$query: " . $res->status_line();
-        carp $self->{errstr} if $self->{debug};
-        return 1;
-    }
-}
-
-sub _put {
-    my $self    = shift;
-    my $page    = shift;
-    my $options = shift;
-    my $extra   = shift;
-    my $type    = shift;
-    my $res     = $self->_get($page, 'edit', $extra);
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
-    if (($res->decoded_content) =~ m/<textarea .+?readonly="readonly"/) {
-        $self->{errstr} = "Error editing $page: Page is protected";
-        carp $self->{errstr} if $self->{debug};
-        return 1;
-    }
-    elsif (($res->decoded_content) =~ m/The specified assertion \(.+?\) failed/)
-    {
-        $self->{errstr} = "Error editing $page: Assertion failed";
-        return 2;
-    }
-    elsif (($res->decoded_content) !~ /class=\"diff-lineno\">/
-        and $type eq 'undo')
-    {
-        $self->{errstr} = "Error editing $page: Undo failed";
-        return 3;
-    }
-    else {
-        $res = $self->{mech}->submit_form(%{$options});
-        return $res;
-    }
 }
 
 =item set_wiki([$wiki_host[,$wiki_path]])
@@ -1542,6 +1458,94 @@ sub get_allusers {
     }
     return @return;
 }
+
+sub _get {
+    my $self      = shift;
+    my $page      = shift;
+    my $action    = shift || 'view';
+    my $extra     = shift;
+    my $no_escape = shift || 0;
+
+    $page = uri_escape_utf8($page) unless $no_escape;
+
+    my $url =
+"$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page&action=$action";
+    $url .= $extra if $extra;
+    print "Retrieving $url\n" if $self->{debug};
+    my $res = $self->{mech}->get($url);
+    if (ref($res) eq 'HTTP::Response' && $res->is_success()) {
+        if ($res->decoded_content =~
+m/The action you have requested is limited to users in the group (.+)\./
+            )
+        {
+            my $group = $1;
+            $group =~ s/<.+?>//g;
+            $self->{errstr} =
+qq/Error requesting $page: You must be in the user group "$group"/;
+            carp $self->{errstr} if $self->{debug};
+            return 1;
+        }
+        else {
+            return $res;
+        }
+    }
+    else {
+        $self->{errstr} = "Error requesting $page: " . $res->status_line();
+        carp $self->{errstr} if $self->{debug};
+        return 1;
+    }
+}
+
+sub _get_api {
+    my $self  = shift;
+    my $query = shift;
+    print
+"Retrieving $self->{protocol}://$self->{host}/$self->{path}/api.php?$query\n"
+        if $self->{debug};
+    my $res =
+        $self->{mech}
+        ->get("$self->{protocol}://$self->{host}/$self->{path}/api.php?$query");
+    if (ref($res) eq 'HTTP::Response' && $res->is_success()) {
+        return $res;
+    }
+    else {
+        $self->{errstr} =
+            "Error requesting api.php?$query: " . $res->status_line();
+        carp $self->{errstr} if $self->{debug};
+        return 1;
+    }
+}
+
+sub _put {
+    my $self    = shift;
+    my $page    = shift;
+    my $options = shift;
+    my $extra   = shift;
+    my $type    = shift;
+    my $res     = $self->_get($page, 'edit', $extra);
+    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return; }
+    if (($res->decoded_content) =~ m/<textarea .+?readonly="readonly"/) {
+        $self->{errstr} = "Error editing $page: Page is protected";
+        carp $self->{errstr} if $self->{debug};
+        return 1;
+    }
+    elsif (($res->decoded_content) =~ m/The specified assertion \(.+?\) failed/)
+    {
+        $self->{errstr} = "Error editing $page: Assertion failed";
+        return 2;
+    }
+    elsif (($res->decoded_content) !~ m/class=\"diff-lineno\">/
+        and $type eq 'undo')
+    {
+        $self->{errstr} = "Error editing $page: Undo failed";
+        return 3;
+    }
+    else {
+        $res = $self->{mech}->submit_form(%{$options});
+        return $res;
+    }
+}
+
 
 1;
 
