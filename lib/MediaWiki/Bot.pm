@@ -666,7 +666,7 @@ sub what_links_here {
 
     my $res = $self->_get(
         'Special:Whatlinkshere', 'view',
-        "&target=$article&limit=5000"
+        "&target=$article&limit=5000&uselang=en"
     );
     if (!$res) {
         carp 'Error code: ' . $self->{api}->{error}->{code};
@@ -757,7 +757,7 @@ sub linksearch {
     my $link = shift;
     my @links;
     my $res =
-        $self->_get("Special:Linksearch", "edit", "&target=$link&limit=500");
+        $self->_get("Special:Linksearch", "edit", "&target=$link&limit=500&uselang=en");
     unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
     my $content = $res->decoded_content;
     while ($content =~
@@ -859,7 +859,7 @@ sub test_blocked {
     my $self = shift;
     my $user = shift;
 
-    my $res = $self->_get("Special%3AIpblocklist&ip=$user", "", "", 1);
+    my $res = $self->_get("Special%3AIpblocklist&ip=$user&uselang=en", "", "", 1);
     if ($res->decoded_content =~ /not blocked/i) {
         return 0;
     }
@@ -1346,7 +1346,7 @@ sub test_block_hist {
     my $user = shift;
 
     $user =~ s/User://i;
-    my $res = $self->_get("Special:Log&type=block&page=User:$user", "", "", 1);
+    my $res = $self->_get("Special:Log&type=block&page=User:$user&uselang=en", "", "", 1);
     if (!$res) {
         carp "Error code: " . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
@@ -1399,7 +1399,7 @@ sub undelete {
     my $self    = shift;
     my $page    = shift;
     my $summary = shift;
-    my $res     = $self->_get("Special:Undelete", "", "&target=$page");
+    my $res     = $self->_get("Special:Undelete", "", "&target=$page&uselang=en");
     if (!$res) {
         carp "Error code: " . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
