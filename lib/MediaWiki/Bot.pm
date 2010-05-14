@@ -848,13 +848,13 @@ sub links_to_image {
     return @list;
 }
 
-=item test_blocked($user)
+=item is_blocked($user)
 
 Checks if a user is currently blocked.
 
 =cut
 
-sub test_blocked {
+sub is_blocked {
     my $self = shift;
     my $user = shift;
 
@@ -886,6 +886,10 @@ sub test_blocked {
             # UNPOSSIBLE!
         }
     }
+}
+
+sub test_blocked { # For backwards-compatibility
+    return (is_blocked(@_));
 }
 
 =item test_image_exists($page)
@@ -1355,30 +1359,51 @@ sub get_users {
     return @return;
 }
 
-=item test_block_hist($user)
+=item was_blocked($user)
 
 Returns 1 if $user has ever been blocked.
 
 =cut
 
-sub test_block_hist {
+sub was_blocked {
     my $self = shift;
     my $user = shift;
+    $user =~ s/User://i; # Strip User: prefix, if present
 
-    $user =~ s/User://i;
-    my $res = $self->_get("Special:Log&type=block&page=User:$user&uselang=en", "", "", 1);
+    # example query
+    my $hash = {
+        action  => 'query',
+        list    => 'logevents',
+        letype  => 'block',
+        letitle => "User:$user", # Ensure the User: prefix is there!
+        lelimit => 1,
+        leprop  => 'ids',
+    };
+
+    my $res = $self->{api}->api($hash);
     if (!$res) {
         carp "Error code: " . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
     }
-    if ($res->decoded_content =~ /no matching/i) {
-        return 0;
-    }
     else {
-        return 1;
+        my $number = scalar @{$res->{'query'}->{'logevents'}}; # The number of blocks returned
+
+        if ($number >= 1) {
+            return 1;
+        }
+        elsif ($number == 0) {
+            return 0;
+        }
+        else {
+            # UNPOSSIBLE!
+        }
     }
+}
+
+sub test_block_hist { # Backwards compatibility
+    return (was_blocked(@_));
 }
 
 =item expandtemplates($page[, $text])

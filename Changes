@@ -6,10 +6,11 @@ Vers. Rel.Mgr. SVN  Date
 2.3.1 UNRELEASED
     Changes made since 2.3.0
         * Codebase underwent spring cleaning.
-        * Default useragent now includes a version number
+        * Default useragent now includes the version number.
         * Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.
-        * Crypt::SSLeay is now correctly listed as a prerequisite
-        * test_blocked() now uses the API.
+        * Crypt::SSLeay is now correctly listed as a prerequisite,
+        * is_blocked() replaces test_blocked(), and now uses the API. test_blocked() remains for backwards compatibility,
+        * was_blocked() replaces test_block_hist(), and now uses the API. test_block_hist() remains for backwards compatibility.
         * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
 
 2.3.0 DCOLLINS r206 June 23 2009
