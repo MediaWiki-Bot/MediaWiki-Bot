@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 #########################
 
@@ -21,5 +21,11 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my $result = $wikipedia->test_block_hist("User:Jimbo Wales");
-is($result, 1, "block history");
+# Jimbo is almost certainly not blocked right now
+my $result = $wikipedia->is_blocked("User:Jimbo Wales");
+is($result, 0, "current blocks");
+
+# A random old account I chose - it will probably be blocked forever
+# (del/undel) 23:44, 31 December 2006 Agathoclea (talk | contribs | block) blocked Deathtonoobs (talk | contribs) with an expiry time of indefinite (vandalism only - offensive username) (unblock | change block)
+$result = $wikipedia->is_blocked("User:Deathtonoobs");
+is($result, 1, "current blocks");

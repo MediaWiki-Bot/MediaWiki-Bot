@@ -888,6 +888,12 @@ sub is_blocked {
     }
 }
 
+=item test_blocked($user)
+
+Retained for backwards compatibility. User is_blocked($user) for clarity.
+
+=cut
+
 sub test_blocked { # For backwards-compatibility
     return (is_blocked(@_));
 }
@@ -1390,7 +1396,7 @@ sub was_blocked {
     else {
         my $number = scalar @{$res->{'query'}->{'logevents'}}; # The number of blocks returned
 
-        if ($number >= 1) {
+        if ($number == 1) {
             return 1;
         }
         elsif ($number == 0) {
@@ -1401,6 +1407,12 @@ sub was_blocked {
         }
     }
 }
+
+=item test_block_hist($user)
+
+Retained for backwards compatibility. Use was_blocked($user) for clarity.
+
+=cut
 
 sub test_block_hist { # Backwards compatibility
     return (was_blocked(@_));
