@@ -765,8 +765,7 @@ sub linksearch {
     {
         push(@links, { link => $1, page => $2 });
     }
-    while (my $res =
-           $self->{mech}->follow_link(text => 'next 500')
+    while (my $res = $self->{mech}->follow_link(text => 'next 500')
         && ref($res) eq 'HTTP::Response'
         && $res->is_success)
     {
@@ -859,12 +858,33 @@ sub test_blocked {
     my $self = shift;
     my $user = shift;
 
-    my $res = $self->_get("Special%3AIpblocklist&ip=$user&uselang=en", "", "", 1);
-    if ($res->decoded_content =~ /not blocked/i) {
-        return 0;
+    # http://en.wikipedia.org/w/api.php?action=query&meta=blocks&bkusers=$user&bklimit=1&bkprop=id
+    my $hash = {
+        action  => 'query',
+        list    => 'blocks',
+        bkusers => $user,
+        bklimit => 1,
+        bkprop  => 'id',
+    };
+    my $res = $self->{api}->api($hash);
+    if (!$res) {
+        carp "Error code: " . $self->{api}->{error}->{code};
+        carp $self->{api}->{error}->{details};
+        $self->{error} = $self->{api}->{error};
+        return $self->{error}->{code};
     }
     else {
-        return 1;
+        my $number = scalar @{$res->{query}->{"blocks"}}; # The number of blocks returned
+
+        if ($number == 1) {
+            return 1;
+        }
+        elsif ($number == 0) {
+            return 0;
+        }
+        else {
+            # UNPOSSIBLE!
+        }
     }
 }
 
