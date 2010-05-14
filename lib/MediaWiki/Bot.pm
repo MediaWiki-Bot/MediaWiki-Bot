@@ -1411,38 +1411,42 @@ sub expandtemplates {
 
 =item undelete($page, $summary)
 
-Undeletes $page with $summary.
+Undeletes $page with $summary. If you omit $summary, a generic one will be used.
 
 =cut
 
 sub undelete {
     my $self    = shift;
     my $page    = shift;
-    my $summary = shift;
-    my $res     = $self->_get("Special:Undelete", "", "&target=$page&uselang=en");
-    if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
-    }
-    if ($res->decoded_content =~ /There is no revision history for this page/i)
-    {
-        return 1;
-    }
-    my $options = {
-        fields => {
-            wpComment => $summary,
-        },
+    my $summary = shift || 'Bot: undeleting page by request';
+
+    # http://meta.wikimedia.org/w/api.php?action=query&list=deletedrevs&titles=User:Mike.lifeguard/sandbox&drprop=token&drlimit=1
+    my $tokenhash = {
+        action  => 'query',
+        list    => 'deletedrevs',
+        titles  => $page,
+        drlimit => 1,
+        drprop  => 'token',
     };
-    $res = $self->{mech}->submit_form(%{$options}, button => "restore");
+    my $token_results = $self->{api}->api($tokenhash);
+    my $token = $token_results->{'query'}->{'deletedrevs'}->[0]->{'token'};
+
+    my $hash = {
+        action  => 'undelete',
+        title   => $page,
+        reason  => $summary,
+        token   => $token,
+    };
+    my $res = $self->{api}->api($hash);
     if (!$res) {
         carp "Error code: " . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
     }
-    return $res;
+    else {
+        return $res;
+    }
 }
 
 =item get_allusers($limit)
