@@ -1,4 +1,5 @@
 Revision history for MediaWiki::Bot
+===================================
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
@@ -8,6 +9,8 @@ Vers. Rel.Mgr. SVN  Date
         * Default useragent now includes a version number
         * Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.
         * Crypt::SSLeay is now correctly listed as a prerequisite
+        * test_blocked() now uses the API.
+        * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
