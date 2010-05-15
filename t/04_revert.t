@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 1;
 
 #########################
@@ -13,12 +15,11 @@ use Test::More tests => 1;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-$wikipedia=MediaWiki::Bot->new;
-
-$wikipedia->set_wiki("localhost","wiki");
+my $bot = MediaWiki::Bot->new();
+$bot->set_wiki('localhost', 'wiki');
 
 SKIP: {
-    skip("Skipping revert() for now",1);
-    my $res = $wikipedia->revert("MediaWiki::Bot test","MediaWiki::Bot tests","revid");
-    ok( $res->isa("HTTP::Response") );
+    skip('Skipping revert() for now', 1);
+    my $res = $bot->revert('MediaWiki::Bot test', 'MediaWiki::Bot tests', 'revid');
+    ok($res->isa('HTTP::Response'));
 }

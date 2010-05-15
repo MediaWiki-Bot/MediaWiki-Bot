@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 1;
 
 #########################
@@ -14,22 +16,21 @@ use Test::More tests => 1;
 
 use MediaWiki::Bot;
 
-$wikipedia=MediaWiki::Bot->new;
-
-#$wikipedia->set_wiki( "wiki.xyrael.net","w" );
+my $bot = MediaWiki::Bot->new();
+#$bot->set_wiki( "wiki.xyrael.net","w" );
 
 my $rand = rand();
-my $status = $wikipedia->edit("User:ST47/test",$rand,"MediaWiki::Bot tests");
+my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests');
 #eval { use Data::Dumper; print STDERR Dumper($status); };
 #if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
 SKIP: {
-    if ($status==3 and $wikipedia->{error}->{code}==3) {
-        skip "You are blocked, cannot use editing tests", 1;
+    if ($status == 3 and $bot->{error}->{code} == 3) {
+        skip 'You are blocked, cannot use editing tests', 1;
     }
     #ok( $status->isa("HTTP::Response") );
 
     sleep 1;
-    my $text = $wikipedia->get_text("User:ST47/test");
+    my $text = $bot->get_text('User:ST47/test');
     $text =~ s/\n//;
     is($text,$rand);
 }

@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 1;
 
 #########################
@@ -13,8 +15,7 @@ use Test::More tests => 1;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-$wikipedia=MediaWiki::Bot->new;
+my $bot = MediaWiki::Bot->new();
 
-@history = $wikipedia->get_history("User:Shadow1/perlwikipedia/Check",1);
-
-is($history[0]->{comment},"Perlwikipedia tests");
+my @history = $bot->get_history('User:Shadow1/perlwikipedia/Check', 1);
+is($history[0]->{comment}, 'Perlwikipedia tests');

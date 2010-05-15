@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 2;
 
 #########################
@@ -13,7 +15,7 @@ use Test::More tests => 2;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-$wikipedia=MediaWiki::Bot->new ("STWP");
+my $bot = MediaWiki::Bot->new ('STWP');
 
-is( $wikipedia->login("Perlwikipedia testing",'test'), 0 );
-ok( $wikipedia->_get("Main Page")->decoded_content=~/Perlwikipedia.testing/, "Login propagation");
+is($bot->login('Perlwikipedia testing','test'), 0);
+ok($bot->_get('Main Page')->decoded_content=~/Perlwikipedia.testing/, 'Login propagation');

@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 1;
 
 #########################
@@ -13,14 +15,14 @@ use Test::More tests => 1;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-$wikipedia=MediaWiki::Bot->new("make test");
-$article="WMIZ";
+my $bot = MediaWiki::Bot->new('make test');
+my $article = 'WMIZ';
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-    $article="Main Page" unless ($ENV{'PWPMakeTestSetWikiHost'}.$ENV{'PWPMakeTestSetWikiDir'} eq 'en.wikipedia.orgw');
+    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $article = 'Main Page' unless ($ENV{'PWPMakeTestSetWikiHost'}.$ENV{'PWPMakeTestSetWikiDir'} eq 'en.wikipedia.orgw');
 }
 
-my @links = $wikipedia->what_links_here($article);
+my @links = $bot->what_links_here($article);
 
-ok( defined $links[0]->{title} );
+ok(defined $links[0]->{title});

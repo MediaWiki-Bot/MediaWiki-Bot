@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 5;
 
 #########################
@@ -13,30 +15,30 @@ use Test::More tests => 5;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 SKIP: {
-skip("wiki.xyrael.net is down",5);
+    skip('wiki.xyrael.net is down', 5);
 
-$wikipedia=MediaWiki::Bot->new("make test");
-$wikipedia->set_wiki('wiki.xyrael.net', 'w');
+    my $bot = MediaWiki::Bot->new('make test');
+    $bot->set_wiki('wiki.xyrael.net', 'w');
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
+    if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
+        $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    }
 
-my @pages = $wikipedia->get_all_pages_in_category("Category:MediaWiki::Bot test nest2");
+    my @pages = $bot->get_all_pages_in_category('Category:MediaWiki::Bot test nest2');
 
-ok( defined $pages[0], "Get small category" );
+    ok(defined $pages[0], 'Get small category');
 
-#This tests categories with more than one page.
-$wikipedia->set_wiki('en.wikipedia.org', 'w');
-@pages = $wikipedia->get_all_pages_in_category("Category:Wikipedia external links cleanup");
+    #This tests categories with more than one page.
+    $bot->set_wiki('en.wikipedia.org', 'w');
+    @pages = $bot->get_all_pages_in_category('Category:Wikipedia external links cleanup');
 
-ok( defined $pages[0], "Get big category" );
-cmp_ok ( scalar(@pages), ">", 500, "Get big category, enough elements");
+    ok(defined $pages[0], 'Get big category');
+    cmp_ok(scalar(@pages), '>', 500, 'Get big category, enough elements');
 
-$wikipedia->set_wiki('wiki.xyrael.net', 'w');
-@pages = $wikipedia->get_all_pages_in_category("Category:MediaWiki::Bot test nest1");
-is ( scalar(@pages), 3, "Nested categories, one level");
+    $bot->set_wiki('wiki.xyrael.net', 'w');
+    @pages = $bot->get_all_pages_in_category('Category:MediaWiki::Bot test nest1');
+    is(scalar(@pages), 3, 'Nested categories, one level');
 
-@pages = $wikipedia->get_all_pages_in_category("Category:MediaWiki::Bot test");
-is ( scalar(@pages), 5, "Nested categories, two levels");
+    @pages = $bot->get_all_pages_in_category('Category:MediaWiki::Bot test');
+    is (scalar(@pages), 5, 'Nested categories, two levels');
 }

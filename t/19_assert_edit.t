@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 1;
 
 #########################
@@ -14,10 +16,10 @@ use Test::More tests => 1;
 
 use MediaWiki::Bot;
 
-$wikipedia=MediaWiki::Bot->new("MediaWiki::Bot tests", "admin");
+my $bot = MediaWiki::Bot->new('MediaWiki::Bot tests', 'admin');
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
 SKIP: {
@@ -25,12 +27,12 @@ SKIP: {
 
     my $rand = rand();
     print STDERR "\rYou should receive another error message here regarding a failed assertion.\n";
-    my $status = $wikipedia->edit("User:ST47/test",$rand,"MediaWiki::Bot tests");
+    my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests');
 #   eval { use Data::Dumper; print STDERR Dumper($status); };
 #   if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
 #   ok( $status->isa("HTTP::Response") );
 
-    my $text = $wikipedia->get_text("User:ST47/test");
+    my $text = $bot->get_text('User:ST47/test');
     $text =~ s/\n//;
-    isnt($text,$rand,"Intentionally bad assertion");
+    isnt($text, $rand, 'Intentionally bad assertion');
 }

@@ -5,6 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
+use strict;
+use warnings;
 use Test::More tests => 1;
 
 #########################
@@ -13,12 +15,11 @@ use Test::More tests => 1;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-$wikipedia=MediaWiki::Bot->new;
+my $bot = MediaWiki::Bot->new();
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
+    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my %namespaces = $wikipedia->get_namespace_names;
-
-is( $namespaces{1}, "Talk" );
+my %namespaces = $bot->get_namespace_names;
+is($namespaces{1}, "Talk");
