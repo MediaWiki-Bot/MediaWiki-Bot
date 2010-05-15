@@ -596,14 +596,13 @@ sub get_last {
     my $editor   = shift;
 
     my $revertto = 0;
-    $pagename = uri_escape_utf8($pagename);
 
     my $res = $self->{api}->api(
         {
             action        => 'query',
             titles        => $pagename,
             prop          => 'revisions',
-            rvlimit       => 20,
+            rvlimit       => 1,
             rvprop        => 'ids|user',
             rvexcludeuser => $editor
         }
@@ -614,8 +613,10 @@ sub get_last {
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
     }
-    my ($id, $data) = %{ $res->{query}->{pages} };
-    return $data->{revisions}[0]->{revid};
+    else {
+        my ($id, $data) = %{ $res->{query}->{pages} };
+        return $data->{revisions}[0]->{revid};
+    }
 }
 
 =item update_rc([$limit])
