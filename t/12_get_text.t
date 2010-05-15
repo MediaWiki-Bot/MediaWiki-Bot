@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 #########################
 
@@ -21,13 +21,17 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $wikipedia->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my $result = $wikipedia->get_text("Main Page");
-like( $result, qr/Main Page/, "Main Page found" );
+my ($length, $wikitext) = $wikipedia->get_text('Main Page');
+like($wikitext, qr/Main Page/, 'Main Page found');
+is($length, length($wikitext), 'Length of wikitext is accurate');
+($length, $wikitext) = $wikipedia->get_text('User:Mike.lifeguard/12 get text.t');
+is($length, 60, 'Length of wikitext is accurate');
 
-$result = $wikipedia->get_text("God");
-my $resultsection = $wikipedia->get_text("God", '', 3);
-isnt($resultsection, 2, "Section load pass/fail");
-isnt(length($result), length($resultsection), "Section loaded content correct");
+($length, $wikitext) = $wikipedia->get_text('God');
+my ($section_length, $section_wikitext) = $wikipedia->get_text('God', '', 3);
+isnt($section_length, -1, 'Section load pass/fail');
+isnt($wikitext, $section_wikitext, 'Section loaded content correctly');
 
-$result = $wikipedia->get_text("egaP niaM");
-is( $result, 2, "No page found" );
+($length, $wikitext) = $wikipedia->get_text('egaP niaM');
+is($length, -1, 'No page found');
+

@@ -7,7 +7,6 @@ use HTML::Entities;
 use URI::Escape;
 use XML::Simple;
 use Carp;
-use Encode;
 use URI::Escape qw(uri_escape_utf8);
 use MediaWiki::API;
 
@@ -342,7 +341,7 @@ sub get_history {
         my $user  = $hash->{user};
         my ($timestamp_date, $timestamp_time) = split(/T/, $hash->{timestamp});
         $timestamp_time =~ s/Z$//;
-        my $comment = $hash->{comment};
+        my $comment =$hash->{comment};
         push(
             @return,
             {
@@ -359,17 +358,19 @@ sub get_history {
 
 =item get_text($pagename,[$revid,$section_number])
 
-Returns the wikitext of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. Returns 2 if page does not exist.
+Returns an array of the wikitext of the specified page and the length of that wikitext (in chars, not bytes). If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. A negative length means the page doesn't exist (0 means the page is blank).
+
+    my ($l, $wikitext) = $bot->get_text('Page title');
+    print "Length: $l\n";
+    print "Wikitext: $wikitext\n";
 
 =cut
 
 sub get_text {
     my $self       = shift;
     my $pagename   = shift;
-    my $revid      = shift || '';
-    my $section    = shift || '';
-    my $recurse    = shift || 0;
-    my $dontescape = shift || 0;
+    my $revid      = shift;
+    my $section    = shift;
 
     my $hash = {
         action => 'query',
@@ -388,12 +389,16 @@ sub get_text {
         $self->{error} = $self->{api}->{error};
         return $self->{error}->{code};
     }
-    my ($id, $data) = %{ $res->{query}->{pages} };
-
-    if ($id == -1) { return 2 }
-
-    my $wikitext = $data->{revisions}[0]->{'*'};
-    return $wikitext;
+    else {
+        my ($id, $data) = %{ $res->{query}->{pages} };
+        if ($id == -1) { # Page doesn't exist
+            return (-1, undef);
+        }
+        else { # Page exists
+            my $wikitext = $data->{revisions}[0]->{'*'};
+            return (length($wikitext), $wikitext);
+        }
+    }
 }
 
 =item get_id($pagename)
