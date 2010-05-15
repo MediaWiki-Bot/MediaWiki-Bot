@@ -358,11 +358,10 @@ sub get_history {
 
 =item get_text($pagename,[$revid,$section_number])
 
-Returns an array of the wikitext of the specified page and the length of that wikitext (in chars, not bytes). If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. A negative length means the page doesn't exist (0 means the page is blank).
+Returns an the wikitext of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. A blank page will return wikitext of "" (which evaluates to false in Perl, but is defined); a nonexistent page will return undef (which also evaluates to false in Perl, but is obviously undefined). You can distinguish between blank and nonexistent by using defined():
 
-    my ($l, $wikitext) = $bot->get_text('Page title');
-    print "Length: $l\n";
-    print "Wikitext: $wikitext\n";
+    my $wikitext = $bot->get_text('Page title');
+    print "Wikitext: $wikitext\n" if defined $wikitext;
 
 =cut
 
@@ -392,11 +391,11 @@ sub get_text {
     else {
         my ($id, $data) = %{ $res->{query}->{pages} };
         if ($id == -1) { # Page doesn't exist
-            return (-1, undef);
+            return undef;
         }
         else { # Page exists
             my $wikitext = $data->{revisions}[0]->{'*'};
-            return (length($wikitext), $wikitext);
+            return $wikitext;
         }
     }
 }

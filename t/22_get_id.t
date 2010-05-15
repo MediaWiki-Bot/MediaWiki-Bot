@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 3;
+use Test::More tests => 2;
 
 #########################
 
@@ -24,6 +24,5 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 my $result = $wikipedia->get_id('Main Page');
 is($result, 15580374, 'Main Page found');
 
-(my $length, $result) = $wikipedia->get_text('egaP niaM');
-is($length, -1, 'No page found');
+$result = $wikipedia->get_text('egaP niaM');
 is($result, undef, 'No page found');

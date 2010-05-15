@@ -23,10 +23,10 @@ my $editor = MediaWiki::Bot->new;
 #}
 
 my $string = 'éółŽć';
-my ($length, $load) = $editor->get_text('User:ST47/unicode1');
+my $load = $editor->get_text('User:ST47/unicode1');
 is($load, $string, 'Is our string the same as what we load?');
 
-($length, my $old) = $editor->get_text('User:ST47/unicode2');
+my $old = $editor->get_text('User:ST47/unicode2');
 my $rand = rand();
 my $status = $editor->edit('User:ST47/unicode2', "$rand\n$string\n", 'PWP test');
 SKIP: {
@@ -41,11 +41,11 @@ SKIP: {
     sleep 1;
     $editor->edit('User:ST47/éółŽć', "$rand3\n$load\n", 'PWP test');
     sleep 1;
-    my ($length, $new) = $editor->get_text('User:ST47/unicode2');
+    my $new = $editor->get_text('User:ST47/unicode2');
     isnt($new, $old, 'Successfully saved test string');             # new from 42; old from 29
     is($new, "$rand\n$string", 'Loaded correct data');              # new from 42; compare against save from 31
-    ($length, $new) = $editor->get_text('User:ST47/unicode3');
+    $new = $editor->get_text('User:ST47/unicode3');
     is($new, "$rand2\n$string", 'Saved data from load correctly');  # new from 42; compare against save from 37
-    ($length, $new) = $editor->get_text('User:ST47/éółŽć');
+    $new = $editor->get_text('User:ST47/éółŽć');
     is($new, "$rand3\n$string", 'Saved data from load correctly to page with unicode title');
 }

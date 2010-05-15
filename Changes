@@ -12,8 +12,8 @@ Vers. Rel.Mgr. SVN  Date
         * is_blocked() replaces test_blocked(), and now uses the API. test_blocked() remains for backwards compatibility,
         * was_blocked() replaces test_block_hist(), and now uses the API. test_block_hist() remains for backwards compatibility.
         * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
-        * BREAKING CHANGE: get_text() now returns an array consisting of the length (in chars, not bytes) of the page's wikitext, and the wikitext
-          itself (UTF8-encoded, as mentioned above). Nonexistent pages have a length of -1, and their text is undefined.
+        * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
+          These both evaluate to false; you can differentiate between them with defined().
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
