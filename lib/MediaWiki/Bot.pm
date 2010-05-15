@@ -432,26 +432,9 @@ sub get_id {
 
 =item get_pages(@pages)
 
-Returns the text of the specified pages in a hashref. Content of '2' means page does not exist.
-Also handles redirects or article names that use namespace aliases
+Returns the text of the specified pages in a hashref. Content of undef means page does not exist. Also handles redirects or article names that use namespace aliases.
 
 =cut
-
-sub _get_one_page { # Internal use
-    my ($self, $title) = @_;
-    my $hash = {
-        action => 'query',
-        prop   => 'revisions',
-        rvprop => 'content',
-    };
-
-    my $mw_temp = MediaWiki::API->new();
-    $mw_temp->{config}->{api_url} = $self->{api}->{config}->{api_url};
-    $hash->{titles} = $title;
-    my $res_temp = $mw_temp->api($hash);
-    my ($k, $v) = each %{ $res_temp->{query}->{pages} };
-    return $v;
-}
 
 sub get_pages {
     my $self  = shift;
@@ -467,6 +450,7 @@ sub get_pages {
 
     my $diff;    # Used to track problematic article names
     map { $diff->{$_} = 1; } @pages;
+
     my $res = $self->{api}->api($hash);
     if (!$res) {
         carp 'Error code: ' . $self->{api}->{error}->{code};
@@ -475,62 +459,58 @@ sub get_pages {
         return $self->{error}->{code};
     }
 
-    # Need to add shift @pages before each next , and
     foreach my $id (keys %{ $res->{query}->{pages} }) {
-        my $page = $res->{query}->{pages}->{$id};
-        if ($diff->{ $page->{title} }) {
-            $diff->{ $page->{title} }++;
+        my $page = $res->{'query'}->{'pages'}->{$id};
+        if ($diff->{ $page->{'title'} }) {
+            $diff->{ $page->{'title'} }++;
         }
         else {
             next;
         }
 
-        if (defined($page->{missing})) {
-            $return{ $page->{title} } = 2;
+        if (defined($page->{'missing'})) {
+            $return{ $page->{'title'} } = undef;
             next;
         }
-        if (defined($page->{revisions})) {
-            my $revisions = @{ $page->{revisions} }[0]->{'*'};
+        if (defined($page->{'revisions'})) {
+            my $revisions = @{ $page->{'revisions'} }[0]->{'*'};
             if (!defined $revisions) {
-                $return{ $page->{title} } = $revisions;
+                $return{ $page->{'title'} } = $revisions;
             }
-            elsif (length($revisions) < 150
-                && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/)
-            {
+            elsif (length($revisions) < 150 && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) { # FRAGILE!
                 my $redirect_to = $1;
-                $redirect_to =~ s/\s/_/g;
-                my $v = $self->_get_one_page($redirect_to);
-                $return{ $page->{title} } = @{ $v->{revisions} }[0]->{'*'};
+                print "DEBUG: $redirect_to\n" and die;
+                $return{ $page->{'title'} } = $self->get_text($redirect_to);
             }
             else {
-                $return{ $page->{title} } = $revisions;
+                $return{ $page->{'title'} } = $revisions;
             }
         }
     }
 
-# Based on api.php?action=query&meta=siteinfo&siprop=namespaces|namespacealiases
+    # Based on api.php?action=query&meta=siteinfo&siprop=namespaces|namespacealiases
+    # Should be done on an as-needed basis! This is only correct for enwiki (and
+    # it is probably incomplete anyways, or will be eventually).
     my $expand = {
-        WP           => 'Wikipedia',
-        WT           => 'Wikipedia talk',
-        Image        => 'File',
+        'WP'         => 'Wikipedia',
+        'WT'         => 'Wikipedia talk',
+        'Image'      => 'File',
         'Image talk' => 'File talk',
     };
-    for my $title (keys %$diff) {
-
     # Only for those article names that remained after the first part
     # If we're here we are dealing most likely with a WP:CSD type of article name
+    for my $title (keys %$diff) {
         if ($diff->{$title} == 1) {
             my @pieces = split(/:/, $title);
             if (@pieces > 1) {
                 $pieces[0] = ($expand->{ $pieces[0] } || $pieces[0]);
-                my $v = $self->_get_one_page(join ':', @pieces);
-                print "Detected article name that needed expanding $title\n"
-                    if @{ $v->{revisions} }[0]->{'*'} && $self->{debug};
+                my $v = $self->get_text(join ':', @pieces);
+                print "Detected article name that needed expanding $title\n" if $self->{debug};
 
-                $return{$title} = @{ $v->{revisions} }[0]->{'*'};
-                if (@{ $v->{revisions} }[0]->{'*'} =~ m/\#REDIRECT\s\[\[([^\[\]]*)\]\]/) {
-                    $v = $self->_get_one_page($1);
-                    $return{$title} = @{ $v->{revisions} }[0]->{'*'};
+                $return{$title} = $v;
+                if ($v =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {
+                    $v = $self->get_text($1);
+                    $return{$title} = $v;
                 }
             }
         }
