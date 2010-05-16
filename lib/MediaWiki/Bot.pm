@@ -479,7 +479,6 @@ sub get_pages {
             }
             elsif (length($revisions) < 150 && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) { # FRAGILE!
                 my $redirect_to = $1;
-                print "DEBUG: $redirect_to\n" and die;
                 $return{ $page->{'title'} } = $self->get_text($redirect_to);
             }
             else {
