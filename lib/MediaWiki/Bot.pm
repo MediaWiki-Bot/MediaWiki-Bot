@@ -399,7 +399,10 @@ sub get_text {
 
 =item get_id($pagename)
 
-Returns the id of the specified page. Returns 2 if page does not exist.
+Returns the id of the specified page. Returns undef if page does not exist.
+
+    my $pageid = $bot->get_id("Main Page");
+    croak "Page doesn't exist\n" if !defined($pageid);
 
 =cut
 
@@ -422,9 +425,12 @@ sub get_id {
 
     my ($id, $data) = %{ $res->{query}->{pages} };
 
-    if ($id == -1) { return 2 }
-
-    return $id;
+    if ($id == -1) {
+        return undef;
+    }
+    else {
+        return $id;
+    }
 }
 
 =item get_pages(@pages)

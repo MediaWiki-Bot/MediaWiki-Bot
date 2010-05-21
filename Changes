@@ -13,7 +13,8 @@ Vers. Rel.Mgr. SVN  Date
         * was_blocked() replaces test_block_hist(), and now uses the API. test_block_hist() remains for backwards compatibility.
         * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
         * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
-          These both evaluate to false; you can differentiate between them with defined().
+          These both evaluate to false; you can differentiate between them with defined(). get_id() now returns undef instead of
+          2 when there is no pageid (page is nonexistent or title is invalid).
         * edit() now uses an md5 hash to ensure data integrity.
         * set_highlimits() can now be used to *not* use highlimits.
 
