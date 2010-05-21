@@ -120,14 +120,16 @@ sub new {
 
 =item set_highlimits([$flag])
 
-Tells MediaWiki::Bot to start using the APIHighLimits for certain queries.
+Tells MediaWiki::Bot to start/stop using the APIHighLimits for certain queries.
+
+    $bot->set_highlimits(1);
 
 =cut
 
 sub set_highlimits {
     my $self       = shift;
     my $highlimits = shift || 1;
-    $self->{highlimits} = 1;
+    $self->{highlimits} = $highlimits;
     return;
 }
 

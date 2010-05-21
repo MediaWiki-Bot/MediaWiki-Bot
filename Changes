@@ -15,6 +15,7 @@ Vers. Rel.Mgr. SVN  Date
         * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
           These both evaluate to false; you can differentiate between them with defined().
         * edit() now uses an md5 hash to ensure data integrity.
+        * set_highlimits() can now be used to *not* use highlimits.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
