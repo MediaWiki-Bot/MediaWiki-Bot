@@ -8,6 +8,8 @@ use URI::Escape;
 use XML::Simple;
 use Carp;
 use URI::Escape qw(uri_escape_utf8);
+use Digest::MD5 qw(md5_hex);
+use Encode qw(encode_utf8);
 use MediaWiki::API;
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
@@ -215,49 +217,42 @@ sub login {
     }
 }
 
-=item edit($pagename,$page_text,[$edit_summary],[$is_minor],[$assert])
+=item edit($pagename, $text[,$edit_summary,[$is_minor,[$assert[,$markasbot]]]])
 
-Edits the specified page $pagename and replaces it with $page_text with an edit summary of $edit_summary, optionally marking the edit as minor if specified, and adding an assertion, if requested. Assertions should be of the form "user".
+Edits the specified page $pagename and replaces it with $text. If provided, use an edit summary of $edit_summary, mark the edit as minor, or add an assertion. Assertions should be of the form "user". $markasbot allows bots to optionally not hide a given edit in RecentChanges. An MD5 hash is sent to guard against data corruption while in transit.
+
+    my $text = $bot->get_text('My page');
+    $text .= "\n\n* More text\n";
+    $bot->edit('My page', $text, 'Automated update', 1);
 
 =cut
 
 sub edit {
-    my $self     = shift;
-    my $page     = shift;
-    my $text     = shift;
-    my $summary  = shift;
-    my $is_minor = shift || 0;
-    my $assert   = shift || $self->{assert};
-    my $res;
+    my $self      = shift;
+    my $page      = shift;
+    my $text      = shift;
+    my $summary   = shift;
+    my $is_minor  = shift || 0;
+    my $assert    = shift || $self->{assert};
+    my $markasbot = shift || 1;
+    $assert       =~ s/\&?assert=// if $assert;
 
-    $assert =~ s/\&?assert=// if $assert;
-
-    $res = $self->{api}->api(
-        {
-            action  => 'query',
-            titles  => $page,
-            prop    => 'info|revisions',
-            intoken => 'edit'
-        }
-    );
-    my ($id, $data) = %{ $res->{query}->{pages} };
-    my $edittoken = $data->{edittoken};
-    my $lastedit  = $data->{revisions}[0]->{timestamp};
-
-    my $savehash = {
-        action        => 'edit',
-        title         => $page,
-        token         => $edittoken,
-        text          => $text,
-        summary       => $summary,
-        basetimestamp => $lastedit,
-        bot           => 1
+    my ($edittoken, $lastedit) = $self->_get_edittoken($page);
+    my $hash = {
+        action          => 'edit',
+        title           => $page,
+        token           => $edittoken,
+        text            => $text,
+        md5             => md5_hex(encode_utf8($text)), # Guard against data corruption
+                                                        # Pass only bytes to md5_hex()
+        summary         => $summary,
+        basetimestamp   => $lastedit, # Guard against edit conflicts
+        bot             => $markasbot,
+        assert          => $assert,
+        minor           => $is_minor,
     };
 
-    $savehash->{assert} = $assert   if ($assert);
-    $savehash->{minor}  = $is_minor if ($is_minor);
-
-    $res = $self->{api}->api($savehash);
+    my $res = $self->{api}->api($hash);
     if (!$res) {
         carp 'Error code: ' . $self->{api}->{error}->{code};
         carp $self->{api}->{error}->{details};
@@ -1588,6 +1583,23 @@ sub _put {
     }
 }
 
+sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimestamp)
+    my $self = shift;
+    my $page = shift;
+
+    my $hash = {
+        action  => 'query',
+        titles  => $page,
+        prop    => 'info|revisions',
+        intoken => 'edit'
+    };
+    my $res = $self->{api}->api($hash);
+    my ($id, $data) = %{ $res->{query}->{pages} };
+    my $edittoken = $data->{'edittoken'};
+    my $tokentimestamp = $data->{'starttimestamp'};
+    my $basetimestamp = $data->{'revisions'}[0]->{'timestamp'};
+    return ($edittoken, $basetimestamp, $tokentimestamp);
+}
 
 1;
 

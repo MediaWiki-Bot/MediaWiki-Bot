@@ -14,6 +14,7 @@ Vers. Rel.Mgr. SVN  Date
         * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
         * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
           These both evaluate to false; you can differentiate between them with defined().
+        * edit() now uses an md5 hash to ensure data integrity.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3

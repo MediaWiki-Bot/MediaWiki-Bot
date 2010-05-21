@@ -1,10 +1,11 @@
-MediaWiki::Bot version 1.3
-==========================
+MediaWiki::Bot version 2.3.1
+============================
 
 This is MediaWiki::Bot, a Perl module designed to interface with the
 online encyclopedia Wikipedia, and other MediaWiki-powered sites.
 
 INSTALLATION
+------------
 
 To install this module type the following:
 
@@ -19,20 +20,25 @@ complete because you do not have access to wiki.xyrael.net, you can
 (probably) safely install the module anyway.
 
 DEPENDENCIES
+------------
 
 This module requires these other modules and libraries:
 
-WWW::Mechanize
-XML::Simple
-HTML::Entities
-URI::Escape
-Carp
-Encode
-MediaWiki::API
+ * WWW::Mechanize
+ * HTML::Entities
+ * URI::Escape
+ * XML::Simple
+ * Carp
+ * Encode
+ * MediaWiki::API
+ * Module::Pluggable
+ * Crypt::SSLeay
+ * Digest::MD5
 
 COPYRIGHT AND LICENCE
+---------------------
 
-Copyright (C) 2006, 2007 by the MediaWiki::Bot team
+Copyright (C) 2006, 2007, 2010 by the MediaWiki::Bot team.
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

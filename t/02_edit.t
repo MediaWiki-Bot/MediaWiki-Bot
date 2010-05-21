@@ -31,6 +31,6 @@ SKIP: {
 
     sleep 1;
     my $text = $bot->get_text('User:ST47/test');
-    $text =~ s/\n//;
+    $text =~ s/\n$//;
     is($text,$rand);
 }
