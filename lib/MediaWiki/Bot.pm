@@ -520,26 +520,23 @@ sub get_pages {
     return \%return;
 }
 
-=item revert($pagename,$edit_summary,$old_revision_id)
+=item revert($pagename, $revid[,$summary])
 
-Reverts the specified page to $old_revision_id, with an edit summary of $edit_summary.
+Reverts the specified page to $revid, with an edit summary of $summary. A default edit summary will be used if $summary is omitted.
+
+    $bot->revert('User:Mike.lifeguard', 1972950, 'rvv');
 
 =cut
 
 sub revert {
     my $self     = shift;
     my $pagename = shift;
-    my $summary  = shift;
     my $revid    = shift;
+    my $summary  = shift || "Reverting to old revision $revid";
 
-    return $self->_put(
-        $pagename,
-        {
-            form_name => 'editform',
-            fields    => { wpSummary => $summary, },
-        },
-        "&oldid=$revid"
-    );
+    my $text = $self->get_text($pagename, $revid);
+    my $res  = $self->edit($pagename, $text, $summary);
+    return $res;
 }
 
 =item undo($pagename,$edit_summary,$revision_id,$after)

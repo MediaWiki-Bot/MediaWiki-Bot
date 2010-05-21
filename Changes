@@ -17,6 +17,7 @@ Vers. Rel.Mgr. SVN  Date
           2 when there is no pageid (page is nonexistent or title is invalid).
         * edit() now uses an md5 hash to ensure data integrity.
         * set_highlimits() can now be used to *not* use highlimits.
+        * revert() now uses the API.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
