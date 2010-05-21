@@ -194,10 +194,7 @@ sub login {
         }
     );
     if (!$res) {
-        carp 'Error code: ' . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     my $result = $res->{login}->{result};
     if ($result eq 'NeedToken') {
@@ -211,10 +208,7 @@ sub login {
             }
         );
         if (!$res) {
-            carp 'Error code: ' . $self->{api}->{error}->{code};
-            carp $self->{api}->{error}->{details};
-            $self->{error} = $self->{api}->{error};
-            return $self->{error}->{code};
+            return $self->_handle_api_error();
         }
         $result = $res->{login}->{result};
     }
@@ -264,10 +258,7 @@ sub edit {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp 'Error code: ' . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code} if $self->{error}->{code} != 2;
+        return $self->_handle_api_error();
     }
     if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
         if ($self->{mech}->{agent}) {
@@ -333,10 +324,7 @@ sub get_history {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     my ($id) = keys %{ $res->{query}->{pages} };
     my $array = $res->{query}->{pages}->{$id}->{revisions};
@@ -387,10 +375,7 @@ sub get_text {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp 'Error code: ' . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     else {
         my ($id, $data) = %{ $res->{query}->{pages} };
@@ -424,14 +409,9 @@ sub get_id {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp 'Error code: ' . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
-
     my ($id, $data) = %{ $res->{query}->{pages} };
-
     if ($id == -1) {
         return undef;
     }
@@ -470,10 +450,7 @@ sub get_pages {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp 'Error code: ' . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
 
     foreach my $id (keys %{ $res->{query}->{pages} }) {
@@ -582,7 +559,7 @@ sub undo {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        return $self->_return_packaged_error();
+        return $self->_handle_api_error();
     }
     else {
         return $res;
@@ -616,7 +593,7 @@ sub get_last {
         }
     );
     if (!$res) {
-        return $self->_return_packaged_error();
+        return $self->_handle_api_error();
     }
     else {
         my ($id, $data) = %{ $res->{query}->{pages} };
@@ -723,10 +700,7 @@ sub get_pages_in_category {
         },
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     foreach (@{$res}) {
         push @return, $_->{title};
@@ -821,10 +795,7 @@ sub get_namespace_names {
         }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     foreach my $id (keys %{ $res->{query}->{namespaces} }) {
         $return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
@@ -879,10 +850,7 @@ sub is_blocked {
     };
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     else {
         my $number = scalar @{$res->{query}->{"blocks"}}; # The number of blocks returned
@@ -934,10 +902,7 @@ sub test_image_exists {
     #use Data::Dumper; print Dumper($hash);
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
 
     #use Data::Dumper; print Dumper($res);
@@ -994,10 +959,7 @@ sub delete_page {
         }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     return $res;
 }
@@ -1027,10 +989,7 @@ sub delete_old_image {
     $res = $self->{mech}->submit_form(%{$options});
 
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
 
     #use Data::Dumper;print Dumper($res);
@@ -1088,10 +1047,7 @@ sub block {
     $res                   = $self->{api}->api($hash);
 
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
 
     return $res;
@@ -1131,10 +1087,7 @@ sub unblock {
     };
     $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
 
     return $res;
@@ -1181,10 +1134,7 @@ sub protect {
     $hash->{'cascade'} = $cascade if ($cascade);
     $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
 
     return $res;
@@ -1226,10 +1176,7 @@ sub get_pages_in_namespace {
         { max => $max }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     foreach (@{$res}) {
         push @return, $_->{title};
@@ -1257,10 +1204,7 @@ sub count_contributions {
         { max => 1 }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     my $return = ${$res}[0]->{'editcount'};
 
@@ -1292,10 +1236,7 @@ sub last_active {
         { max => 1 }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     return ${$res}[0]->{'timestamp'};
 }
@@ -1319,10 +1260,7 @@ sub recent_edit_to_page {
         { max => 1 }
     );
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     my ($id, $data) = %{ $res->{query}->{pages} };
     return $data->{revisions}[0]->{timestamp};
@@ -1363,10 +1301,7 @@ sub get_users {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     my ($id) = keys %{ $res->{query}->{pages} };
     my $array = $res->{query}->{pages}->{$id}->{revisions};
@@ -1399,10 +1334,7 @@ sub was_blocked {
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     else {
         my $number = scalar @{$res->{'query'}->{'logevents'}}; # The number of blocks returned
@@ -1487,10 +1419,7 @@ sub undelete {
     };
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     else {
         return $res;
@@ -1633,12 +1562,12 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
     return ($edittoken, $basetimestamp, $tokentimestamp);
 }
 
-sub _return_packaged_error {
+sub _handle_api_error {
     my $self = shift;
     carp 'Error code: ' . $self->{api}->{error}->{code};
     carp $self->{api}->{error}->{details};
     $self->{error} = $self->{api}->{error};
-    return $self->{error}->{code};
+    return undef;
 }
 
 

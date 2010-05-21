@@ -35,5 +35,5 @@ $namespace_id = 'non-existent';
 print STDERR "\rYou should receive an error message below. This is an expected part of the test.\n";
 @pages = $bot->get_pages_in_namespace($namespace_id);
 
-is($pages[0], 3, 'Error code received');
+is($pages[0], undef, 'Error code received');
 is($bot->{error}->{code}, 3, 'Error code in MediaWiki::Bot object');

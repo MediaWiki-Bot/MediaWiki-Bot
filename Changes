@@ -15,6 +15,8 @@ Vers. Rel.Mgr. SVN  Date
         * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
           These both evaluate to false; you can differentiate between them with defined(). get_id() now returns undef instead of
           2 when there is no pageid (page is nonexistent or title is invalid).
+        * BREAKING CHANGE: All subs return undef when they encounter an error that is passed off to _handle_api_error(). Error
+          details are still available in $bot->{'error'}.
         * edit() now uses an md5 hash to ensure data integrity.
         * set_highlimits() can now be used to *not* use highlimits.
         * revert() now uses the API.
