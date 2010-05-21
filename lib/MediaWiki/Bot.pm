@@ -61,9 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =head1 METHODS
 
-=over 4
-
-=item new($options_hashref)
+=head2 new($options_hashref)
 
 Calling MediaWiki::Bot->new() will create a new MediaWiki::Bot object.
 
@@ -190,7 +188,7 @@ sub new {
     return $self;
 }
 
-=item set_wiki($host[,$path[,$protocol]])
+=head2 set_wiki($host[,$path[,$protocol]])
 
 Set what wiki to use. $host is the domain name; $path is the path before api.php (usually 'w'); $protocol is either 'http' or 'https'. For example:
 
@@ -260,7 +258,7 @@ sub set_wiki {
     return 1;
 }
 
-=item login()
+=head2 login($login_hashref)
 
 Logs the use $username in, optionally using $password. First, an attempt will be made to use cookies to log in. If this fails, an attempt will be made to use the password provided to log in, if any. If the login was successful, returns true; false otherwise.
 
@@ -337,7 +335,7 @@ sub login {
     return $logged_in;
 }
 
-=item set_highlimits($flag)
+=head2 set_highlimits($flag)
 
 Tells MediaWiki::Bot to start/stop using APIHighLimits for certain queries.
 
@@ -353,7 +351,7 @@ sub set_highlimits {
     return 1;
 }
 
-=item logout()
+=head2 logout()
 
 The logout procedure deletes the login tokens and other browser cookies.
 
@@ -440,7 +438,7 @@ sub edit {
     return $res;
 }
 
-=item get_history($pagename[,$limit])
+=head2 get_history($pagename[,$limit])
 
 Returns an array containing the history of the specified page, with $limit number of revisions. The array structure contains 'revid', 'user', 'comment', 'timestamp_date', and 'timestamp_time'.
 
@@ -500,7 +498,7 @@ sub get_history {
     return @return;
 }
 
-=item get_text($pagename,[$revid,$section_number])
+=head2 get_text($pagename,[$revid,$section_number])
 
 Returns an the wikitext of the specified page. If $revid is defined, it will return the text of that revision; if $section_number is defined, it will return the text of that section. A blank page will return wikitext of "" (which evaluates to false in Perl, but is defined); a nonexistent page will return undef (which also evaluates to false in Perl, but is obviously undefined). You can distinguish between blank and nonexistent by using defined():
 
@@ -540,7 +538,7 @@ sub get_text {
     }
 }
 
-=item get_id($pagename)
+=head2 get_id($pagename)
 
 Returns the id of the specified page. Returns undef if page does not exist.
 
@@ -571,12 +569,12 @@ sub get_id {
     }
 }
 
-=item get_pages(@pages)
+=head2 get_pages(\@pages)
 
 Returns the text of the specified pages in a hashref. Content of undef means page does not exist. Also handles redirects or article names that use namespace aliases.
 
     my @pages = ('Page 1', 'Page 2', 'Page 3');
-    my $thing = $bot->get_pages(@pages);
+    my $thing = $bot->get_pages(\@pages);
     foreach my $page (keys %$thing) {
         my $text = $thing->{$page};
         print "$text\n" if defined($text);
@@ -662,7 +660,7 @@ sub get_pages {
     return \%return;
 }
 
-=item revert($pagename, $revid[,$summary])
+=head2 revert($pagename, $revid[,$summary])
 
 Reverts the specified page to $revid, with an edit summary of $summary. A default edit summary will be used if $summary is omitted.
 
@@ -681,10 +679,9 @@ sub revert {
     return $res;
 }
 
-=item undo($pagename, $revid[,$summary[,$after]])
+=head2 undo($pagename, $revid[,$summary[,$after]])
 
 Reverts the specified $revid, with an edit summary of $summary, using the undo function. To undo all revisions from $revid up to but not including this one, set $after to another revid. If not set, just undo the one revision ($revid).
-
 
 =cut
 
@@ -717,7 +714,7 @@ sub undo {
     }
 }
 
-=item get_last($page, $user)
+=head2 get_last($page, $user)
 
 Returns the revid of the last revision to $page not made by $user. undef is returned if no result was found, as would be the case if the page is deleted.
 
@@ -753,7 +750,7 @@ sub get_last {
     }
 }
 
-=item update_rc([$limit])
+=head2 update_rc([$limit])
 
 Returns an array containing the Recent Changes to the wiki Main namespace. The array structure contains 'pagename', 'revid', 'oldid', 'timestamp_date', and 'timestamp_time'.
 
@@ -790,7 +787,7 @@ sub update_rc {
     return @rc_table;
 }
 
-=item what_links_here($page[,$filter[,$ns[,$options]]])
+=head2 what_links_here($page[,$filter[,$ns[,$options]]])
 
 Returns an array containing a list of all pages linking to $page. The array structure contains 'title' and 'redirect' is defined if the title is a redirect. $filter can be one of: all (default), redirects (list only redirects), nonredirects (list only non-redirects). $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). $options is a hashref as described by MediaWiki::API: Set max to limit the number of queries performed. Set hook to a subroutine reference to use a callback hook for incremental processing. Refer to the section on linksearch() for examples.
 
@@ -850,7 +847,7 @@ sub what_links_here {
     return @links;
 }
 
-=item list_transclusions($page[,$filter[,$ns[,$options]]])
+=head2 list_transclusions($page[,$filter[,$ns[,$options]]])
 
 Returns an array containing a list of all pages transcluding $page. The array structure contains 'title' and 'redirect' is defined if the title is a redirect. $filter can be one of: all (default), redirects (list only redirects), nonredirects (list only non-redirects). $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). $options is a hashref as described by MediaWiki::API: Set max to limit the number of queries performed. Set hook to a subroutine reference to use a callback hook for incremental processing. Refer to the section on linksearch() or what_links_here() for examples.
 
@@ -908,7 +905,7 @@ sub list_transclusions {
     return @links;
 }
 
-=item get_pages_in_category($category_name)
+=head2 get_pages_in_category($category_name)
 
 Returns an array containing the names of all pages in the specified category. Does not go into sub-categories.
 
@@ -936,7 +933,7 @@ sub get_pages_in_category {
     return @return;
 }
 
-=item get_all_pages_in_category($category_name)
+=head2 get_all_pages_in_category($category_name)
 
 Returns an array containing the names of ALL pages in the specified category, including sub-categories.
 
@@ -959,7 +956,7 @@ sub get_all_pages_in_category {
     return keys %data;
 }
 
-=item linksearch($link[,$ns[,$protocol[,$options]]])
+=head2 linksearch($link[,$ns[,$protocol[,$options]]])
 
 Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page the link is on.  $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). You can search by $protocol (http is default). The optional $options hashref is fully documented in MediaWiki::API.
 
@@ -1023,7 +1020,7 @@ sub linksearch {
     }
 }
 
-=item purge_page($pagename)
+=head2 purge_page($pagename)
 
 Purges the server cache of the specified page. Pass an array reference to purge multiple pages. Returns true on success; false on failure. If you really care, a true return value is the number of pages successfully purged. You could check that it is the same as the number you wanted to purge.- maybe some pages don't exist, or you passed invalid titles, or you aren't allowed to purge the cache:
 
@@ -1084,7 +1081,7 @@ sub purge_page {
 
 }
 
-=item get_namespace_names
+=head2 get_namespace_names
 
 get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as "Talk".
 
@@ -1114,7 +1111,7 @@ sub get_namespace_names {
     }
 }
 
-=item links_to_image($page)
+=head2 links_to_image($page)
 
 Gets a list of pages which include a certain image.
 
@@ -1136,7 +1133,7 @@ sub links_to_image {
     return @list;
 }
 
-=item is_blocked($user)
+=head2 is_blocked($user)
 
 Checks if a user is currently blocked.
 
@@ -1173,9 +1170,9 @@ sub is_blocked {
     }
 }
 
-=item test_blocked($user)
+=head2 test_blocked($user)
 
-Retained for backwards compatibility. User is_blocked($user) for clarity.
+Retained for backwards compatibility. Use is_blocked($user) for clarity.
 
 =cut
 
@@ -1183,7 +1180,7 @@ sub test_blocked { # For backwards-compatibility
     return (is_blocked(@_));
 }
 
-=item test_image_exists($page)
+=head2 test_image_exists($page)
 
 Checks if an image exists at $page. 0 means no, 1 means yes, local, 2 means on commons, 3 means doesn't exist but there is text on the page.
 
@@ -1236,7 +1233,7 @@ sub test_image_exists {
 }
 
 
-=item get_pages_in_namespace($namespace_id,$page_limit)
+=head2 get_pages_in_namespace($namespace_id,$page_limit)
 
 Returns an array containing the names of all pages in the specified namespace. The $namespace_id must be a number, not a namespace name. Setting $page_limit is optional. If $page_limit is over 500, it will be rounded up to the next multiple of 500.
 
@@ -1280,7 +1277,7 @@ sub get_pages_in_namespace {
     return @return;
 }
 
-=item count_contributions($user)
+=head2 count_contributions($user)
 
 Uses the API to count $user's contributions.
 
@@ -1312,7 +1309,7 @@ sub count_contributions {
     }
 }
 
-=item last_active($user)
+=head2 last_active($user)
 
 Returns the last active time of $user in YYYY-MM-DDTHH:MM:SSZ
 
@@ -1337,7 +1334,7 @@ sub last_active {
     return ${$res}[0]->{'timestamp'};
 }
 
-=item recent_edit_to_page($page)
+=head2 recent_edit_to_page($page)
 
 Returns timestamp and username for most recent (top) edit to $page.
 
@@ -1362,7 +1359,7 @@ sub recent_edit_to_page {
     return $data->{revisions}[0]->{timestamp};
 }
 
-=item get_users($page, $limit, $revision, $direction)
+=head2 get_users($page, $limit, $revision, $direction)
 
 Gets the most recent editors to $page, up to $limit, starting from $revision and goint in $direction.
 
@@ -1407,7 +1404,7 @@ sub get_users {
     return @return;
 }
 
-=item was_blocked($user)
+=head2 was_blocked($user)
 
 Returns 1 if $user has ever been blocked.
 
@@ -1447,7 +1444,7 @@ sub was_blocked {
     }
 }
 
-=item test_block_hist($user)
+=head2 test_block_hist($user)
 
 Retained for backwards compatibility. Use was_blocked($user) for clarity.
 
@@ -1457,7 +1454,7 @@ sub test_block_hist { # Backwards compatibility
     return (was_blocked(@_));
 }
 
-=item expandtemplates($page[, $text])
+=head2 expandtemplates($page[, $text])
 
 Expands templates on $page, using $text if provided, otherwise loading the page text automatically.
 
@@ -1485,7 +1482,7 @@ sub expandtemplates {
     return $1;
 }
 
-=item get_allusers($limit)
+=head2 get_allusers($limit)
 
 Returns an array of all users. Default limit is 500.
 
@@ -1512,7 +1509,7 @@ sub get_allusers {
     return @return;
 }
 
-=item db_to_domain($wiki)
+=head2 db_to_domain($wiki)
 
 Converts a wiki/database name (enwiki) to the domain name (en.wikipedia.org).
 
@@ -1558,7 +1555,7 @@ sub db_to_domain {
     }
 }
 
-=item domain_to_db($wiki)
+=head2 domain_to_db($wiki)
 
 As you might expect, does the opposite of domain_to_db(): Converts a domain
 name into a database/wiki name.
@@ -1820,8 +1817,6 @@ sub _get_sitematrix {
 }
 
 1;
-
-=back
 
 =head1 ERROR HANDLING
 
