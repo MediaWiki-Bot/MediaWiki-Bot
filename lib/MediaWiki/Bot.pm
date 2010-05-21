@@ -63,52 +63,125 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =over 4
 
-=item new([$agent[,$assert[,$operator[,$maxlag[,$protocol]]]]])
+=item new($options_hashref)
 
-Calling MediaWiki::Bot->new will create a new MediaWiki::Bot object.
+Calling MediaWiki::Bot->new() will create a new MediaWiki::Bot object.
 
-$agent sets a custom useragent, $assert sets a parameter for the assertedit extension (commonly "&assert=bot"), $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent. $maxlag allows you to set the maxlag parameter (default is the recommended 5s). $protocol allows you to specify 'http' or 'https' (default is 'http').
+=over 4
+
+=item *
+agent sets a custom useragent
+
+=item *
+assert sets a parameter for the AssertEdit extension (commonly 'bot'). Refer to L<http://mediawiki.org/wiki/Extension:AssertEdit>.
+
+=item *
+operator allows the bot to send you a message when it fails an assert, and will be integrated into the default useragent (which may not be used if you set agent yourself). The message will tell you that $useragent is logged out, so use a descriptive one if you set it.
+
+=item *
+maxlag allows you to set the maxlag parameter (default is the recommended 5s). Please refer to the MediaWiki documentation prior to changing this from the default.
+
+=item *
+protocol allows you to specify 'http' or 'https' (default is 'http'). This is commonly used with the domain and path settings below.
+
+=item *
+host sets the domain name of the wiki to connect to.
+
+=item *
+path sets the path to api.php (with no trailing slash).
+
+=item *
+login_data is a hashref of data to pass to login(). See that section for a description.
+
+=back
 
 For example:
 
-    my $bot = MediaWiki::Bot->new('MediaWiki::Bot 2.3.1 (User:Mike.lifeguard)', undef, undef, 5, 'https');
+    my $bot = MediaWiki::Bot->new(
+        useragent   => 'MediaWiki::Bot 3.0.0 (User:Mike.lifeguard)',
+        assert      => 'bot',
+        protocol    => 'https',
+        host        => 'secure.wikimedia.org',
+        path        => 'wikipedia/meta/w',
+        login_data  => { username => "Mike's bot account", password => "password" },
+    );
+
+For backward compatibility, you can specify up to three parameters:
+
+    my $bot = MediaWiki::Bot->new('MediaWiki::Bot 2.3.1 (User:Mike.lifeguard)', $assert, $operator);
+
+This deprecated form will never do auto-login or autoconfiguration.
 
 =cut
 
 sub new {
-    my $package  = shift;
-    my $agent    = shift || "MediaWiki::Bot $VERSION";  # User-specified agent or default
-    my $assert   = shift ;
-    my $operator = shift;
-    my $maxlag   = shift || 5;
-    my $protocol = shift || 'http';                     # Added for https
-    $assert =~ s/[&?]assert=// if $assert;              # Strip out param part, leaving just the value
-    $operator =~ s/^User://i if $operator;
-
-    my $self = bless {}, $package;
-
-    # Added for https
-    $self->{protocol} = $protocol;
-    if ($self->{protocol} eq 'https') {
-        use Crypt::SSLeay;
+    my $package = shift;
+    my $agent;
+    my $assert;
+    my $operator;
+    my $maxlag;
+    my $protocol;
+    my $host;
+    my $path;
+    my $login_data;
+    if (ref $_[0] eq 'HASH') {
+        $agent      = $_[0]->{'agent'};
+        $assert     = $_[0]->{'assert'};
+        $operator   = $_[0]->{'operator'};
+        $maxlag     = $_[0]->{'maxlag'};
+        $protocol   = $_[0]->{'protocol'};
+        $host       = $_[0]->{'host'};
+        $path       = $_[0]->{'path'};
+        $login_data = $_[0]->{'login_data'};
+    }
+    else {
+        $agent      = shift;
+        $assert     = shift;
+        $operator   = shift;
+        $maxlag     = shift;
+        $protocol   = shift;
+        $host       = shift;
+        $path       = shift;
     }
 
-    $self->{mech} =
-        WWW::Mechanize->new(
+    $assert   =~ s/[&?]assert=// if $assert; # Strip out param part, leaving just the value
+    $operator =~ s/^User://i     if $operator;
+
+    # Set defaults
+    unless ($agent) {
+        $agent  = "MediaWiki::Bot $VERSION";
+        $agent .= " (User:$operator)" if $operator;
+    }
+
+    my $self = bless({}, $package);
+    $self->{mech} = WWW::Mechanize->new(
             cookie_jar => {},
             onerror => \&Carp::carp,
             stack_depth => 1
-        );
+    );
     $self->{mech}->agent($agent);
-    $self->{host}                     = 'en.wikipedia.org';
-    $self->{path}                     = 'w';
+    $self->{protocol}                 = $protocol || 'http';
+    $self->{host}                     = $host || 'en.wikipedia.org';
+    $self->{path}                     = $path || 'w';
     $self->{debug}                    = 0;
     $self->{errstr}                   = '';
     $self->{assert}                   = $assert;
     $self->{operator}                 = $operator;
     $self->{api}                      = MediaWiki::API->new();
-    $self->{api}->{config}->{api_url} = 'http://en.wikipedia.org/w/api.php';
-    $self->{api}->{config}->{max_lag} = $maxlag;
+
+    # Set wiki if these are set
+    $self->set_wiki({
+        protocol => $self->{protocol},
+        host     => $self->{host},
+        path     => $self->{path},
+    });
+
+    # Log-in, and maybe autoconfigure
+    if ($login_data) {
+        $self->login($login_data) or carp "Couldn't log in with supplied settings";
+    }
+
+    $self->{api}->{config}->{max_lag}         = $maxlag || 5;
     $self->{api}->{config}->{max_lag_delay}   = 1;
     $self->{api}->{config}->{retries}         = 5;
     $self->{api}->{config}->{max_lag_retries} = -1;
@@ -117,9 +190,156 @@ sub new {
     return $self;
 }
 
-=item set_highlimits([$flag])
+=item set_wiki($host[,$path[,$protocol]])
 
-Tells MediaWiki::Bot to start/stop using the APIHighLimits for certain queries.
+Set what wiki to use. $host is the domain name; $path is the path before api.php (usually 'w'); $protocol is either 'http' or 'https'. For example:
+
+    $bot->set_wiki('de.wikipedia.org', 'w');
+
+will tell it to use http://de.wikipedia.org/w/index.php. The default settings are 'en.wikipedia.org' with a path of 'w'. You can also pass a hashref using keys with the same names as these parameters. To use the secure server:
+
+    $bot->set_wiki(
+        protocol    => 'https',
+        host        => 'secure.wikimedia.org',
+        path        => 'wikipedia/meta/w',
+    );
+
+For backward compatibility, you can specify up to two parameters in this deprecated form:
+
+    $bot->set_wiki($host, $path);
+
+=cut
+
+sub set_wiki {
+    my $self = shift;
+    my $host;
+    my $path;
+    my $protocol;
+
+    if (ref $_[0] eq 'HASH') {
+        $host     = $_[0]->{'host'};
+        $path     = $_[0]->{'path'};
+        $protocol = $_[0]->{'protocol'};
+    }
+    else {
+        $host = shift;
+        $path = shift;
+    }
+
+    # Set defaults
+    $protocol = 'http' unless $protocol;
+    $host = 'en.wikipedia.org' unless $host;
+    $path = 'w' unless $path;
+
+    # Clean up the parts we will build a URL with
+    $protocol   =~ s,://$,,;
+    if ($host =~ m,^(http|https)(://)?, and !$protocol) {
+        $protocol = $1;
+    }
+    $host =~ s,^https?://,,;
+    $host =~ s,/$,,;
+    $path =~ s,/$,,;
+
+    if ($protocol eq 'https') {
+        use Crypt::SSLeay;
+    }
+    elsif ($protocol eq 'http') {
+        #un-use Crypt::SSLeay;
+    }
+    else {
+        $protocol = 'http';
+    }
+
+    $self->{host} = $host;
+    $self->{path} = $path;
+    $self->{protocol} = $protocol;
+
+    $self->{api}->{config}->{api_url} = "$protocol://$host/$path/api.php";
+    print "Wiki set to $protocol://$host/$path/api.php\n" if $self->{debug};
+
+    return 1;
+}
+
+=item login()
+
+Logs the use $username in, optionally using $password. First, an attempt will be made to use cookies to log in. If this fails, an attempt will be made to use the password provided to log in, if any. If the login was successful, returns true; false otherwise.
+
+    $bot->login(
+        {
+            username => $username,
+            password => $password,
+        }
+    ) or die "Login failed";
+
+Once logged in, attempt to do some simple auto-configuration. At present, this consists solely of warning if the account doesn't have the bot flag, and setting the use of apihighlimits if the account has that userright. You can skip this autoconfiguration by passing C<autoconfig =Z<>> 0>
+
+For backward compatibility, you can call this as
+
+    $bot->login($username, $password);
+
+This deprecated form will never do autoconfiguration.
+
+=cut
+
+sub login {
+    my $self = shift;
+    my $username;
+    my $password;
+    my $autoconfig;
+    if (ref $_[0] eq 'HASH') {
+        $username = $_[0]->{'username'};
+        $password = $_[0]->{'password'};
+        $autoconfig = defined($_[0]->{'autoconfig'}) ? $_[0]->{'autoconfig'} : 1;
+    }
+    else {
+        $username = shift;
+        $password = shift;
+        $autoconfig = 0;
+    }
+
+    # This seems to not do what we want. Cookies are loaded, but a
+    # subsequent userinfo query shows the bot is not logged in.
+    my $cookies  = ".mediawiki-bot-$username-cookies";
+    $self->{mech}->cookie_jar({ file => $cookies, autosave => 1 });
+    my $cookies_exist = $self->{mech}->{cookie_jar}->as_string;
+    if ($cookies_exist) {
+        $self->{mech}->{cookie_jar}->load($cookies);
+        carp "Loaded MediaWiki cookies from file $cookies" if $self->{debug};
+        $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
+    }
+    else {
+        $self->{errstr} = "Cannot load MediaWiki cookies from file $cookies";
+        carp $self->{errstr} if $self->{debug};
+    }
+
+    $self->{username} = $username; # Remember who we are
+    my $logged_in = $self->_is_loggedin();
+    if ($logged_in) {
+        $self->_do_autoconfig() if $autoconfig;
+        carp "Logged in successfully with cookies" if $self->{debug};
+        return 1; # If we're already logged in, nothing more is needed
+    }
+
+    unless ($password) {
+        carp "No login cookies available, and no password to continue with authentication" if $self->{debug};
+        return 0;
+    }
+
+    my $res = $self->{api}->login({
+        lgname     => $username,
+        lgpassword => $password
+    }) or return $self->_handle_api_error();
+
+    $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
+    $logged_in = $self->_is_loggedin();
+    $self->_do_autoconfig() if ($autoconfig and $logged_in);
+    carp "Logged in successfully with password" if ($logged_in and $self->{debug});
+    return $logged_in;
+}
+
+=item set_highlimits($flag)
+
+Tells MediaWiki::Bot to start/stop using APIHighLimits for certain queries.
 
     $bot->set_highlimits(1);
 
@@ -128,119 +348,16 @@ Tells MediaWiki::Bot to start/stop using the APIHighLimits for certain queries.
 sub set_highlimits {
     my $self       = shift;
     my $highlimits = shift || 1;
+
     $self->{highlimits} = $highlimits;
-    return;
+    return 1;
 }
 
-=item set_wiki([$wiki_host[,$wiki_path]])
-
-set_wiki will cause the MediaWiki::Bot object to use the specified wiki. For example,
-
-    $bot->set_wiki('de.wikipedia.org','w')
-
-will tell it to use http://de.wikipedia.org/w/index.php. The default settings are 'en.wikipedia.org' with a path of 'w'.
-
-=cut
-
-sub set_wiki {
-    my $self = shift;
-    my $host = shift || 'en.wikipedia.org';
-    my $path = shift || 'w';
-    $self->{host} = $host if $host;
-    $self->{path} = $path if $path;
-    $self->{api}->{config}->{api_url} = "$self->{protocol}://$host/$path/api.php";
-    print "Wiki set to $self->{protocol}://$self->{host}/$self->{path}\n" if $self->{debug};
-    return 0;
-}
-
-=item login($username[,$password[,$paranoia]])
-
-Logs the use $username in, optionally using $password. If omitted, an attempt to use stored cookies will be made. If the login was successful, returns true; false otherwise.
-
-    $bot->login($username, $password) or croak "Login failed\n";
-
-Set $paranoia to true to do an extra check that login was successful. This is intended to be used for debugging.
-
-=cut
-
-sub login {
-    my $self     = shift;
-    my $username = shift;
-    my $password = shift;
-    my $paranoia = shift || 0;
-    my $cookies  = ".mediawiki-bot-$username-cookies";
-
-    $self->{username} = $username; # Remember who we are
-
-    $self->{mech}->cookie_jar({ file => $cookies, autosave => 1 });
-    if (!defined $password) {
-        $self->{mech}->{cookie_jar}->load($cookies);
-        my $cookies_exist = $self->{mech}->{cookie_jar}->as_string;
-        if ($cookies_exist) {
-            $self->{mech}->{cookie_jar}->load($cookies);
-            print "Loaded MediaWiki cookies from file $cookies\n" if $self->{debug};
-            $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
-            if ($paranoia) {
-                return $self->_is_loggedin();
-            }
-            else {
-                return 1;
-            }
-        }
-        else {
-            $self->{errstr} = "Cannot load MediaWiki cookies from file $cookies";
-            carp $self->{errstr};
-            return 0;
-        }
-    }
-
-    my $res = $self->{api}->api(
-        {
-            action     => 'login',
-            lgname     => $username,
-            lgpassword => $password
-        }
-    );
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
-    my $result = $res->{login}->{result};
-    if ($result eq 'NeedToken') {
-        my $lgtoken = $res->{login}->{token};
-        $res = $self->{api}->api(
-            {
-                action     => 'login',
-                lgname     => $username,
-                lgpassword => $password,
-                lgtoken    => $lgtoken
-            }
-        );
-        if (!$res) {
-            return $self->_handle_api_error();
-        }
-        $result = $res->{login}->{result};
-    }
-    $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
-    if ($result eq 'Success') {
-        if ($paranoia) {
-            return $self->_is_loggedin();
-        }
-        else {
-            return 1;
-        }
-    }
-    else {
-        return 0;
-    }
-}
-
-=item logout([$paranoia])
+=item logout()
 
 The logout procedure deletes the login tokens and other browser cookies.
 
     $bot->logout();
-
-Set $paranoia to true to do an extra check that logout was successful. This is intended to be used for debugging.
 
 =cut
 
@@ -252,12 +369,7 @@ sub logout {
         action => 'logout',
     };
     $self->{api}->api($hash);
-    if ($paranoia) {
-        return $self->_is_loggedin();
-    }
-    else {
-        return 1;
-    }
+    return 1;
 }
 
 =item edit($pagename, $text[,$edit_summary,[$is_minor,[$assert[,$markasbot]]]])
@@ -1595,36 +1707,69 @@ sub _handle_api_error {
 
 sub _is_loggedin {
     my $self = shift;
-    # http://en.wikipedia.org/w/api.php?action=query&meta=userinfo
+
     my $hash = {
-        action  => 'query',
+        action =>  'query',
         meta    => 'userinfo',
     };
     my $res = $self->{api}->api($hash);
     if (!$res) {
-        return 0;
+        return $self->_handle_api_error();
     }
-    else {
-        my $is = $res->{'query'}->{'userinfo'}->{'name'};
-        my $ought = $self->{username};
-        #print "We're logged in as $is\nWe should be logged in as $ought\n" and die;
-        if ($is eq $ought) {
-            return 1;
+    my $is = $res->{'query'}->{'userinfo'}->{'name'};
+    my $ought = $self->{username};
+    return ($is eq $ought);
+}
+
+sub _do_autoconfig {
+    my $self = shift;
+
+    # http://en.wikipedia.org/w/api.php?action=query&meta=userinfo&uiprop=rights|groups
+    my $hash = {
+        action  => 'query',
+        meta    => 'userinfo',
+        uiprop  => 'rights|groups',
+    };
+    my $res = $self->{api}->api($hash);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+
+    my $is = $res->{'query'}->{'userinfo'}->{'name'};
+    my $ought = $self->{username};
+    # Should we try to recover by logging in again? croak?
+    carp "We're logged in as $is but we should be logged in as $ought" if ($is ne $ought);
+
+    my @rights = @{ $res->{'query'}->{'userinfo'}->{'rights'} };
+    my $has_bot = 0;
+    my $has_apihighlimits = 0;
+    foreach my $right (@rights) {
+        if ($right eq 'bot') {
+            $has_bot = 1;
         }
-        else {
-            return 0;
+        elsif ($right eq 'apihighlimits') {
+            $has_apihighlimits = 1;
         }
     }
+
+    my @groups = @{ $res->{'query'}->{'userinfo'}->{'groups'} };
+    my $is_sysop = 0;
+    foreach my $group (@groups) {
+        $is_sysop = 1 if $group eq 'sysop';
+    }
+
+    unless ($has_bot and !$is_sysop) {
+        carp "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{debug};
+    }
+    $self->set_highlimits($has_apihighlimits);
+
+    return 1;
 }
 
 sub _get_sitematrix {
     my $self = shift;
 
-    my $res = $self->{api}->api(
-        {
-            action => 'sitematrix',
-        }
-    );
+    my $res = $self->{api}->api( { action => 'sitematrix' } );
     if (!$res) {
         return $self->_handle_api_error();
     }
@@ -1680,9 +1825,8 @@ sub _get_sitematrix {
 
 =head1 ERROR HANDLING
 
-All functions will return an integer error value in any handled error
-situation. Error codes are stored in $agent->{error}->{code}, error text
-in $agent->{error}->{details}.
+All functions will return undef in any handled error situation. Further error
+data is stored in $bot->{error}->{code} and $bot->{error}->{details}.
 
 =cut
 
