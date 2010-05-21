@@ -1648,6 +1648,82 @@ sub get_allusers {
     return @return;
 }
 
+=item db_to_domain($wiki)
+
+Converts a wiki/database name (enwiki) to the domain name (en.wikipedia.org).
+
+    my @wikis = ("enwiki", "kowiki", "bat-smgwiki", "nonexistent");
+    foreach my $wiki (@wikis) {
+        my $domain = $bot->db_to_domain($wiki);
+        next if !defined($domain);
+        print "$wiki: $domain\n";
+    }
+
+You can pass an arrayref to do bulk lookup:
+
+    my @wikis = ("enwiki", "kowiki", "bat-smgwiki", "nonexistent");
+    my $domains = $bot->db_to_domain(\@wikis);
+    foreach my $domain (@$domains) {
+        next if !defined($domain);
+        print "$domain\n";
+    }
+
+=cut
+
+sub db_to_domain {
+    my $self = shift;
+    my $wiki = shift;
+
+    if (!$self->{sitematrix}) {
+        $self->_get_sitematrix();
+    }
+
+    if (ref $wiki eq 'ARRAY') {
+        my @return;
+        foreach my $w (@$wiki) {
+            $wiki =~ s/_p$//; # Strip off a _p suffix, if present
+            my $domain = $self->{'sitematrix'}->{$w} || undef;
+            push(@return, $domain);
+        }
+        return \@return;
+    }
+    else {
+        $wiki =~ s/_p$//; # Strip off a _p suffix, if present
+        my $domain = $self->{'sitematrix'}->{$wiki} || undef;
+        return $domain;
+    }
+}
+
+=item domain_to_db($wiki)
+
+As you might expect, does the opposite of domain_to_db(): Converts a domain
+name into a database/wiki name.
+
+=cut
+
+sub domain_to_db {
+    my $self = shift;
+    my $wiki = shift;
+
+    if (!$self->{sitematrix}) {
+        $self->_get_sitematrix();
+    }
+
+    if (ref $wiki eq 'ARRAY') {
+        my @return;
+        foreach my $w (@$wiki) {
+            my $db = $self->{'sitematrix'}->{$w} || undef;
+            push(@return, $db);
+        }
+        return \@return;
+    }
+    else {
+        my $db = $self->{'sitematrix'}->{$wiki} || undef;
+        return $db;
+    }
+}
+
+
 ################
 # Internal use #
 ################
@@ -1786,6 +1862,63 @@ sub _is_loggedin {
         else {
             return 0;
         }
+    }
+}
+
+sub _get_sitematrix {
+    my $self = shift;
+
+    my $res = $self->{api}->api(
+        {
+            action => 'sitematrix',
+        }
+    );
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    else {
+        my %sitematrix = %{ $res->{'sitematrix'} };
+#        use Data::Dumper;
+#        print Dumper(\%sitematrix) and die;
+        # This hash is a monstrosity (see http://sprunge.us/dfBD?pl), and needs
+        # lots of post-processing to have a sane data structure :\
+        my %map;
+        foreach my $hashref (%sitematrix) {
+            if (ref $hashref ne 'HASH') { # Yes, there are non-hashrefs in here, wtf?!
+                if ($hashref eq 'specials'){
+                    foreach my $special (@{ $sitematrix{'specials'} }) {
+                        my $db     = $special->{'code'};
+                        my $domain = $special->{'url'};
+                        $domain    =~ s,^http://,,;
+
+                        $map{$db} = $domain;
+                        $map{$domain} = $db;
+                    }
+                }
+                next;
+            }
+
+            my $lang = $hashref->{'code'};
+
+            foreach my $wiki_ref ($hashref->{'site'}) {
+                foreach my $wiki_ref2 (@$wiki_ref) {
+                    my $family = $wiki_ref2->{'code'};
+                    my $domain = $wiki_ref2->{'url'};
+                    $domain    =~ s,^http://,,;
+
+                    my $db = $lang . $family; # Is simple concatenation /always/ correct?
+
+                    $map{$db} = $domain;
+                    $map{$domain} = $db;
+                }
+            }
+        }
+
+        # This could be saved to disk with Storable. Next time you call this
+        # method, if mtime is less than, say, 14d, you could load it from
+        # disk instead of over network.
+        $self->{'sitematrix'} = \%map;
+        return $self->{'sitematrix'};
     }
 }
 

@@ -30,6 +30,8 @@ Vers. Rel.Mgr. SVN  Date
         * undo() now uses the API, and is documented accurately.
         * logout() was added.
         * purge_page() now uses the API and returns the number of pages successfully purged, which may be useful for the caller's error-checking.
+        * New methods were added to query WMF's sitematrix, and convert between db name (enwikibooks) to the domain name (en.wikibooks.org):
+          db_to_domain() and domain_to_db().
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
