@@ -41,7 +41,7 @@ Many of the methods use the MediaWiki API (L<http://en.wikipedia.org/w/api.php>)
 
 =head1 AUTHOR
 
-The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins) and others.
+The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins, Mike.lifeguard) and others.
 
 =head1 COPYING
 
