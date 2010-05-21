@@ -64,12 +64,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =over 4
 
-=item new([$agent[, $assert[, $operator]]])
+=item new([$agent[,$assert[,$operator[,$protocol]]]])
 
 Calling MediaWiki::Bot->new will create a new MediaWiki::Bot object.
-$agent sets a custom useragent, $assert sets a parameter for the assertedit extension, common is "&assert=bot", $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent. $protocol allows you to specify 'http' or 'https' (default is 'http'). For example:
 
-$bot = MediaWiki::Bot->new("MediaWiki::Bot", undef, undef, 5, "https");
+$agent sets a custom useragent, $assert sets a parameter for the assertedit extension (commonly "&assert=bot"), $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent. $protocol allows you to specify 'http' or 'https' (default is 'http'). For example:
+
+    my $bot = MediaWiki::Bot->new('MediaWiki::Bot 2.3.1 (User:Mike.lifeguard)', undef, undef, 5, 'https');
 
 =cut
 
@@ -135,7 +136,11 @@ sub set_highlimits {
 
 =item set_wiki([$wiki_host[,$wiki_path]])
 
-set_wiki will cause the MediaWiki::Bot object to use the wiki specified, e.g set_wiki('de.wikipedia.org','w') will tell it to use http://de.wikipedia.org/w/index.php. The default settings are 'en.wikipedia.org' with a path of 'w'.
+set_wiki will cause the MediaWiki::Bot object to use the specified wiki. For example,
+
+    $bot->set_wiki('de.wikipedia.org','w')
+
+will tell it to use http://de.wikipedia.org/w/index.php. The default settings are 'en.wikipedia.org' with a path of 'w'.
 
 =cut
 
@@ -150,9 +155,12 @@ sub set_wiki {
     return 0;
 }
 
-=item login($username,$password)
+=item login($username, $password)
 
-Logs the object into the specified wiki. If the login was a success, it will return 'Success', otherwise, 'Fail'.
+Logs the object into the specified wiki. If the login was a success, it will return 1, otherwise, 0:
+
+    my $login_failed = $bot->login($username, $password);
+    croak "Login failed\n" if $login_failed;
 
 =cut
 
@@ -290,9 +298,9 @@ sub edit {
     return $res;
 }
 
-=item get_history($pagename,$limit)
+=item get_history($pagename[,$limit])
 
-Returns an array containing the history of the specified page, with $limit number of revisions. The array structure contains 'revid','user','comment','timestamp_date', and 'timestamp_time'.
+Returns an array containing the history of the specified page, with $limit number of revisions. The array structure contains 'revid', 'user', 'comment', 'timestamp_date', and 'timestamp_time'.
 
 =cut
 
@@ -374,9 +382,8 @@ sub get_text {
         prop   => 'revisions',
         rvprop => 'content',
     };
-
-    $hash->{rvsection} = $section if ($section);
     $hash->{rvstartid} = $revid   if ($revid);
+    $hash->{rvsection} = $section if ($section);
 
     my $res = $self->{api}->api($hash);
     if (!$res) {
@@ -436,6 +443,13 @@ sub get_id {
 =item get_pages(@pages)
 
 Returns the text of the specified pages in a hashref. Content of undef means page does not exist. Also handles redirects or article names that use namespace aliases.
+
+    my @pages = ('Page 1', 'Page 2', 'Page 3');
+    my $thing = $bot->get_pages(@pages);
+    foreach my $page (keys %$thing) {
+        my $text = $thing->{$page};
+        print "$text\n" if defined($text);
+    }
 
 =cut
 
