@@ -64,11 +64,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =over 4
 
-=item new([$agent[,$assert[,$operator[,$protocol]]]])
+=item new([$agent[,$assert[,$operator[,$maxlag[,$protocol]]]]])
 
 Calling MediaWiki::Bot->new will create a new MediaWiki::Bot object.
 
-$agent sets a custom useragent, $assert sets a parameter for the assertedit extension (commonly "&assert=bot"), $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent. $protocol allows you to specify 'http' or 'https' (default is 'http'). For example:
+$agent sets a custom useragent, $assert sets a parameter for the assertedit extension (commonly "&assert=bot"), $operator allows the bot to send you a message when it fails an assert. The message will tell you that $agent is logged out, so use a descriptive $agent. $maxlag allows you to set the maxlag parameter (default is the recommended 5s). $protocol allows you to specify 'http' or 'https' (default is 'http').
+
+For example:
 
     my $bot = MediaWiki::Bot->new('MediaWiki::Bot 2.3.1 (User:Mike.lifeguard)', undef, undef, 5, 'https');
 
@@ -77,15 +79,12 @@ $agent sets a custom useragent, $assert sets a parameter for the assertedit exte
 sub new {
     my $package  = shift;
     my $agent    = shift || "MediaWiki::Bot $VERSION";  # User-specified agent or default
-    my $assert   = shift || undef;
-    my $operator = shift || undef;
+    my $assert   = shift ;
+    my $operator = shift;
     my $maxlag   = shift || 5;
-
-    # Added for https
-    my $protocol = shift || 'http';
-
-    $operator =~ s/^User://i if $operator; # Strip off namespace, if it is present
-    $assert =~ s/[&?]assert=// if $assert; # Strip out param part, leaving just the value for insertion in to the query string
+    my $protocol = shift || 'http';                     # Added for https
+    $assert =~ s/[&?]assert=// if $assert;              # Strip out param part, leaving just the value
+    $operator =~ s/^User://i if $operator;
 
     my $self = bless {}, $package;
 
