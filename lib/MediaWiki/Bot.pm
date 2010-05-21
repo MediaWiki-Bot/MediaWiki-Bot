@@ -731,38 +731,65 @@ sub get_all_pages_in_category {
     return keys %data;
 }
 
-=item linksearch($link)
+=item linksearch($link, $namespace, $protocol, $options)
 
-Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys "link" for the outbound link name, and "page" for the page the link is on.
+Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page the link is on. Optionally, you may specify the $namespace to search (the number, not the name), or $protocol to search (http is default). The optional $options hashref is fully documented in MediaWiki::API.
+
+This runs one query - the maximum number of results that gives depends on your userrights. With apihighlimits, you can get 5000 in one go. Set max in $options to get more than one query's worth of results:
+
+    my $options = { max => 10, }; # I want lots of results
+    my @links = $bot->linksearch("slashdot.org", undef, undef, $options);
+    foreach my $hash (@links) {
+        my $url = $hash->{'url'};
+        my $page = $hash->{'title'};
+        print "$page: $url\n";
+    }
+
+You can also specify a callback function in $options:
+
+    my $options = { hook => \&mysub, }; # I want to do incremental processing
+    $bot->linksearch("slashdot.org", undef, undef, $options);
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $url  = $hashref->{'url'};
+            my $page = $hashref->{'title'};
+            print "$page: $url\n";
+        }
+    }
+
 
 =cut
 
 sub linksearch {
-    my $self = shift;
-    my $link = shift;
+    my $self    = shift;
+    my $link    = shift;
+    my $ns      = shift;
+    my $prot    = shift;
+    my $options = shift;
     my @links;
-    my $res =
-        $self->_get("Special:Linksearch", "edit", "&target=$link&limit=500&uselang=en");
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-    my $content = $res->decoded_content;
-    while ($content =~
-        m{<li><a href.+>(.+?)</a> linked from <a href.+>(.+)</a></li>}g)
-    {
-        push(@links, { link => $1, page => $2 });
+
+    my $hash = {
+        action      => 'query',
+        list        => 'exturlusage',
+        euprop      => 'url|title',
+        euquery     => $link,
+        eunamespace => $ns,
+        euprotocol  => $prot,
+    };
+    my $res = $self->{api}->list($hash, $options);
+    if (!$res) {
+        return $self->_handle_api_error();
     }
-    while (my $res = $self->{mech}->follow_link(text => 'next 500')
-        && ref($res) eq 'HTTP::Response'
-        && $res->is_success)
-    {
-        sleep 2;
-        my $content = $res->decoded_content;
-        while ($content =~
-            m{<li><a href.+>(.+?)</a> linked from <a href=.+>(.+)</a></li>}g)
-        {
-            push(@links, { link => $1, page => $2 });
+    else {
+        return undef if (! ref $res); # When using a callback hook, this won't be a reference
+        foreach my $hashref (@$res) {
+            my $url  = $hashref->{'url'};
+            my $page = $hashref->{'title'};
+            push(@links, {'url' => $url, 'title' => $page});
         }
+        return @links;
     }
-    return @links;
 }
 
 =item purge_page($pagename)

@@ -5,6 +5,13 @@ Vers. Rel.Mgr. SVN  Date
 ------------------------
 2.3.1 UNRELEASED
     Changes made since 2.3.0
+        * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
+          These both evaluate to false; you can differentiate between them with defined(). get_id() now returns undef instead of
+          2 when there is no pageid (page is nonexistent or title is invalid).
+        * BREAKING CHANGE: All subs return undef when they encounter an error that is passed off to _handle_api_error(). Error
+          details are still available in $bot->{'error'}.
+        * BREAKING CHANGE: linksearch() now uses keys 'url' and 'title' like the API does. This is to avoid confusion when using
+          a callback hook, which is now exposed to callers. linksearch() now uses the API.
         * Codebase underwent spring cleaning.
         * Default useragent now includes the version number.
         * Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.
@@ -12,11 +19,6 @@ Vers. Rel.Mgr. SVN  Date
         * is_blocked() replaces test_blocked(), and now uses the API. test_blocked() remains for backwards compatibility,
         * was_blocked() replaces test_block_hist(), and now uses the API. test_block_hist() remains for backwards compatibility.
         * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
-        * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
-          These both evaluate to false; you can differentiate between them with defined(). get_id() now returns undef instead of
-          2 when there is no pageid (page is nonexistent or title is invalid).
-        * BREAKING CHANGE: All subs return undef when they encounter an error that is passed off to _handle_api_error(). Error
-          details are still available in $bot->{'error'}.
         * edit() now uses an md5 hash to ensure data integrity.
         * set_highlimits() can now be used to *not* use highlimits.
         * revert() now uses the API.

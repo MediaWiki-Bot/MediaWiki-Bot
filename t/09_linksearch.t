@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 1;
+use Test::More tests => 6;
 
 #########################
 
@@ -21,9 +21,12 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-SKIP: {
-    skip('Linksearch not enabled on all wikis', 1);
+my @pages = $bot->linksearch("*.example.com", undef, undef, {max=>1});
 
-    my @pages = $bot->linksearch("*.example.com");
-    ok(defined $pages[0]);
-}
+ok(     defined $pages[0],                                  'Something was returned');
+isa_ok( $pages[0],                      'HASH',             'A hash was returned');
+ok(     defined $pages[0]->{'url'},                         'The hash contains a URL');
+like(   $pages[0]->{'url'},             qr/example\.com/,   'The URL is one we requested');
+ok(     defined $pages[0]->{'title'},                       'The has contains a page title');
+like(   $pages[0]->{'title'},           qr/\w+/,            'The title looks valid');
+
