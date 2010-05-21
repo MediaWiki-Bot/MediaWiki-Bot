@@ -563,38 +563,39 @@ sub undo {
     );
 }
 
-=item get_last($pagename,$username)
+=item get_last($page, $user)
 
-Returns the number of the last revision not made by $username.
+Returns the revid of the last revision to $page not made by $user. undef is returned if no result was found, as would be the case if the page is deleted.
+
+    my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+    print "$revid\n" if defined($revid);
 
 =cut
 
 sub get_last {
-    my $self     = shift;
-    my $pagename = shift;
-    my $editor   = shift;
+    my $self = shift;
+    my $page = shift;
+    my $user = shift;
 
     my $revertto = 0;
 
     my $res = $self->{api}->api(
         {
             action        => 'query',
-            titles        => $pagename,
+            titles        => $page,
             prop          => 'revisions',
             rvlimit       => 1,
             rvprop        => 'ids|user',
-            rvexcludeuser => $editor
+            rvexcludeuser => $user,
         }
     );
     if (!$res) {
-        carp 'Error code: ' . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_return_packaged_error();
     }
     else {
         my ($id, $data) = %{ $res->{query}->{pages} };
-        return $data->{revisions}[0]->{revid};
+        my $revid = $data->{'revisions'}[0]->{'revid'};
+        return $revid;
     }
 }
 
@@ -1605,6 +1606,15 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
     my $basetimestamp = $data->{'revisions'}[0]->{'timestamp'};
     return ($edittoken, $basetimestamp, $tokentimestamp);
 }
+
+sub _return_packaged_error {
+    my $self = shift;
+    carp 'Error code: ' . $self->{api}->{error}->{code};
+    carp $self->{api}->{error}->{details};
+    $self->{error} = $self->{api}->{error};
+    return $self->{error}->{code};
+}
+
 
 1;
 
