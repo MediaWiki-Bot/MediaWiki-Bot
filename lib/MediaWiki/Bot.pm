@@ -914,7 +914,7 @@ sub linksearch {
 
 =item purge_page($pagename)
 
-Purges the server cache of the specified page. Pass an array reference to purge multiple pages. Returns the number of pages successfully purged so you can check - maybe some pages don't exist, or you passed invalid titles, or you aren't allowed to purge the cache.
+Purges the server cache of the specified page. Pass an array reference to purge multiple pages. Returns true on success; false on failure. If you really care, a true return value is the number of pages successfully purged. You could check that it is the same as the number you wanted to purge.- maybe some pages don't exist, or you passed invalid titles, or you aren't allowed to purge the cache:
 
     my @to_purge = ('Main Page', 'A', 'B', 'C', 'Very unlikely to exist');
     my $size = scalar @to_purge;
@@ -933,7 +933,7 @@ Purges the server cache of the specified page. Pass an array reference to purge 
     }
 
     # OR
-    print "\n\narrayref:\n";
+    print "\n\none-at-a-time:\n";
     foreach my $page (@to_purge) {
         my $ok = $bot->purge_page($page);
         print "$page: $ok\n";
@@ -961,10 +961,7 @@ sub purge_page {
 
     my $res  = $self->{api}->api($hash);
     if (!$res) {
-        carp "Error code: " . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
     else {
         my $success = 0;
