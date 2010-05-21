@@ -32,6 +32,7 @@ Vers. Rel.Mgr. SVN  Date
         * purge_page() now uses the API and returns the number of pages successfully purged, which may be useful for the caller's error-checking.
         * New methods were added to query WMF's sitematrix, and convert between db name (enwikibooks) to the domain name (en.wikibooks.org):
           db_to_domain() and domain_to_db().
+        * Admin functions were moved into the plugin MediaWiki::Bot::Plugin::Admin, which is auto-loaded if present.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
