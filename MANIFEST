@@ -35,6 +35,7 @@ t/21_unicode.t
 t/22_get_id.t
 t/23_is_blocked.t
 t/24_api_error.t
+t/25_list_transclusions.t
 t/97_pod.t
 t/98_pod_coverage.t
 t/99_pod_kwalitee.t

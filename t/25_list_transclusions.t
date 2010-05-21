@@ -21,7 +21,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my @pages = $bot->what_links_here('Main Page', 'redirects', undef, {max=>1});
+my @pages = $bot->list_transclusions('Template:Tlx', 'redirects', undef, {max=>1});
 
 ok(     defined $pages[0],                                  'Something was returned');
 isa_ok( $pages[0],                      'HASH',             'A hash was returned');
@@ -30,6 +30,6 @@ like(   $pages[0]->{'title'},           qr/\w+/,            'The title looks val
 ok(     defined $pages[0]->{'redirect'},                    'Redirect status is defined');
 ok(     defined($pages[0]->{'redirect'}),                   'We got a redirect when we asked for it');
 
-@pages = $bot->what_links_here('Main Page', 'nonredirects', undef, {max=>1});
+@pages = $bot->what_links_here('Template:Tlx', 'nonredirects', undef, {max=>1});
 
 isnt(     defined($pages[0]->{'redirect'}),                   'We got a normal link when we asked for no redirects');

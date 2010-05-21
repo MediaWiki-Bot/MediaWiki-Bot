@@ -679,42 +679,119 @@ sub update_rc {
     return @rc_table;
 }
 
-=item what_links_here($pagename)
+=item what_links_here($page[,$filter[,$ns[,$options]]])
 
-Returns an array containing a list of all pages linking to the given page. The array structure contains 'title' and 'type', the type being a transclusion, redirect, or neither.
+Returns an array containing a list of all pages linking to $page. The array structure contains 'title' and 'redirect' is defined if the title is a redirect. $filter can be one of: all (default), redirects (list only redirects), nonredirects (list only non-redirects). $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). $options is a hashref as described by MediaWiki::API: Set max to limit the number of queries performed. Set hook to a subroutine reference to use a callback hook for incremental processing. Refer to the section on linksearch() for examples.
+
+A typical query:
+
+    my @links = $bot->what_links_here("Meta:Sandbox", undef, 1, {hook=>\&mysub});
+    sub mysub{
+        my ($res) = @_;
+        foreach my $hash (@$res) {
+            my $title = $hash->{'title'};
+            my $is_redir = $hash->{'redirect'};
+            print "Redirect: $title\n" if $is_redir;
+            print "Page: $title\n" unless $is_redir;
+        }
+    }
+
+Transclusions are no longer handled by what_links_here() - use list_transcludes() instead.
 
 =cut
 
 sub what_links_here {
     my $self    = shift;
-    my $article = shift;
+    my $page    = shift;
+    my $filter  = shift;
+    my $ns      = shift;
+    my $options = shift;
+
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY'); # Allow array of namespaces
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) { # Verify $filter
+        $filter = $1;
+    }
+
     my @links;
 
-    $article = uri_escape_utf8($article);
+    # http://en.wikipedia.org/w/api.php?action=query&list=backlinks&bltitle=template:tlx
+    my $hash = {
+        action      => 'query',
+        list        => 'backlinks',
+        bltitle     => $page,
+        blnamespace => $ns,
+    };
+    $hash->{'blfilterredir'} = $filter if $filter;
 
-    my $res = $self->_get(
-        'Special:Whatlinkshere', 'view',
-        "&target=$article&limit=5000&uselang=en"
-    );
+    my $res = $self->{api}->list($hash, $options);
     if (!$res) {
-        carp 'Error code: ' . $self->{api}->{error}->{code};
-        carp $self->{api}->{error}->{details};
-        $self->{error} = $self->{api}->{error};
-        return $self->{error}->{code};
+        return $self->_handle_api_error();
     }
-    unless (ref($res) eq 'HTTP::Response' && $res->is_success) { return 1; }
-    my $content = $res->decoded_content;
-    while ($content =~ m{<li><a href="[^"]+" title="([^"]+)">[^<]+</a>([^<]*)}g)
-    {
-        my $title = $1;
-        my $type  = $2;
-        if ($type !~ /\(redirect page\)/ && $type !~ /\(transclusion\)/) {
-            $type = '';
+    else {
+        return undef if (! ref $res); # When using a callback hook, this won't be a reference
+        foreach my $hashref (@$res) {
+            my $title = $hashref->{'title'};
+            my $redirect = defined($hashref->{'redirect'});
+            push @links, { title => $title, redirect => $redirect };
         }
-        if ($type =~ /\(redirect page\)/) { $type = 'redirect'; }
-        if ($type =~ /\(transclusion\)/)  { $type = 'transclusion'; }
+    }
 
-        push @links, { title => $title, type => $type };
+    return @links;
+}
+
+=item list_transclusions($page[,$filter[,$ns[,$options]]])
+
+Returns an array containing a list of all pages transcluding $page. The array structure contains 'title' and 'redirect' is defined if the title is a redirect. $filter can be one of: all (default), redirects (list only redirects), nonredirects (list only non-redirects). $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). $options is a hashref as described by MediaWiki::API: Set max to limit the number of queries performed. Set hook to a subroutine reference to use a callback hook for incremental processing. Refer to the section on linksearch() or what_links_here() for examples.
+
+A typical query:
+
+    $bot->list_transclusions("Template:Tlx", undef, 4, {hook => \&mysub});
+    sub mysub{
+        my ($res) = @_;
+        foreach my $hash (@$res) {
+            my $title = $hash->{'title'};
+            my $is_redir = $hash->{'redirect'};
+            print "Redirect: $title\n" if $is_redir;
+            print "Page: $title\n" unless $is_redir;
+        }
+    }
+
+=cut
+
+sub list_transclusions {
+    my $self    = shift;
+    my $page    = shift;
+    my $filter  = shift;
+    my $ns      = shift;
+    my $options = shift;
+
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) { # Verify $filter
+        $filter = $1;
+    }
+
+    my @links;
+
+    # http://en.wikipedia.org/w/api.php?action=query&list=embeddedin&eititle=Template:Stub
+    my $hash = {
+        action      => 'query',
+        list        => 'embeddedin',
+        eititle     => $page,
+        einamespace => $ns,
+    };
+    $hash->{'eifilterredir'} = $filter if $filter;
+
+    my $res = $self->{api}->list($hash, $options);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    else {
+        return undef if (! ref $res); # When using a callback hook, this won't be a reference
+        foreach my $hashref (@$res) {
+            my $title = $hashref->{'title'};
+            my $redirect = defined($hashref->{'redirect'});
+            push @links, { title => $title, redirect => $redirect };
+        }
     }
 
     return @links;
@@ -771,14 +848,14 @@ sub get_all_pages_in_category {
     return keys %data;
 }
 
-=item linksearch($link, $namespace, $protocol, $options)
+=item linksearch($link[,$ns[,$protocol[,$options]]])
 
-Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page the link is on. Optionally, you may specify the $namespace to search (the number, not the name), or $protocol to search (http is default). The optional $options hashref is fully documented in MediaWiki::API.
+Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page the link is on.  $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). You can search by $protocol (http is default). The optional $options hashref is fully documented in MediaWiki::API.
 
-This runs one query - the maximum number of results that gives depends on your userrights. With apihighlimits, you can get 5000 in one go. Set max in $options to get more than one query's worth of results:
+Set max in $options to get more than one query's worth of results:
 
-    my $options = { max => 10, }; # I want lots of results
-    my @links = $bot->linksearch("slashdot.org", undef, undef, $options);
+    my $options = { max => 10, }; # I only want some results
+    my @links = $bot->linksearch("slashdot.org", 1, undef, $options);
     foreach my $hash (@links) {
         my $url = $hash->{'url'};
         my $page = $hash->{'title'};
@@ -788,7 +865,7 @@ This runs one query - the maximum number of results that gives depends on your u
 You can also specify a callback function in $options:
 
     my $options = { hook => \&mysub, }; # I want to do incremental processing
-    $bot->linksearch("slashdot.org", undef, undef, $options);
+    $bot->linksearch("slashdot.org", 1, undef, $options);
     sub mysub {
         my ($res) = @_;
         foreach my $hashref (@$res) {
@@ -807,6 +884,9 @@ sub linksearch {
     my $ns      = shift;
     my $prot    = shift;
     my $options = shift;
+
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
+
     my @links;
 
     my $hash = {
