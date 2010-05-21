@@ -15,7 +15,7 @@ use Test::More tests => 2;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new ('STWP');
+my $bot = MediaWiki::Bot->new('STWP');
 
-is($bot->login('Perlwikipedia testing','test'), 0);
-ok($bot->_get('Main Page')->decoded_content=~/Perlwikipedia.testing/, 'Login propagation');
+is($bot->login('Perlwikipedia testing', 'test'), 1, 'Log in');
+ok($bot->_is_loggedin(),                            "Double-check we're logged in");

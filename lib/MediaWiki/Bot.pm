@@ -155,20 +155,25 @@ sub set_wiki {
     return 0;
 }
 
-=item login($username, $password)
+=item login($username[,$password[,$paranoia]])
 
-Logs the object into the specified wiki. If the login was a success, it will return 1, otherwise, 0:
+Logs the use $username in, optionally using $password. If omitted, an attempt to use stored cookies will be made. If the login was successful, returns true; false otherwise.
 
-    my $login_failed = $bot->login($username, $password);
-    croak "Login failed\n" if $login_failed;
+    $bot->login($username, $password) or croak "Login failed\n";
+
+Set $paranoia to true to do an extra check that login was successful. This is intended to be used for debugging.
 
 =cut
 
 sub login {
     my $self     = shift;
-    my $editor   = shift;
+    my $username = shift;
     my $password = shift;
-    my $cookies  = ".mediawiki-bot-$editor-cookies";
+    my $paranoia = shift || 0;
+    my $cookies  = ".mediawiki-bot-$username-cookies";
+
+    $self->{username} = $username; # Remember who we are
+
     $self->{mech}->cookie_jar({ file => $cookies, autosave => 1 });
     if (!defined $password) {
         $self->{mech}->{cookie_jar}->load($cookies);
@@ -177,19 +182,24 @@ sub login {
             $self->{mech}->{cookie_jar}->load($cookies);
             print "Loaded MediaWiki cookies from file $cookies\n" if $self->{debug};
             $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
-            return 0;
+            if ($paranoia) {
+                return $self->_is_loggedin();
+            }
+            else {
+                return 1;
+            }
         }
         else {
             $self->{errstr} = "Cannot load MediaWiki cookies from file $cookies";
             carp $self->{errstr};
-            return 1;
+            return 0;
         }
     }
 
     my $res = $self->{api}->api(
         {
             action     => 'login',
-            lgname     => $editor,
+            lgname     => $username,
             lgpassword => $password
         }
     );
@@ -202,7 +212,7 @@ sub login {
         $res = $self->{api}->api(
             {
                 action     => 'login',
-                lgname     => $editor,
+                lgname     => $username,
                 lgpassword => $password,
                 lgtoken    => $lgtoken
             }
@@ -214,7 +224,38 @@ sub login {
     }
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
     if ($result eq 'Success') {
+        if ($paranoia) {
+            return $self->_is_loggedin();
+        }
+        else {
+            return 1;
+        }
+    }
+    else {
         return 0;
+    }
+}
+
+=item logout([$paranoia])
+
+The logout procedure deletes the login tokens and other browser cookies.
+
+    $bot->logout();
+
+Set $paranoia to true to do an extra check that logout was successful. This is intended to be used for debugging.
+
+=cut
+
+sub logout {
+    my $self     = shift;
+    my $paranoia = shift;
+
+    my $hash = {
+        action => 'logout',
+    };
+    $self->{api}->api($hash);
+    if ($paranoia) {
+        return $self->_is_loggedin();
     }
     else {
         return 1;
@@ -794,15 +835,66 @@ sub linksearch {
 
 =item purge_page($pagename)
 
-Purges the server cache of the specified page.
+Purges the server cache of the specified page. Pass an array reference to purge multiple pages. Returns the number of pages successfully purged so you can check - maybe some pages don't exist, or you passed invalid titles, or you aren't allowed to purge the cache.
+
+    my @to_purge = ('Main Page', 'A', 'B', 'C', 'Very unlikely to exist');
+    my $size = scalar @to_purge;
+
+    print "all-at-once:\n";
+    my $success = $bot->purge_page(\@to_purge);
+
+    if ($success == $size) {
+        print "@to_purge: OK ($success/$size)\n";
+    }
+    else {
+        my $missed = @to_purge - $success;
+        print "We couldn't purge $missed pages (list was: "
+            . join(', ', @to_purge)
+            . ")\n";
+    }
+
+    # OR
+    print "\n\narrayref:\n";
+    foreach my $page (@to_purge) {
+        my $ok = $bot->purge_page($page);
+        print "$page: $ok\n";
+    }
 
 =cut
 
 sub purge_page {
     my $self = shift;
     my $page = shift;
-    my $res  = $self->_get($page, 'purge');
-    return;
+
+    my $hash;
+    if (ref $page eq 'ARRAY') {             # If it is an array reference...
+        $hash = {
+            action  => 'purge',
+            titles  => join('|',@$page),    # dereference it and purge all those titles
+        };
+    }
+    else {                                  # Just one page
+        $hash = {
+            action  => 'purge',
+            titles  => $page,
+        };
+    }
+
+    my $res  = $self->{api}->api($hash);
+    if (!$res) {
+        carp "Error code: " . $self->{api}->{error}->{code};
+        carp $self->{api}->{error}->{details};
+        $self->{error} = $self->{api}->{error};
+        return $self->{error}->{code};
+    }
+    else {
+        my $success = 0;
+        foreach my $hashref (@{$res->{'purge'}}) {
+            $success++ if exists $hashref->{'purged'};
+        }
+        return $success;
+    }
+
 }
 
 =item get_namespace_names
@@ -1597,6 +1689,29 @@ sub _handle_api_error {
     return undef;
 }
 
+sub _is_loggedin {
+    my $self = shift;
+    # http://en.wikipedia.org/w/api.php?action=query&meta=userinfo
+    my $hash = {
+        action  => 'query',
+        meta    => 'userinfo',
+    };
+    my $res = $self->{api}->api($hash);
+    if (!$res) {
+        return 0;
+    }
+    else {
+        my $is = $res->{'query'}->{'userinfo'}->{'name'};
+        my $ought = $self->{username};
+        #print "We're logged in as $is\nWe should be logged in as $ought\n" and die;
+        if ($is eq $ought) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+}
 
 1;
 

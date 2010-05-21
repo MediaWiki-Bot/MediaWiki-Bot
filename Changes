@@ -12,6 +12,10 @@ Vers. Rel.Mgr. SVN  Date
           details are still available in $bot->{'error'}.
         * BREAKING CHANGE: linksearch() now uses keys 'url' and 'title' like the API does. This is to avoid confusion when using
           a callback hook, which is now exposed to callers. linksearch() now uses the API.
+        * BREAKING CHANGE: login()'s return values are reversed, and properly documented. Returns true for success; false for failure:
+          $bot->login($user, $pass) or die "Login failed\n"; # This is in accord with Perl standards
+        * BREAKING CHANGE: what_links_here() no longer handles transclusions. To get transclusions, use list_transclusions(). Also,
+          key names are now 'title' and 'redirect' (defined when the page is a redirect; undefined otherwise).
         * Codebase underwent spring cleaning.
         * Default useragent now includes the version number.
         * Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.
@@ -24,6 +28,8 @@ Vers. Rel.Mgr. SVN  Date
         * revert() now uses the API.
         * get_last() now uses the API.
         * undo() now uses the API, and is documented accurately.
+        * logout() was added.
+        * purge_page() now uses the API and returns the number of pages successfully purged, which may be useful for the caller's error-checking.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
