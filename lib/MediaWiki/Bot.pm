@@ -370,27 +370,56 @@ sub logout {
     return 1;
 }
 
-=item edit($pagename, $text[,$edit_summary,[$is_minor,[$assert[,$markasbot]]]])
+=head2 edit($options_hashref)
 
-Edits the specified page $pagename and replaces it with $text. If provided, use an edit summary of $edit_summary, mark the edit as minor, or add an assertion. Assertions should be of the form "user". $markasbot allows bots to optionally not hide a given edit in RecentChanges. An MD5 hash is sent to guard against data corruption while in transit.
+Puts text on a page. If provided, use a specified edit summary, mark the edit as minor, as a non-bot edit, or add an assertion. An MD5 hash is sent to guard against data corruption while in transit.
 
     my $text = $bot->get_text('My page');
     $text .= "\n\n* More text\n";
-    $bot->edit('My page', $text, 'Automated update', 1);
+    $bot->edit({
+        page    => 'My page',
+        text    => $text,
+        summary => 'Adding new content',
+    });
+
+You can also call this using the deprecated form:
+
+    $bot->edit($page, $text, $summary, $is_minor, $assert, $markasbot);
 
 =cut
 
 sub edit {
-    my $self      = shift;
-    my $page      = shift;
-    my $text      = shift;
-    my $summary   = shift;
-    my $is_minor  = shift || 0;
-    my $assert    = shift || $self->{assert};
-    my $markasbot = shift || 1;
-    $assert       =~ s/\&?assert=// if $assert;
+    my $self = shift;
+    my $page;
+    my $text;
+    my $summary;
+    my $is_minor;
+    my $assert;
+    my $markasbot;
 
-    my ($edittoken, $lastedit) = $self->_get_edittoken($page);
+    if (ref $_[0] eq 'HASH') {
+        $page       = $_[0]->{'page'};
+        $text       = $_[0]->{'text'};
+        $summary    = $_[0]->{'summary'};
+        $is_minor   = $_[0]->{'is_minor'};
+        $assert     = $_[0]->{'assert'};
+        $markasbot  = $_[0]->{'markasbot'};
+    }
+    else {
+        $page       = shift;
+        $text       = shift;
+        $summary    = shift;
+        $is_minor   = shift;
+        $assert     = shift;
+        $markasbot  = shift;
+    }
+    # Set defaults
+    $summary   = 'BOT: Changing page text' unless $summary;
+    $assert    =~ s/^[&?]assert=// if $assert;
+    $is_minor  = 1 unless defined($is_minor);
+    $markasbot = 1 unless defined($markasbot);
+
+    my ($edittoken, $lastedit, $tokentime) = $self->_get_edittoken($page);
     my $hash = {
         action          => 'edit',
         title           => $page,
@@ -399,13 +428,14 @@ sub edit {
         md5             => md5_hex(encode_utf8($text)), # Guard against data corruption
                                                         # Pass only bytes to md5_hex()
         summary         => $summary,
-        basetimestamp   => $lastedit, # Guard against edit conflicts
+        basetimestamp   => $lastedit,  # Guard against edit conflicts
+        starttimestamp  => $tokentime, # Guard against the page being deleted/moved
         bot             => $markasbot,
         assert          => $assert,
         minor           => $is_minor,
     };
 
-    my $res = $self->{api}->api($hash);
+    my $res = $self->{api}->api($hash); # Check if MediaWiki::API::edit() is good enough
     if (!$res) {
         return $self->_handle_api_error();
     }
@@ -414,22 +444,22 @@ sub edit {
             carp 'Assertion failed as ' . $self->{mech}->{agent};
             if ($self->{operator}) {
                 my $optalk = $self->get_text('User talk:' . $self->{operator});
-                unless ($optalk =~ /Error with \Q$self->{mech}->{agent}\E/) {
+                unless (!defined($optalk)) {
                     print "Sending warning!\n";
                     $self->edit(
-                        "User talk:$self->{operator}",
-                        $optalk
-                            . "\n\n==Error with "
-                            . $self->{mech}->{agent} . "==\n"
-                            . $self->{mech}->{agent}
-                            . ' needs to be logged in! ~~~~',
-                        'bot issue',
-                        0,
-                        'assert='
+                        page        => "User talk:$self->{operator}",
+                        text        => $optalk
+                                        . "\n\n==Error with "
+                                        . $self->{mech}->{agent} . "==\n"
+                                        . $self->{mech}->{agent}
+                                        . ' needs to be logged in! ~~~~',
+                        summary     => 'bot issue',
+                        is_minor    => 0,
+                        assert      => ''
                     );
                 }
             }
-            return 2;
+            return undef;
         }
         else {
             carp 'Assertion failed';
