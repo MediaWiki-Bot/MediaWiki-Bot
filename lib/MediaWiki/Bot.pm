@@ -539,28 +539,40 @@ sub revert {
     return $res;
 }
 
-=item undo($pagename,$edit_summary,$revision_id,$after)
+=item undo($pagename, $revid[,$summary[,$after]])
 
-Reverts the specified page to $revision_id, with an edit summary of $edit_summary, using the undo function. To use old revision id instead of new, set last param to 'after'.
+Reverts the specified $revid, with an edit summary of $summary, using the undo function. To undo all revisions from $revid up to but not including this one, set $after to another revid. If not set, just undo the one revision ($revid).
+
 
 =cut
 
 sub undo {
-    my $self     = shift;
-    my $pagename = shift;
-    my $summary  = shift;
-    my $revid    = shift;
-    my $after    = shift || '';
+    my $self    = shift;
+    my $page    = shift;
+    my $revid   = shift;
+    my $summary = shift || "Reverting revision #$revid";
+    my $after   = shift;
+    $summary = "Reverting edits between #$revid & #$after" if defined($after); # Is that clear? Correct?
 
-    return $self->_put(
-        $pagename,
-        {
-            form_name => 'editform',
-            fields    => { wpSummary => $summary, },
-        },
-        "&undo$after=$revid",
-        'undo'    # For the error detection in _put.
-    );
+    my ($edittoken, $basetimestamp, $starttimestamp) = $self->_get_edittoken($page);
+    my $hash = {
+        action          => 'edit',
+        title           => $page,
+        undo            => $revid,
+        undoafter       => $after,
+        summary         => $summary,
+        token           => $edittoken,
+        starttimestamp  => $starttimestamp,
+        basetimestamp   => $basetimestamp,
+    };
+
+    my $res = $self->{api}->api($hash);
+    if (!$res) {
+        return $self->_return_packaged_error();
+    }
+    else {
+        return $res;
+    }
 }
 
 =item get_last($page, $user)

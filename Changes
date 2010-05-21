@@ -19,6 +19,7 @@ Vers. Rel.Mgr. SVN  Date
         * set_highlimits() can now be used to *not* use highlimits.
         * revert() now uses the API.
         * get_last() now uses the API.
+        * undo() now uses the API, and is documented accurately.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
