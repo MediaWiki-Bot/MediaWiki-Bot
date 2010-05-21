@@ -35,6 +35,7 @@ Vers. Rel.Mgr. SVN  Date
         * Admin functions were moved into the plugin MediaWiki::Bot::Plugin::Admin, which is auto-loaded if present.
         * The constructor now does more for script authors. It sets the wiki, logs in, and does some autoconfiguration. See updated POD for details.
         * edit() now accepts a hashref of options. See updated POD for details.
+        * expandtemplates() now uses the API.
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3

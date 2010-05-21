@@ -1493,23 +1493,24 @@ Expands templates on $page, using $text if provided, otherwise loading the page 
 sub expandtemplates {
     my $self = shift;
     my $page = shift;
-    my $text = shift || undef;
+    my $text = shift;
 
     unless ($text) {
         $text = $self->get_text($page);
     }
 
-    my $res     = $self->_get("Special:ExpandTemplates");
-    my $options = {
-        fields => {
-            contexttitle   => $page,
-            input          => $text,
-            removecomments => undef,
-        },
+    my $hash = {
+        action  => 'expandtemplates',
+        title   => $page,
+        text    => $text,
     };
-    $res = $self->{mech}->submit_form(%{$options});
-    $res->decoded_content =~ /\<textarea id=\"output\"(.+?)\<\/textarea\>/si;
-    return $1;
+    my $res = $self->{api}->api($hash);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    my $expanded = $res->{'expandtemplates'}->{'*'};
+
+    return $expanded;
 }
 
 =head2 get_allusers($limit)
