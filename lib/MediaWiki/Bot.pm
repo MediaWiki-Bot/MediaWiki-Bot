@@ -1728,7 +1728,7 @@ sub _do_autoconfig {
         carp "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{debug};
     }
     $self->set_highlimits($has_apihighlimits);
-    $self->{'assert'} = $default_assert;
+    $self->{'assert'} = $default_assert unless $self->{'assert'};
 
     return 1;
 }
