@@ -1720,7 +1720,6 @@ sub _do_autoconfig {
     foreach my $group (@groups) {
         if ($group eq 'sysop') {
             $is_sysop = 1;
-            $default_assert = 'sysop';
         }
     }
 
