@@ -269,7 +269,22 @@ Logs the use $username in, optionally using $password. First, an attempt will be
         }
     ) or die "Login failed";
 
-Once logged in, attempt to do some simple auto-configuration. At present, this consists solely of warning if the account doesn't have the bot flag, and setting the use of apihighlimits if the account has that userright. You can skip this autoconfiguration by passing C<autoconfig =Z<>> 0>
+Once logged in, attempt to do some simple auto-configuration. At present, this consists of:
+
+=over 4
+
+=item *
+Warning if the account doesn't have the bot flag, and isn't a sysop account.
+
+=item *
+Setting the use of apihighlimits if the account has that userright.
+
+=item *
+Setting an appropriate default assert.
+
+=back
+
+You can skip this autoconfiguration by passing C<autoconfig =Z<>> 0>
 
 For backward compatibility, you can call this as
 
@@ -1689,9 +1704,11 @@ sub _do_autoconfig {
     my @rights = @{ $res->{'query'}->{'userinfo'}->{'rights'} };
     my $has_bot = 0;
     my $has_apihighlimits = 0;
+    my $default_assert = 'user'; # At a *minimum*, the bot should be logged in.
     foreach my $right (@rights) {
         if ($right eq 'bot') {
             $has_bot = 1;
+            $default_assert = 'bot';
         }
         elsif ($right eq 'apihighlimits') {
             $has_apihighlimits = 1;
@@ -1701,13 +1718,17 @@ sub _do_autoconfig {
     my @groups = @{ $res->{'query'}->{'userinfo'}->{'groups'} };
     my $is_sysop = 0;
     foreach my $group (@groups) {
-        $is_sysop = 1 if $group eq 'sysop';
+        if ($group eq 'sysop') {
+            $is_sysop = 1;
+            $default_assert = 'sysop';
+        }
     }
 
     unless ($has_bot and !$is_sysop) {
         carp "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{debug};
     }
     $self->set_highlimits($has_apihighlimits);
+    $self->{'assert'} = $default_assert;
 
     return 1;
 }
