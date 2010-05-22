@@ -414,8 +414,13 @@ sub edit {
         $markasbot  = shift;
     }
     # Set defaults
-    $summary   = 'BOT: Changing page text' unless $summary;
-    $assert    =~ s/^[&?]assert=// if $assert;
+    $summary = 'BOT: Changing page text' unless $summary;
+    if ($assert) {
+        $assert =~ s/^[&?]assert=//;
+    }
+    else {
+        $assert = $self->{'assert'};
+    }
     $is_minor  = 1 unless defined($is_minor);
     $markasbot = 1 unless defined($markasbot);
 
