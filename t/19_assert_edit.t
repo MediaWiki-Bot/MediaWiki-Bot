@@ -27,12 +27,6 @@ SKIP: {
 
     my $rand = rand();
     print STDERR "\rYou should receive another error message here regarding a failed assertion.\n";
-    my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests');
-#   eval { use Data::Dumper; print STDERR Dumper($status); };
-#   if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
-#   ok( $status->isa("HTTP::Response") );
-
-    my $text = $bot->get_text('User:ST47/test');
-    $text =~ s/\n//;
-    isnt($text, $rand, 'Intentionally bad assertion');
+    my $status = $bot->edit('User:ST47/test', $rand, 'false');
+    is($status->{'edit'}->{'result'}, 'Failure', 'Intentionally bad assertion');
 }
