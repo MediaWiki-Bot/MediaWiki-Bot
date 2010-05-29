@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 #########################
 
@@ -50,3 +50,5 @@ SKIP: {
     $new = $bot->get_text('User:ST47/éółŽć');
     is($new, "$rand3\n$string", 'Saved data from load correctly to page with unicode title');
 }
+my $unititle=$bot->get_text("User:ST47/testőá");
+is($unititle, "testőácontenthere", 'Loaded correct data from page with unicode title');
