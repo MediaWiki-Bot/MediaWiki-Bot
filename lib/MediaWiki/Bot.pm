@@ -313,17 +313,9 @@ sub login {
     # This seems to not do what we want. Cookies are loaded, but a
     # subsequent userinfo query shows the bot is not logged in.
     my $cookies  = ".mediawiki-bot-$username-cookies";
-    $self->{mech}->cookie_jar({ file => $cookies, autosave => 1 });
-    my $cookies_exist = $self->{mech}->{cookie_jar}->as_string;
-    if ($cookies_exist) {
-        $self->{mech}->{cookie_jar}->load($cookies);
-        carp "Loaded MediaWiki cookies from file $cookies" if $self->{debug};
-        $self->{api}->{ua}->{cookie_jar} = $self->{mech}->{cookie_jar};
-    }
-    else {
-        $self->{errstr} = "Cannot load MediaWiki cookies from file $cookies";
-        carp $self->{errstr} if $self->{debug};
-    }
+    $self->{mech}->{cookie_jar}->load($cookies);
+    $self->{mech}->{cookie_jar}->{ignore_discard}=1;
+    $self->{api}->{ua}->{cookie_jar}->load($cookies);
 
     $self->{username} = $username; # Remember who we are
     my $logged_in = $self->_is_loggedin();
@@ -344,6 +336,9 @@ sub login {
     }) or return $self->_handle_api_error();
 
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
+    $self->{mech}->{cookie_jar}->save($cookies);
+
+#use Data::Dumper; print Dumper $self->{mech}->{cookie_jar};
     $logged_in = $self->_is_loggedin();
     $self->_do_autoconfig() if ($autoconfig and $logged_in);
     carp "Logged in successfully with password" if ($logged_in and $self->{debug});
@@ -1679,6 +1674,7 @@ sub _is_loggedin {
     }
     my $is = $res->{'query'}->{'userinfo'}->{'name'};
     my $ought = $self->{username};
+    carp "Testing if logged in: we are $is, think we should be $ought" if $self->{debug};
     return ($is eq $ought);
 }
 

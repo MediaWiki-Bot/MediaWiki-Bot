@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 2;
+use Test::More tests => 4;
 
 #########################
 
@@ -19,3 +19,8 @@ my $bot = MediaWiki::Bot->new('STWP');
 
 is($bot->login('Perlwikipedia testing', 'test'), 1, 'Log in');
 ok($bot->_is_loggedin(),                            "Double-check we're logged in");
+
+my $cookiemonster = MediaWiki::Bot->new('STWP');
+
+is ($cookiemonster->login('Perlwikipedia testing'), 1, 'Cookie log in');
+ok($bot->_is_loggedin(),                            "Double-check we're cookie logged in");
