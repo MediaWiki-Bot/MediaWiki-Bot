@@ -371,7 +371,6 @@ The logout procedure deletes the login tokens and other browser cookies.
 
 sub logout {
     my $self     = shift;
-    my $paranoia = shift;
 
     my $hash = {
         action => 'logout',
