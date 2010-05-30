@@ -3,7 +3,7 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
-2.3.1 UNRELEASED
+3.0.0 Mike.lif r282 30 May 2010
     Changes made since 2.3.0
         * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
           These both evaluate to false; you can differentiate between them with defined(). get_id() now returns undef instead of
