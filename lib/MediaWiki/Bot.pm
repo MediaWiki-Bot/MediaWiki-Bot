@@ -1692,6 +1692,65 @@ sub domain_to_db {
     }
 }
 
+=head2 diff($options_hashref)
+
+This allows retrieval of a diff from the API. The return is a scalar containing the HTML table of the diff. Options are as follows:
+
+=over 4
+
+=item *
+title is the title to use. Provide I<either> this or revid.
+
+=item *
+revid is any revid to diff from. If you also specified title, only title will be honoured.
+
+=item *
+oldid is an identifier to diff to. This can be a revid, or the special values 'cur', 'prev' or 'next'
+
+=back
+
+=cut
+
+sub diff {
+    my $self = shift;
+    my $title;
+    my $revid;
+    my $oldid;
+
+    if (ref $_[0] eq 'HASH') {
+        $title = $_[0]->{'title'};
+        $revid = $_[0]->{'revid'};
+        $oldid = $_[0]->{'oldid'};
+    }
+    else {
+        $title = shift;
+        $revid = shift;
+        $oldid = shift;
+    }
+
+    my $hash = {
+        action      => 'query',
+        prop        => 'revisions',
+        rvdiffto    => $oldid,
+    };
+    if ($title) {
+        $hash->{'titles'} = $title;
+        $hash->{'rvlimit'} = 1;
+    }
+    elsif ($revid) {
+        $hash->{'revids'} = $revid;
+    }
+
+    my $res = $self->{api}->api($hash);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    my @revids = keys %{ $res->{'query'}->{'pages'} };
+    my $diff = $res->{'query'}->{'pages'}->{$revids[0]}->{'revisions'}->[0]->{'diff'}->{'*'};
+
+    return $diff;
+}
+
 
 ################
 # Internal use #
