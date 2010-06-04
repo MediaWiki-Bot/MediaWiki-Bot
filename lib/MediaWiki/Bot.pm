@@ -951,13 +951,24 @@ sub list_transclusions {
 
 =head2 get_pages_in_category($category_name)
 
-Returns an array containing the names of all pages in the specified category. Does not go into sub-categories.
+Returns an array containing the names of all pages in the specified category (include Category: prefix). Does not recurse into sub-categories.
+
+    my @pages = $bot->get_pages_in_category("Category:People on stamps of Gabon");
+    print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
 
 =cut
 
 sub get_pages_in_category {
     my $self     = shift;
     my $category = shift;
+
+    unless ($category =~ m/^Category:/) {
+        my %ns_data = $self->{'ns_data'} ? %{$self->{'ns_data'}} : $self->get_namespace_names();
+        $self->{'ns_data'} = \%ns_data; # Save for later use
+        my $cat_ns_name = $ns_data{'14'};
+
+        $category = "$cat_ns_name:$category" unless ($category =~ m/^$cat_ns_name:/);
+    }
 
     my @return;
     my $res = $self->{api}->list(
@@ -979,7 +990,7 @@ sub get_pages_in_category {
 
 =head2 get_all_pages_in_category($category_name)
 
-Returns an array containing the names of ALL pages in the specified category, including sub-categories.
+Returns an array containing the names of ALL pages in the specified category (include the Category: prefix), including sub-categories.
 
 =cut
 
@@ -988,9 +999,15 @@ sub get_all_pages_in_category {
     my $base_category = shift;
     my @first         = $self->get_pages_in_category($base_category);
     my %data;
+
     foreach my $page (@first) {
         $data{$page} = '';
-        if ($page =~ /^Category:/) {
+
+        my %ns_data = $self->{'ns_data'} ? %{$self->{'ns_data'}} : $self->get_namespace_names();
+        $self->{'ns_data'} = \%ns_data; # Save for later use
+        my $cat_ns_name = $ns_data{'14'};
+
+        if ($page =~ /^$cat_ns_name:/) {
             my @pages = $self->get_all_pages_in_category($page);
             foreach (@pages) {
                 $data{$_} = '';
