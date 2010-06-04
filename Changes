@@ -37,6 +37,7 @@ Vers. Rel.Mgr. SVN  Date
         * edit() now accepts a hashref of options. See updated POD for details.
         * expandtemplates() now uses the API.
         * get_pages_in_category() and get_all_pages_in_category() now work properly for non-English wikis (issue 42).
+        * Moving pages is now supported (issue 43).
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3

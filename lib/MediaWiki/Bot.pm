@@ -482,6 +482,52 @@ sub edit {
     return $res;
 }
 
+=head2 move($from, $to, $reason, $options_hashref)
+
+This moves a page from $from to $to. If you wish to specify more options (like whether to suppress creation of a redirect), use $options_hashref.
+
+=over 4
+
+=item *
+movetalk specifies whether to attempt to the talk page.
+
+=item *
+noredirect specifies whether to suppress creation of a redirect.
+
+=back
+
+    my @pages = ("Humor", "Rumor");
+    foreach my $page (@pages) {
+        my $to = $page;
+        $to =~ s/or$/our/;
+        $bot->move($page, $to, "silly 'merricans");
+    }
+
+=cut
+
+sub move {
+    my $self   = shift;
+    my $from   = shift;
+    my $to     = shift;
+    my $reason = shift;
+    my $opts   = shift;
+
+    my $hash = {
+        action  => 'move',
+        from    => $from,
+        to      => $to,
+        reason  => $reason,
+    };
+    $hash->{'movetalk'}   = $opts->{'movetalk'}   if defined($opts->{'movetalk'});
+    $hash->{'noredirect'} = $opts->{'noredirect'} if defined($opts->{'noredirect'});
+
+    my $res = $self->{api}->edit($hash);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    return $res; # should we return something more useful?
+}
+
 =head2 get_history($pagename[,$limit])
 
 Returns an array containing the history of the specified page, with $limit number of revisions. The array structure contains 'revid', 'user', 'comment', 'timestamp_date', and 'timestamp_time'.
