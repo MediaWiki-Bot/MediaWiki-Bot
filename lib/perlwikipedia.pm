@@ -8,7 +8,7 @@ PWP - Alias for MediaWiki::Bot, previously known as perlwikipedia or PWP
 
 =head1 SYNOPSIS
 
- perl -MPWP -e "$editor=new PWP"
+ perl -Mperlwikipedia -e "$editor=new perlwikipedia"
 
 =head1 DESCRIPTION
 
