@@ -16,6 +16,7 @@ Vers. Rel.Mgr. SVN  Date
           $bot->login($user, $pass) or die "Login failed\n"; # This is in accord with Perl standards
         * BREAKING CHANGE: what_links_here() no longer handles transclusions. To get transclusions, use list_transclusions(). Also,
           key names are now 'title' and 'redirect' (defined when the page is a redirect; undefined otherwise).
+        * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
         * Codebase underwent spring cleaning.
         * Default useragent now includes the version number.
         * Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.

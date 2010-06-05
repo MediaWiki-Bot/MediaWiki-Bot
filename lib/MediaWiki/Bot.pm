@@ -849,37 +849,56 @@ sub get_last {
     }
 }
 
-=head2 update_rc([$limit])
+=head2 update_rc($limit[,$options_hashref])
 
-Returns an array containing the Recent Changes to the wiki Main namespace. The array structure contains 'pagename', 'revid', 'oldid', 'timestamp_date', and 'timestamp_time'.
+Returns an array containing the Recent Changes to the wiki Main namespace. The array structure contains 'title', 'revid', 'old_revid', and 'timestamp'. The $options_hashref is the same as described in the section on linksearch().
+
+    my @rc = $bot->update_rc(5);
+    foreach my $hashref (@rc) {
+        my $title = $hash->{'title'};
+        print "$title\n";
+    }
+
+    # Or, use a callback for incremental processing:
+    my $options = { hook => \&mysub, };
+    $bot->update_rc($options);
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $page = $hashref->{'title'};
+            print "$page\n";
+        }
+    }
 
 =cut
 
 sub update_rc {
-    my $self = shift;
-    my $limit = shift || 5;
-    my @rc_table;
+    my $self    = shift;
+    my $limit   = shift;
+    my $options = shift;
 
-    my $res = $self->{api}->list(
-        {
-            action      => 'query',
-            list        => 'recentchanges',
-            rcnamespace => 0,
-            rclimit     => $limit
-        },
-        { max => $limit }
-    );
+    my $hash = {
+        action      => 'query',
+        list        => 'recentchanges',
+        rcnamespace => 0,
+        rclimit     => $limit,
+    };
+    $options->{'max'} = 1 unless $options->{'max'};
+
+    my $res = $self->{api}->list($hash, $options);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    return undef if (! ref $res); # Not a ref when using callback
+    my @rc_table;
     foreach my $hash (@{$res}) {
-        my ($timestamp_date, $timestamp_time) = split(/T/, $hash->{timestamp});
-        $timestamp_time =~ s/Z$//;
         push(
             @rc_table,
             {
-                pagename       => $hash->{title},
-                revid          => $hash->{revid},
-                oldid          => $hash->{old_revid},
-                timestamp_date => $timestamp_date,
-                timestamp_time => $timestamp_time,
+                title          => $hash->{'title'},
+                revid          => $hash->{'revid'},
+                old_revid      => $hash->{'old_revid'},
+                timestamp      => $hash->{'timestamp'},
             }
         );
     }
