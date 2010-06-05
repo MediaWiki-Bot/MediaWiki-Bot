@@ -938,8 +938,6 @@ sub what_links_here {
         $filter = $1;
     }
 
-    my @links;
-
     # http://en.wikipedia.org/w/api.php?action=query&list=backlinks&bltitle=template:tlx
     my $hash = {
         action      => 'query',
@@ -948,18 +946,18 @@ sub what_links_here {
         blnamespace => $ns,
     };
     $hash->{'blfilterredir'} = $filter if $filter;
+    $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
     if (!$res) {
         return $self->_handle_api_error();
     }
-    else {
-        return undef if (! ref $res); # When using a callback hook, this won't be a reference
-        foreach my $hashref (@$res) {
-            my $title = $hashref->{'title'};
-            my $redirect = defined($hashref->{'redirect'});
-            push @links, { title => $title, redirect => $redirect };
-        }
+    return undef if (! ref $res); # When using a callback hook, this won't be a reference
+    my @links;
+    foreach my $hashref (@$res) {
+        my $title = $hashref->{'title'};
+        my $redirect = defined($hashref->{'redirect'});
+        push @links, { title => $title, redirect => $redirect };
     }
 
     return @links;
@@ -996,8 +994,6 @@ sub list_transclusions {
         $filter = $1;
     }
 
-    my @links;
-
     # http://en.wikipedia.org/w/api.php?action=query&list=embeddedin&eititle=Template:Stub
     my $hash = {
         action      => 'query',
@@ -1006,35 +1002,38 @@ sub list_transclusions {
         einamespace => $ns,
     };
     $hash->{'eifilterredir'} = $filter if $filter;
+    $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
     if (!$res) {
         return $self->_handle_api_error();
     }
-    else {
-        return undef if (! ref $res); # When using a callback hook, this won't be a reference
-        foreach my $hashref (@$res) {
-            my $title = $hashref->{'title'};
-            my $redirect = defined($hashref->{'redirect'});
-            push @links, { title => $title, redirect => $redirect };
-        }
+    return undef if (! ref $res); # When using a callback hook, this won't be a reference
+    my @links;
+    foreach my $hashref (@$res) {
+        my $title = $hashref->{'title'};
+        my $redirect = defined($hashref->{'redirect'});
+        push @links, { title => $title, redirect => $redirect };
     }
 
     return @links;
 }
 
-=head2 get_pages_in_category($category_name)
+=head2 get_pages_in_category($category_name[,$options_hashref])
 
 Returns an array containing the names of all pages in the specified category (include Category: prefix). Does not recurse into sub-categories.
 
     my @pages = $bot->get_pages_in_category("Category:People on stamps of Gabon");
     print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
 
+The options hashref is as described in the section on linksearch().
+
 =cut
 
 sub get_pages_in_category {
     my $self     = shift;
     my $category = shift;
+    my $options  = shift;
 
     unless ($category =~ m/^Category:/) {
         my $ns_data = $self->_get_ns_data();
@@ -1043,22 +1042,24 @@ sub get_pages_in_category {
         $category = "$cat_ns_name:$category" unless ($category =~ m/^$cat_ns_name:/);
     }
 
-    my @return;
-    my $res = $self->{api}->list(
-        {
-            action  => 'query',
-            list    => 'categorymembers',
-            cmtitle => $category,
-            cmlimit => 500
-        },
-    );
+    my $hash = {
+        action  => 'query',
+        list    => 'categorymembers',
+        cmtitle => $category,
+    };
+    $options->{'max'} = 1 unless $options->{'max'};
+
+    my $res = $self->{api}->list($hash, $options);
     if (!$res) {
         return $self->_handle_api_error();
     }
-    foreach (@{$res}) {
-        push @return, $_->{title};
+    return undef if (! ref $res); # Not a hashref when using callback
+    my @pages;
+    foreach my $hash (@$res) {
+        my $title = $hash->{'title'};
+        push @pages, $title;
     }
-    return @return;
+    return @pages;
 }
 
 =head2 get_all_pages_in_category($category_name)
@@ -1070,6 +1071,8 @@ Returns an array containing the names of ALL pages in the specified category (in
 sub get_all_pages_in_category {
     my $self          = shift;
     my $base_category = shift;
+    my $options       = shift;
+
     my @first         = $self->get_pages_in_category($base_category);
     my %data;
 
@@ -1127,8 +1130,6 @@ sub linksearch {
 
     $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
 
-    my @links;
-
     my $hash = {
         action      => 'query',
         list        => 'exturlusage',
@@ -1137,19 +1138,20 @@ sub linksearch {
         eunamespace => $ns,
         euprotocol  => $prot,
     };
+    $options->{'max'} = 1 unless $options->{'max'};
+
     my $res = $self->{api}->list($hash, $options);
     if (!$res) {
         return $self->_handle_api_error();
     }
-    else {
-        return undef if (! ref $res); # When using a callback hook, this won't be a reference
-        foreach my $hashref (@$res) {
-            my $url  = $hashref->{'url'};
-            my $page = $hashref->{'title'};
-            push(@links, {'url' => $url, 'title' => $page});
-        }
-        return @links;
+    return undef if (! ref $res); # When using a callback hook, this won't be a reference
+    my @links;
+    foreach my $hashref (@$res) {
+        my $url  = $hashref->{'url'};
+        my $page = $hashref->{'title'};
+        push(@links, {'url' => $url, 'title' => $page});
     }
+    return @links;
 }
 
 =head2 purge_page($pagename)
@@ -1365,7 +1367,7 @@ sub test_image_exists {
 }
 
 
-=head2 get_pages_in_namespace($namespace_id,$page_limit)
+=head2 get_pages_in_namespace($namespace_id, $page_limit)
 
 Returns an array containing the names of all pages in the specified namespace. The $namespace_id must be a number, not a namespace name. Setting $page_limit is optional. If $page_limit is over 500, it will be rounded up to the next multiple of 500.
 
@@ -1374,35 +1376,24 @@ Returns an array containing the names of all pages in the specified namespace. T
 sub get_pages_in_namespace {
     my $self       = shift;
     my $namespace  = shift;
-    my $page_limit = shift || 500;
-    my $apilimit   = 500;
-    if ($self->{highlimits}) {
-        $apilimit = 5000;
-    }
+    my $limit      = shift || 500;
+    my $options    = shift;
+    $limit = 5000 if $self->{'highlimits'};
 
-    my @return;
-    my $max;
+    my $hash = {
+        action      => 'query',
+        list        => 'allpages',
+        apnamespace => $namespace,
+        aplimit     => $limit,
+    };
+    $options->{'max'} = 1 unless $options->{'max'};
 
-    if ($page_limit <= $apilimit) {
-        $max = 1;
-    }
-    else {
-        $max        = ($page_limit - 1) / $apilimit + 1;
-        $page_limit = $apilimit;
-    }
-
-    my $res = $self->{api}->list(
-        {
-            action      => 'query',
-            list        => 'allpages',
-            apnamespace => $namespace,
-            aplimit     => $page_limit
-        },
-        { max => $max }
-    );
+    my $res = $self->{api}->list($hash, $options);
     if (!$res) {
         return $self->_handle_api_error();
     }
+    return undef if (! ref $res); # Not a ref when using callback
+    my @return;
     foreach (@{$res}) {
         push @return, $_->{title};
     }
@@ -1418,7 +1409,8 @@ Uses the API to count $user's contributions.
 sub count_contributions {
     my $self     = shift;
     my $username = shift;
-    $username =~ s/User://i;    # Strip namespace
+    $username =~ s/User://i; # Strip namespace
+
     my $res = $self->{api}->list(
         {
             action  => 'query',
@@ -1822,20 +1814,74 @@ sub prefixindex {
     };
     $hash->{'apnamespace'} = $ns if $ns;
     $hash->{'apfilterredir'} = $filter if $filter;
+    $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
 
-    my @pages;
     if (!$res) {
         return $self->_handle_api_error();
     }
-    else {
-        return undef if (! ref $res); # Not a ref when using callback hook
+    return undef if (! ref $res); # Not a ref when using callback hook
+    my @pages;
+    foreach my $hashref (@$res) {
+        my $title = $hashref->{'title'};
+        my $redirect = defined($hashref->{'redirect'});
+        push @pages, { title => $title, redirect => $redirect };
+    }
+
+    return @pages;
+}
+
+=head2 search($search_term[,$ns[,$options_hashref]])
+
+This is a simple search for your $search_term in page text. $ns is a namespace number to search in, or an arrayref of numbers (default is main namespace). $options_hashref is a hashref as described in MediaWiki::API or the section on linksearch(). It returns an array of page titles matching.
+
+    my @pages = $bot->search("Mike.lifeguard", 2);
+    print "@pages\n";
+
+Or, use a callback for incremental processing:
+
+    my @pages = $bot->search("Mike.lifeguard", 2, { hook => \&mysub });
+    sub mysub {
+        my ($res) = @_;
         foreach my $hashref (@$res) {
-            my $title = $hashref->{'title'};
-            my $redirect = defined($hashref->{'redirect'});
-            push @pages, { title => $title, redirect => $redirect };
+            my $page = $hashref->{'title'};
+            print "$page\n";
         }
+    }
+
+=cut
+
+sub search {
+    my $self    = shift;
+    my $term    = shift;
+    my $ns      = shift || 0;
+    my $options = shift;
+
+    if (ref $ns eq 'ARRAY') { # Accept a hashref
+        $ns = join('|', @$ns);
+    }
+
+    my $hash = {
+        action      => 'query',
+        list        => 'search',
+        srsearch    => $term,
+        srwhat      => 'text',
+        #srinfo      => 'totalhits',
+        srprop      => 'size',
+        srredirects => 0,
+    };
+    $options->{'max'} = 1 unless $options->{'max'};
+
+    my $res = $self->{api}->list($hash, $options);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    return undef if (!ref $res); # Not a ref when used with callback
+    my @pages;
+    foreach my $result (@$res) {
+        my $title = $result->{'title'};
+        push @pages, $title;
     }
 
     return @pages;

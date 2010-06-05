@@ -42,6 +42,9 @@ Vers. Rel.Mgr. SVN  Date
         * Moving pages is now supported (issue 43).
         * diff() now supports basic diffing.
         * prefixindex() now supports listing pages with a common prefix
+        * Searching is now supported by search()
+        * Methods like linksearch(), get_pages_in_category(), and list_transcludes() now perform only one query by default. Pass max => 5 (or whatever)
+          to do more queries. Note that this controls the number of queries, not the number of results fetched per query. See POD for details
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3
