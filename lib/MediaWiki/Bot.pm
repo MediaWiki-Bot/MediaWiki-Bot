@@ -1887,6 +1887,78 @@ sub search {
     return @pages;
 }
 
+=head2 log($data, $options)
+
+This fetches log entries, and returns results as an array of hashes. The options are as follows:
+
+=over 4
+
+=item *
+type is the log type (block, delete...)
+
+=item *
+user is the user who I<performed> the action. Do not include the User: prefix
+
+=item *
+target is the target of the action. Where an action was performed to a page, it is the page title. Where an action was performed to a user, it is User:$username.
+
+=back
+
+    my $log = $bot->log({
+            type => 'block',
+            user => 'User:Mike.lifeguard',
+        });
+    foreach my $entry (@$log) {
+        my $user = $entry->{'title'};
+        print "$user\n";
+    }
+
+    $bot->log({
+            type => 'block',
+            user => 'User:Mike.lifeguard',
+        },
+        { hook => \&mysub, max => 10 }
+    );
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $title = $hashref->{'title'};
+            print "$title\n";
+        }
+    }
+
+=cut
+
+sub log {
+    my $self    = shift;
+    my $data    = shift;
+    my $options = shift;
+
+    my $log_type = $data->{'type'};
+    my $user     = $data->{'user'};
+    my $target   = $data->{'target'};
+
+    my $ns_data = $self->_get_ns_data();
+    my $user_ns_name = $ns_data->{'2'};
+    $user =~ s/^$user_ns_name://;
+
+    my $hash = {
+        action  => 'query',
+        list    => 'logevents',
+    };
+    $hash->{'letype'} = $log_type if $log_type;
+    $hash->{'leuser'} = $user if $user;
+    $hash->{'letitle'} = $target if $target;
+    $options->{'max'} = 1 unless $options->{'max'};
+
+    my $res = $self->{api}->list($hash, $options);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    return undef if (! ref $res); # Not a ref when using callback
+
+    return $res;
+}
 
 ################
 # Internal use #
