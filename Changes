@@ -2,6 +2,9 @@ Revision history for MediaWiki::Bot
 
 Current svn
 Vers. Rel.Mgr. SVN  Date
+2.3.1 Mike.lif r308 05 June 2010
+    Changes made since 2.3.0
+        * Backported fix for Issue 15: test_blocked always answers 'false' an all non-English wikis
 2.3.0 DCOLLINS r206 June 23 2009
 	Changes made since 2.1.1
 		* Get_pages now makes sense when following namespace aliases. The title you give is the title you get back. Aliases are not expanded. Patch by Stefan Petrea.
