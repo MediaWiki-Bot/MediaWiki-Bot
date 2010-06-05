@@ -39,6 +39,7 @@ t/25_list_transclusions.t
 t/26_purge_page.t
 t/27_sitematrix.t
 t/28_diff.t
+t/29_prefixindex.t
 t/97_pod.t
 t/98_pod_coverage.t
 t/99_pod_kwalitee.t

@@ -1009,9 +1009,8 @@ sub get_pages_in_category {
     my $category = shift;
 
     unless ($category =~ m/^Category:/) {
-        my %ns_data = $self->{'ns_data'} ? %{$self->{'ns_data'}} : $self->get_namespace_names();
-        $self->{'ns_data'} = \%ns_data; # Save for later use
-        my $cat_ns_name = $ns_data{'14'};
+        my $ns_data = $self->_get_ns_data();
+        my $cat_ns_name = $ns_data->{'14'};
 
         $category = "$cat_ns_name:$category" unless ($category =~ m/^$cat_ns_name:/);
     }
@@ -1049,9 +1048,8 @@ sub get_all_pages_in_category {
     foreach my $page (@first) {
         $data{$page} = '';
 
-        my %ns_data = $self->{'ns_data'} ? %{$self->{'ns_data'}} : $self->get_namespace_names();
-        $self->{'ns_data'} = \%ns_data; # Save for later use
-        my $cat_ns_name = $ns_data{'14'};
+        my $ns_data = $self->_get_ns_data();
+        my $cat_ns_name = $ns_data->{'14'};
 
         if ($page =~ /^$cat_ns_name:/) {
             my @pages = $self->get_all_pages_in_category($page);
@@ -1751,6 +1749,71 @@ sub diff {
     return $diff;
 }
 
+=head2 prefixindex($prefix[,$filter[,$ns[,$options]]])
+
+This returns an array of hashrefs containing page titles that start with the given $prefix. $filter is one of 'all', 'redirects', or 'nonredirects'; $ns is a single namespace number (unlike linksearch etc, which can accept an arrayref of numbers). $options is a hashref as described in the section on linksearch() or in MediaWiki::API. The hashref has keys 'title' and 'redirect' (present if the page is a redirect, not present otherwise).
+
+    my @prefix_pages = $bot->prefixindex("User:Mike.lifeguard");
+    # Or, the more efficient equivalent
+    my @prefix_pages = $bot->prefixindex("Mike.lifeguard", 2);
+    foreach my $hashref (@pages) {
+        my $title = $hashref->{'title'};
+        if $hashref->{'redirect'} {
+            print "$title is a redirect\n";
+        }
+        else {
+            print "$title\n is not a redirect\n";
+        }
+    }
+
+=cut
+
+sub prefixindex {
+    my $self    = shift;
+    my $prefix  = shift;
+    my $ns      = shift;
+    my $filter  = shift;
+    my $options = shift;
+
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) { # Verify
+        $filter = $1;
+    }
+
+    if (!$ns and $prefix =~ m/:/) {
+        print "Converted '$prefix' to..." if $self->{debug};
+        my ($name) = split(/:/, $prefix, 2);
+        my $ns_data = $self->_get_ns_data();
+        $ns = $ns_data->{$name};
+        $prefix =~ s/^$name://;
+        print "'$prefix' with a namespace filter $ns" if $self->{debug};
+    }
+
+    my $hash = {
+        action      => 'query',
+        list        => 'allpages',
+        apprefix    => $prefix,
+    };
+    $hash->{'apnamespace'} = $ns if $ns;
+    $hash->{'apfilterredir'} = $filter if $filter;
+
+    my $res = $self->{api}->list($hash, $options);
+
+    my @pages;
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    else {
+        return undef if (! ref $res); # Not a ref when using callback hook
+        foreach my $hashref (@$res) {
+            my $title = $hashref->{'title'};
+            my $redirect = defined($hashref->{'redirect'});
+            push @pages, { title => $title, redirect => $redirect };
+        }
+    }
+
+    return @pages;
+}
+
 
 ################
 # Internal use #
@@ -1900,6 +1963,16 @@ sub _get_sitematrix {
         $self->{'sitematrix'} = \%map;
         return $self->{'sitematrix'};
     }
+}
+
+sub _get_ns_data {
+    my $self = shift;
+
+    my %ns_data = $self->{'ns_data'} ? %{$self->{'ns_data'}} : $self->get_namespace_names();
+    my %reverse = reverse %ns_data;
+    %ns_data = (%ns_data, %reverse);
+    $self->{'ns_data'} = \%ns_data; # Save for later use
+    return $self->{'ns_data'};
 }
 
 1;
