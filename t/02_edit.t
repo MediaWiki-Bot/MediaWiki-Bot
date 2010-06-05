@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 #########################
 
@@ -29,8 +29,23 @@ SKIP: {
     }
     #ok( $status->isa("HTTP::Response") );
 
-    sleep 1;
-    my $text = $bot->get_text('User:ST47/test');
-    $text =~ s/\n$//;
-    is($text,$rand);
+    my $is = $bot->get_text('User:ST47/test');
+    is($is, $rand, 'Did whole-page editing successfully');
+
+    my $rand2 = rand();
+    $status = $bot->edit({
+        page    => 'User:ST47/test',
+        text    => $rand2,
+        section => 'new',
+        summary => 'MediaWiki::Bot tests',
+    });
+    $is = $bot->get_text('User:ST47/test');
+    my $ought = <<"END";
+$rand
+
+== MediaWiki::Bot tests ==
+
+$rand2
+END
+    is("$is\n", $ought, 'Did section editing successfully');
 }

@@ -381,7 +381,7 @@ sub logout {
 
 =head2 edit($options_hashref)
 
-Puts text on a page. If provided, use a specified edit summary, mark the edit as minor, as a non-bot edit, or add an assertion. An MD5 hash is sent to guard against data corruption while in transit.
+Puts text on a page. If provided, use a specified edit summary, mark the edit as minor, as a non-bot edit, or add an assertion. Set section to edit a single section instead of the whole page. An MD5 hash is sent to guard against data corruption while in transit.
 
     my $text = $bot->get_text('My page');
     $text .= "\n\n* More text\n";
@@ -389,6 +389,7 @@ Puts text on a page. If provided, use a specified edit summary, mark the edit as
         page    => 'My page',
         text    => $text,
         summary => 'Adding new content',
+        section => 'new',
     });
 
 You can also call this using the deprecated form:
@@ -405,6 +406,7 @@ sub edit {
     my $is_minor;
     my $assert;
     my $markasbot;
+    my $section;
 
     if (ref $_[0] eq 'HASH') {
         $page       = $_[0]->{'page'};
@@ -413,6 +415,7 @@ sub edit {
         $is_minor   = $_[0]->{'is_minor'};
         $assert     = $_[0]->{'assert'};
         $markasbot  = $_[0]->{'markasbot'};
+        $section    = $_[0]->{'section'};
     }
     else {
         $page       = shift;
@@ -421,6 +424,7 @@ sub edit {
         $is_minor   = shift;
         $assert     = shift;
         $markasbot  = shift;
+        $section    = shift;
     }
     # Set defaults
     $summary = 'BOT: Changing page text' unless $summary;
@@ -448,6 +452,7 @@ sub edit {
         assert          => $assert,
         minor           => $is_minor,
     };
+    $hash->{'section'} = $section if defined($section);
 
     my $res = $self->{api}->api($hash); # Check if MediaWiki::API::edit() is good enough
     if (!$res) {
