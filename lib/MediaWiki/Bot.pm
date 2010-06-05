@@ -759,7 +759,10 @@ sub get_pages {
 
 Reverts the specified page to $revid, with an edit summary of $summary. A default edit summary will be used if $summary is omitted.
 
-    $bot->revert('User:Mike.lifeguard', 1972950, 'rvv');
+    my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+    print "Reverting to $revid\n" if defined($revid);
+    $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+
 
 =cut
 
@@ -814,7 +817,8 @@ sub undo {
 Returns the revid of the last revision to $page not made by $user. undef is returned if no result was found, as would be the case if the page is deleted.
 
     my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
-    print "$revid\n" if defined($revid);
+    print "Reverting to $revid\n" if defined($revid);
+    $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
 
 =cut
 
@@ -1068,7 +1072,7 @@ sub get_all_pages_in_category {
 
 =head2 linksearch($link[,$ns[,$protocol[,$options]]])
 
-Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page the link is on.  $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). You can search by $protocol (http is default). The optional $options hashref is fully documented in MediaWiki::API.
+Runs a linksearch on the specified link and returns an array containing anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page the link is on. $ns is a namespace number to search (pass an arrayref to search in multiple namespaces). You can search by $protocol (http is default). The optional $options hashref is fully documented in MediaWiki::API: Set `max` to limit the number of queries performed. Set `hook` to a subroutine reference to use a callback hook for incremental processing.
 
 Set max in $options to get more than one query's worth of results:
 
@@ -1092,7 +1096,6 @@ You can also specify a callback function in $options:
             print "$page: $url\n";
         }
     }
-
 
 =cut
 
