@@ -98,7 +98,7 @@ host sets the domain name of the wiki to connect to.
 path sets the path to api.php (with no trailing slash).
 
 =item *
-login_data is a hashref of data to pass to login(). See that section for a description.
+login_data is a hashref of credentials to pass to login(). See that section for a description.
 
 =back
 
@@ -271,12 +271,10 @@ sub set_wiki {
 
 Logs the use $username in, optionally using $password. First, an attempt will be made to use cookies to log in. If this fails, an attempt will be made to use the password provided to log in, if any. If the login was successful, returns true; false otherwise.
 
-    $bot->login(
-        {
-            username => $username,
-            password => $password,
-        }
-    ) or die "Login failed";
+    $bot->login({
+        username => $username,
+        password => $password,
+    }) or die "Login failed";
 
 Once logged in, attempt to do some simple auto-configuration. At present, this consists of:
 
@@ -301,6 +299,18 @@ For backward compatibility, you can call this as
 
 This deprecated form will never do autoconfiguration.
 
+If you need to supply basic auth credentials, pass a hashref of data as described by LWP::UserAgent
+
+    $bot->login({
+        username    => $username,
+        password    => $password,
+        basic_auth  => {    netloc  => "private.wiki.com:80",
+                            realm   => "Authentication Realm",
+                            uname   => "Basic auth username",
+                            pass    => "password",
+                        }
+    }) or die "Couldn't log in";
+
 =cut
 
 sub login {
@@ -308,15 +318,28 @@ sub login {
     my $username;
     my $password;
     my $autoconfig;
+    my $basic_auth;
     if (ref $_[0] eq 'HASH') {
         $username = $_[0]->{'username'};
         $password = $_[0]->{'password'};
         $autoconfig = defined($_[0]->{'autoconfig'}) ? $_[0]->{'autoconfig'} : 1;
+        $basic_auth = $_[0]->{'basic_auth'};
     }
     else {
         $username = shift;
         $password = shift;
         $autoconfig = 0;
+    }
+
+    # Handle basic auth first, if needed
+    if ($basic_auth) {
+        carp "Applying basic auth credentials" if $self->{debug};
+        $self->{api}->{ua}->credentials(
+            $basic_auth->{'netloc'},
+            $basic_auth->{'realm'},
+            $basic_auth->{'uname'},
+            $basic_auth->{'pass'}
+        );
     }
 
     # This seems to not do what we want. Cookies are loaded, but a
