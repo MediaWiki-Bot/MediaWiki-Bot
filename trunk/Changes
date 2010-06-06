@@ -1,0 +1,216 @@
+Revision history for MediaWiki::Bot
+===================================
+
+Vers. Rel.Mgr. SVN  Date
+------------------------
+3.0.0 Mike.lif r282 30 May 2010
+    Changes made since 2.3.0
+        * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
+          These both evaluate to false; you can differentiate between them with defined(). get_id() now returns undef instead of
+          2 when there is no pageid (page is nonexistent or title is invalid).
+        * BREAKING CHANGE: All subs return undef when they encounter an error that is passed off to _handle_api_error(). Error
+          details are still available in $bot->{'error'}.
+        * BREAKING CHANGE: linksearch() now uses keys 'url' and 'title' like the API does. This is to avoid confusion when using
+          a callback hook, which is now exposed to callers. linksearch() now uses the API.
+        * BREAKING CHANGE: login()'s return values are reversed, and properly documented. Returns true for success; false for failure:
+          $bot->login($user, $pass) or die "Login failed\n"; # This is in accord with Perl standards
+        * BREAKING CHANGE: what_links_here() no longer handles transclusions. To get transclusions, use list_transclusions(). Also,
+          key names are now 'title' and 'redirect' (defined when the page is a redirect; undefined otherwise).
+        * Codebase underwent spring cleaning.
+        * Default useragent now includes the version number.
+        * Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.
+        * Crypt::SSLeay is now correctly listed as a prerequisite,
+        * is_blocked() replaces test_blocked(), and now uses the API. test_blocked() remains for backwards compatibility,
+        * was_blocked() replaces test_block_hist(), and now uses the API. test_block_hist() remains for backwards compatibility.
+        * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
+        * edit() now uses an md5 hash to ensure data integrity.
+        * set_highlimits() can now be used to *not* use highlimits.
+        * revert() now uses the API.
+        * get_last() now uses the API.
+        * undo() now uses the API, and is documented accurately.
+        * logout() was added.
+        * purge_page() now uses the API and returns the number of pages successfully purged, which may be useful for the caller's error-checking.
+        * New methods were added to query WMF's sitematrix, and convert between db name (enwikibooks) to the domain name (en.wikibooks.org):
+          db_to_domain() and domain_to_db().
+        * Admin functions were moved into the plugin MediaWiki::Bot::Plugin::Admin, which is auto-loaded if present.
+        * The constructor now does more for script authors. It sets the wiki, logs in, and does some autoconfiguration. See updated POD for details.
+        * edit() now accepts a hashref of options. See updated POD for details.
+        * edit() can now do section editing.
+        * expandtemplates() now uses the API.
+        * get_pages_in_category() and get_all_pages_in_category() now work properly for non-English wikis (issue 42).
+        * Moving pages is now supported (issue 43).
+        * diff() now supports basic diffing.
+        * prefixindex() now supports listing pages with a common prefix
+
+2.3.0 DCOLLINS r206 June 23 2009
+    Changes made since 2.2.3
+        * Get_pages now makes sense when following namespace aliases. The title you give is the title you get back. Aliases are not expanded. Patch by
+          Stefan Petrea.
+        * Unicode test will now take a bit longer but hopefully avoid any errors that shouldn't be there
+
+2.2.3 DCOLLINS r195 May 5 2009
+    Changes made since 2.1.1
+        * RELEASE-NOTES renamed to Changes
+        * Test suite now outputs a message when there is an expected error to be printed to terminal
+        * Some debugging code removed
+        * Simplify Unicode tests, now only run editing tests if not blocked
+        * More specific error detection in test 11 (get_pages_in_namespace)
+        * More verbose error handling in all code
+        * Add unblock capability
+
+2.1.1 DCOLLINS r184 February 24 2009
+    Changes made since 2.1.0
+        * Additions of sub unblock, some test changes
+    Notes
+        * Error checking is about to be updated. If an error occurs, any subs will return -1*the integer error number. See the updated documentation in
+          2.2.0.
+
+2.1.0 DCOLLINS r184 February 3 2009
+    Changes made since 2.0.1
+        * Some more unicode changes
+        * If unicode doesn't work, TELL ME
+
+2.0.1 DCOLLINS r181 January 26 2009
+    Changes made since 2.0.0
+        * Removed some redundant error messages
+
+2.0.0 DCOLLINS r179 December 30 2008
+    Changes made since 1.5.2:
+        * I was going to make this 1.5.3, but then I realized I shouldn't hide something this big behind a sub-minor release. For reasons of having the
+          module included in the module list on CPAN, making everything be a bit neater, and for all-around happiness, I've moved Perlwikipedia into
+          the preexisting MediaWiki:: namespace. The module is now called MediaWiki::Bot.
+        * You can also now use "PWP" instead of "MediaWiki::Bot" in your code. The distribution on CPAN and in the svn repo includes an alias.
+        * Plugins are now loaded automatically if installed. This means you don't have to do as much arcane magic. The plugins will be listed under
+          MediaWiki::Bot::Plugin:: in CPAN and are not currently in svn. If you have a task that you would like to make into a plugin and publish on
+          CPAN, please get in touch with me at DCOLLINS@cpan.org
+    Plugin notes since the last release:
+        * Added the ImageTester plugin to CPAN. Purpose is to analyze and tag copyrighted images which do not follow en.wikipedia's policies
+        * Added the CUP plugin to CPAN as a basic example of what a plugin does. This is used by the bot that will run the WikiCup stats, and these
+          methods can be called just like any other methods in the main module
+
+1.5.2 DCOLLINS r178 December 27 2008
+    Changes made since 1.5.1:
+        * Add support for 'plugins' which add additional features to MediaWiki::Bot. See MediaWiki::Bot::Plugin::ImageTester on CPAN for an example.
+        * Loosened requirements for test_image_exists to determine that an image is on commons: the missing key is not always present.
+
+1.5.1 DCOLLINS r173 December 21 2008
+    Changes made since 1.5.0:
+        * Fixed the bug where logins wouldn't transfer from API to wiki again, now part of test 01.
+        * Added tests for AssertEdit, maxlag, get_allusers, get_pages
+        * Added sub set_highlimits for api queries, since PWP can't tell if you're a bot
+        * Sub test_image_exists can now tell if an image page exists but has no image. Also uses API.
+        * Added defaults for protection, now uses API. In-house tests exist for protection and deletion.
+        * Some variable normalizing in tests.
+        * Added testing environment variables: PWPMakeTestSetWikiHost, PWPMakeTestSetWikiDir
+        * Reenabled tests for get_namespace_names, get_pages_in_namespace
+        * Some fixes for potential race conditions on database replication for tests, should not be necessary in real production code
+
+1.5.0 DCOLLINS r164 December 08 2008
+    Changes made since 1.4.2:
+        * Added a sub get_pages(), which accepts a list of pages and gets each page's text in one go and returns a hash. Much faster than get_text()
+          for more than one page.
+        * Switched sub protect over to API, cascading works now
+        * Add a few more tests
+
+1.4.2 DCOLLINS December 07 2008
+    Changes made since 1.4.1:
+        * Apparently I accidentally removed get_allusers? Fixed that.
+        * Some CPAN testers have been reporting a failure to make the test edit in t/02_edit.t so I added a call to Data::Dumper.
+
+1.4.1 DCOLLINS November 27 2008
+    Changes made since 1.4.0:
+        * Remove my tsting code from sub login, now using an updated version of MediaWiki::API to handle cookies properly. MediaWiki::API 0.20 or
+          higher now required.
+
+1.4.0 DCOLLINS November 18 2008
+    Changes made since 1.3.8:
+        * Fix a bug in get_allusers() by bosborne
+        * Fix a bug which made some methods, such as delete_old_image, attempt to execute logged-out because the method used to transfer cookies from
+          the API useragent, which does the logging in, to the MediaWiki::Bot useragent, which does the other stuff, was not functional. This bug
+          only affected non-api methods and has been fixed through a nasty hack, which I hope can be made cleaner in the coming weeks.
+
+1.3.8 DCOLLINS November 16 2008
+    Changes made since 1.3.7:
+        * New method: get_allusers($limit) by bosborne
+        * That bug I fixed in 1.3.7? I fixed it again. For real this time.
+        * Using 'retries' instead of 'max retries' config variable for MediaWiki::API HTTP errors
+
+1.3.7 DCOLLINS November 11 2008
+    Changes made since 1.3.6:
+        * Minor bugfix in one of the tests.
+
+1.3.6 DCOLLINS October 27 2008
+    Changes made since 1.3.5:
+        * Added maxlag compatibility. (Thanks to the developers of MediaWiki::API for their implementation) The settings are as follows:
+            * Maxlag parameter: Dafault 5 seconds, can be configured when creating the object
+            * Delay: 1 second
+            * Retries: Until success
+        * Make test 98 fail gracefully on platforms without the test suite
+        * Fix some really weird spacing in the Makefile.PL
+    Notes:
+        * The other maxlag options, along with lots of other defaults, will probably be modifiable in 1.4 with a sort of config sub. This will allow
+          the custom configuration of options for WWW::Mechanize and MediaWiki::API, so you don't need to go sourcediving or remember the order for the
+          parameters to the constructor.
+        * Since wiki.xyrael.net is down, tests 1, 8, 10, 11
+
+1.3.5 DCOLLINS October 4 2008
+    Changes made since 1.3.4:
+        * Allowing cascade protection now. This may or may not work, since there are some changes being made to the protection API.
+        * Anonymous editing should work. If you still can not use this framework to edit, I need to be contacted. To this end, I've enabled an editing
+          test, hopefully cpan-testers sends me good results :)
+        * Fix a stupid mistake I made regarding the names of certain parameters to get_history
+
+1.3.4 DCOLLINS September 11 2008
+    Changes made since 1.3.3:
+        * Some triage after the first CPAN test results came in:
+        * Appearantly, get_pages_in_category was running test file 08, test 2, very slowly because I was loading a 1000+ page category in sets of 10
+          pages at a time. This has been remedied, the limit is now 500.
+        * Cannot reproduce a bug in get_namespace_names and another in count_contributions - so instead, if we get weird results, we run the sub again.
+        * There is a bug in get_history which was causing weird errors on some test machines. I've switched it to use MediaWiki::API.
+
+1.3.3 DCOLLINS September 10 2008
+    Changes made since 1.3.2:
+        * get_pages_in_category now uses the API
+        * Test 8 has been modified to test nested categories
+        * Test 7 is now faster, but still effective
+        * Bug checking added on edit for anon edit bug
+        * Bots now use the bot flag when editing, as was done before switching to API editing
+    Notes:
+        * Regarding anonymous editing: MediaWiki bug 15420 has been marked as FIXED by Roan Kattouw. Waiting for that to be scapped so I can test it
+          and enable the editing tests.
+        * Before I updated get_pages_in_category, it seemed to have some encoding errors: returning escape sequences where it shouldn't. I'll be
+          looking into its status on that front.
+
+1.3.2 DCOLLINS August 30 2008
+    Changes made since 1.3.1:
+        * Now logging in via API if password is supplied
+    Bugs fixed since 1.3.1:
+        * Fixed an encoding issue in page saving
+    Notes:
+        * Anonymous editing is currently broken. This is an upstream issue which I am working to resolve
+
+1.3.1 DCOLLINS August 28 2008
+    Changes made since 1.3:
+        * Maintenance: update manifest, readme
+        * More MediaWiki::API: blocking, deleting, get_text
+        * Add localization for MediaWiki::API. This is important...
+        * Update tests to test for loading of sections of pages
+        * AssertEdit assertaions can now be passed as 'bot' OR as '&assert=bot'
+    Bugs fixed since 1.3:
+        * MediaWiki::API didn't localise with set_wiki()
+        * Unicode issues with MediaWiki::API editing fixed
+        * Fix one warning in edit() - undefined value in string eq near line 252
+
+1.3 DCOLLINS August 2008
+    Changes made since 1.2:
+        * Convert over to use MediaWiki::API
+
+1.01
+    Changes made since 1.0:
+        * Standardized all functions to return 1 and set $object->{errstr} in the event of an error
+    Bugs fixed since 1.0:
+        * get_history and other _get_api-based functions will now properly escape utf8 characters in the query
+        * Fixed memory leak issues with WWW::Mechanize
+
+0.1  Sat Aug 25 2007
+    * original version
