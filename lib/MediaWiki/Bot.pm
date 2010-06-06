@@ -257,9 +257,17 @@ sub set_wiki {
         $protocol = 'http';
     }
 
+    # Invalidate wiki-specific cached data
+    if (($self->{'host'} ne $host)
+        or ($self->{'path'} ne $path)
+        or ($self->{'protocol'} ne $protocol)
+    ) {
+        delete $self->{'ns_data'} if $self->{'ns_data'};
+    }
+
+    $self->{protocol} = $protocol;
     $self->{host} = $host;
     $self->{path} = $path;
-    $self->{protocol} = $protocol;
 
     $self->{api}->{config}->{api_url} = "$protocol://$host/$path/api.php";
     print "Wiki set to $protocol://$host/$path/api.php\n" if $self->{debug};
