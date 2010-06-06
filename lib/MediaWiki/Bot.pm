@@ -240,7 +240,7 @@ sub set_wiki {
 
     # Clean up the parts we will build a URL with
     $protocol   =~ s,://$,,;
-    if ($host =~ m,^(http|https)(://)?, and !$protocol) {
+    if ($host =~ m,^(http|https)(://)?, && !$protocol) {
         $protocol = $1;
     }
     $host =~ s,^https?://,,;
@@ -495,7 +495,7 @@ sub edit {
             carp 'Assertion failed as ' . $self->{mech}->{agent};
             if ($self->{operator}) {
                 my $optalk = $self->get_text('User talk:' . $self->{operator});
-                unless (!defined($optalk)) {
+                if (defined($optalk)) {
                     print "Sending warning!\n";
                     $self->edit(
                         page        => "User talk:$self->{operator}",
@@ -510,7 +510,7 @@ sub edit {
                     );
                 }
             }
-            return undef;
+            return;
         }
         else {
             carp 'Assertion failed';
@@ -656,7 +656,7 @@ sub get_text {
     else {
         my ($id, $data) = %{ $res->{query}->{pages} };
         if ($id == -1) { # Page doesn't exist
-            return undef;
+            return;
         }
         else { # Page exists
             my $wikitext = $data->{revisions}[0]->{'*'};
@@ -689,7 +689,7 @@ sub get_id {
     }
     my ($id, $data) = %{ $res->{query}->{pages} };
     if ($id == -1) {
-        return undef;
+        return;
     }
     else {
         return $id;
@@ -921,7 +921,7 @@ sub update_rc {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # Not a ref when using callback
+    return if (! ref $res); # Not a ref when using callback
     my @rc_table;
     foreach my $hash (@{$res}) {
         push(
@@ -984,7 +984,7 @@ sub what_links_here {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # When using a callback hook, this won't be a reference
+    return if (! ref $res); # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
         my $title = $hashref->{'title'};
@@ -1040,7 +1040,7 @@ sub list_transclusions {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # When using a callback hook, this won't be a reference
+    return if (! ref $res); # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
         my $title = $hashref->{'title'};
@@ -1085,7 +1085,7 @@ sub get_pages_in_category {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # Not a hashref when using callback
+    return if (! ref $res); # Not a hashref when using callback
     my @pages;
     foreach my $hash (@$res) {
         my $title = $hash->{'title'};
@@ -1176,7 +1176,7 @@ sub linksearch {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # When using a callback hook, this won't be a reference
+    return if (! ref $res); # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
         my $url  = $hashref->{'url'};
@@ -1331,7 +1331,7 @@ sub is_blocked {
             return 0;
         }
         else {
-            # UNPOSSIBLE!
+            return; # UNPOSSIBLE!
         }
     }
 }
@@ -1424,7 +1424,7 @@ sub get_pages_in_namespace {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # Not a ref when using callback
+    return if (! ref $res); # Not a ref when using callback
     my @return;
     foreach (@{$res}) {
         push @return, $_->{title};
@@ -1595,7 +1595,7 @@ sub was_blocked {
             return 0;
         }
         else {
-            # UNPOSSIBLE!
+            return; # UNPOSSIBLE!
         }
     }
 }
@@ -1830,7 +1830,7 @@ sub prefixindex {
         $filter = $1;
     }
 
-    if (!$ns and $prefix =~ m/:/) {
+    if (!$ns && $prefix =~ m/:/) {
         print "Converted '$prefix' to..." if $self->{debug};
         my ($name) = split(/:/, $prefix, 2);
         my $ns_data = $self->_get_ns_data();
@@ -1853,7 +1853,7 @@ sub prefixindex {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # Not a ref when using callback hook
+    return if (! ref $res); # Not a ref when using callback hook
     my @pages;
     foreach my $hashref (@$res) {
         my $title = $hashref->{'title'};
@@ -1909,7 +1909,7 @@ sub search {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (!ref $res); # Not a ref when used with callback
+    return if (!ref $res); # Not a ref when used with callback
     my @pages;
     foreach my $result (@$res) {
         my $title = $result->{'title'};
@@ -1961,7 +1961,7 @@ target is the target of the action. Where an action was performed to a page, it 
 
 =cut
 
-sub log {
+sub get_log {
     my $self    = shift;
     my $data    = shift;
     my $options = shift;
@@ -1987,7 +1987,7 @@ sub log {
     if (!$res) {
         return $self->_handle_api_error();
     }
-    return undef if (! ref $res); # Not a ref when using callback
+    return if (! ref $res); # Not a ref when using callback
 
     return $res;
 }
@@ -2019,7 +2019,7 @@ sub _handle_api_error {
     carp 'Error code: ' . $self->{api}->{error}->{code};
     carp $self->{api}->{error}->{details};
     $self->{error} = $self->{api}->{error};
-    return undef;
+    return;
 }
 
 sub _is_loggedin {
@@ -2080,7 +2080,7 @@ sub _do_autoconfig {
         }
     }
 
-    unless ($has_bot and !$is_sysop) {
+    unless ($has_bot && !$is_sysop) {
         carp "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{debug};
     }
     $self->set_highlimits($has_apihighlimits);
