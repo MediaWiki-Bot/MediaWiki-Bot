@@ -1,8 +1,0 @@
-MediaWiki::Bot is very easy to install, just run the following commands:
-
-    perl Makefile.PL
-    make
-    make test (optional, the module should work right out of the box)
-    make install
-
-That's it! The man page is available by doing "man MediaWiki::Bot"
