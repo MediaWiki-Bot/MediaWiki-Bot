@@ -27,7 +27,6 @@ t/13_count_contributions.t
 t/14_last_active.t
 t/15_was_blocked.t
 t/16_get_namespace_names.t
-t/17_maxlag.t
 t/18_get_pages.t
 t/19_assert_edit.t
 t/20_get_allusers.t
