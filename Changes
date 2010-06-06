@@ -3,6 +3,19 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
+3.1.0 Mike.lif r302 05 June 2010
+    Changes made since 3.0.0
+        * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
+        * get_pages_in_category() and get_all_pages_in_category() now work properly for non-English wikis (issue 42).
+        * Moving pages is now supported (issue 43).
+        * diff() now supports basic diffing.
+        * prefixindex() now supports listing pages with a common prefix
+        * edit() can now do section editing.
+        * Another alias was added: perlwikipedia
+        * Searching is now supported by search()
+        * Methods like linksearch(), get_pages_in_category(), and list_transcludes() now perform only one query by default. Pass max => 5 (or whatever)
+          to do more queries. Note that this controls the number of queries, not the number of results fetched per query. See POD for details
+
 3.0.0 Mike.lif r282 30 May 2010
     Changes made since 2.3.0
         * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
@@ -35,12 +48,7 @@ Vers. Rel.Mgr. SVN  Date
         * Admin functions were moved into the plugin MediaWiki::Bot::Plugin::Admin, which is auto-loaded if present.
         * The constructor now does more for script authors. It sets the wiki, logs in, and does some autoconfiguration. See updated POD for details.
         * edit() now accepts a hashref of options. See updated POD for details.
-        * edit() can now do section editing.
         * expandtemplates() now uses the API.
-        * get_pages_in_category() and get_all_pages_in_category() now work properly for non-English wikis (issue 42).
-        * Moving pages is now supported (issue 43).
-        * diff() now supports basic diffing.
-        * prefixindex() now supports listing pages with a common prefix
 
 2.3.0 DCOLLINS r206 June 23 2009
     Changes made since 2.2.3

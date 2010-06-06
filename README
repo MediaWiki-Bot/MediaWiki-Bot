@@ -1,4 +1,4 @@
-MediaWiki::Bot version 2.3.1
+MediaWiki::Bot version 3.1.0
 ============================
 
 This is MediaWiki::Bot, a Perl module designed to interface with the
@@ -16,8 +16,7 @@ To install this module type the following:
 
 The test scripts included with this distribution of MediaWiki::Bot
 require a working Internet connection. If the test phase will not
-complete because you do not have access to wiki.xyrael.net, you can
-(probably) safely install the module anyway.
+complete, you can (probably) safely install the module anyway.
 
 DEPENDENCIES
 ------------

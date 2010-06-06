@@ -18,19 +18,28 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.0.0';
+our $VERSION = '3.1.0';
 
 =head1 NAME
 
-MediaWiki::Bot - a Wikipedia bot framework written in Perl
+MediaWiki::Bot - a MediaWiki bot framework written in Perl
 
 =head1 SYNOPSIS
 
 use MediaWiki::Bot;
 
-my $editor = MediaWiki::Bot->new('Account');
-$editor->login('Account', 'password');
-$editor->revert('Wikipedia:Sandbox', 'Reverting vandalism', '38484848');
+my $bot = MediaWiki::Bot->new({
+    useragent   => 'MediaWiki::Bot 3.0.0 (User:Mike.lifeguard)',
+    assert      => 'bot',
+    protocol    => 'https',
+    host        => 'secure.wikimedia.org',
+    path        => 'wikipedia/meta/w',
+    login_data  => { username => "Mike's bot account", password => "password" },
+});
+
+my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+print "Reverting to $revid\n" if defined($revid);
+$bot->revert('User:Mike.lifeguard', $revid, 'rvv');
 
 =head1 DESCRIPTION
 
@@ -95,14 +104,14 @@ login_data is a hashref of data to pass to login(). See that section for a descr
 
 For example:
 
-    my $bot = MediaWiki::Bot->new(
+    my $bot = MediaWiki::Bot->new({
         useragent   => 'MediaWiki::Bot 3.0.0 (User:Mike.lifeguard)',
         assert      => 'bot',
         protocol    => 'https',
         host        => 'secure.wikimedia.org',
         path        => 'wikipedia/meta/w',
         login_data  => { username => "Mike's bot account", password => "password" },
-    );
+    });
 
 For backward compatibility, you can specify up to three parameters:
 
