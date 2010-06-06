@@ -1919,7 +1919,7 @@ sub search {
     return @pages;
 }
 
-=head2 log($data, $options)
+=head2 get_log($data, $options)
 
 This fetches log entries, and returns results as an array of hashes. The options are as follows:
 
@@ -1936,7 +1936,7 @@ target is the target of the action. Where an action was performed to a page, it 
 
 =back
 
-    my $log = $bot->log({
+    my $log = $bot->get_log({
             type => 'block',
             user => 'User:Mike.lifeguard',
         });
@@ -1945,7 +1945,7 @@ target is the target of the action. Where an action was performed to a page, it 
         print "$user\n";
     }
 
-    $bot->log({
+    $bot->get_log({
             type => 'block',
             user => 'User:Mike.lifeguard',
         },

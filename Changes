@@ -15,7 +15,7 @@ Vers. Rel.Mgr. SVN  Date
         * Searching is now supported by search()
         * Methods like linksearch(), get_pages_in_category(), and list_transcludes() now perform only one query by default. Pass max => 5 (or whatever)
           to do more queries. Note that this controls the number of queries, not the number of results fetched per query. See POD for details
-        * log() was added to support the basics of searching the log.
+        * get_log() was added to support the basics of searching the log.
         * Support for basic auth was added (issue 68).
 
 3.0.0 Mike.lif r282 30 May 2010
