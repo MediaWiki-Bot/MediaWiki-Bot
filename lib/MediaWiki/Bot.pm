@@ -18,7 +18,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.1.0';
+our $VERSION = '3.2.0';
 
 =head1 NAME
 
@@ -1998,6 +1998,29 @@ sub get_log {
     return if (! ref $res); # Not a ref when using callback
 
     return $res;
+}
+
+=head2 find_global_rangeblock($ip)
+
+Pass in an IP or CIDR range to find the rangeblock affecting that IP/range.
+
+=cut
+
+sub find_global_rangeblock {
+    my $self = shift;
+    my $ip   = shift;
+
+    # http://en.wikipedia.org/w/api.php?action=query&list=globalblocks&bglimit=1&bgprop=address&bgip=127.0.0.1
+    my $res = $self->{api}->api({
+        action  => 'query',
+        list    => 'globalblocks',
+        bglimit => 1,
+        bgprop  => 'address',
+        bgip    => $ip, # So handy! It searches for blocks affecting this IP or IP range, including rangeblocks! Can't get that from UI.
+    });
+    return unless ($res->{'query'}->{'globalblocks'}->[0]);
+
+    return $res->{'query'}->{'globalblocks'}->[0]->{'address'};
 }
 
 ################
