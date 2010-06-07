@@ -18,7 +18,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.2.0';
+our $VERSION = '3.2.1';
 
 =head1 NAME
 
@@ -1579,7 +1579,7 @@ sub was_blocked {
     my $user = shift;
     $user =~ s/User://i; # Strip User: prefix, if present
 
-    # example query
+    # http://en.wikipedia.org/w/api.php?action=query&list=logevents&letype=block&letitle=User:127.0.0.1&lelimit=1&leprop=ids
     my $hash = {
         action  => 'query',
         list    => 'logevents',
@@ -2000,13 +2000,13 @@ sub get_log {
     return $res;
 }
 
-=head2 find_global_rangeblock($ip)
+=head2 is_g_blocked($ip)
 
-Pass in an IP or CIDR range to find the rangeblock affecting that IP/range.
+Returns what IP/range block I<currently in place> affects the IP/range. The return is a scalar of an IP/range if found (evaluates to true in boolean context); undef otherwise (evaluates false in boolean context). Pass in a single IP or CIDR range.
 
 =cut
 
-sub find_global_rangeblock {
+sub is_g_blocked {
     my $self = shift;
     my $ip   = shift;
 
@@ -2022,6 +2022,81 @@ sub find_global_rangeblock {
 
     return $res->{'query'}->{'globalblocks'}->[0]->{'address'};
 }
+
+=head2 was_g_blocked($ip)
+
+Returns whether an IP/range was ever globally blocked.
+
+=cut
+
+sub was_g_blocked {
+    my $self = shift;
+    my $ip   = shift;
+    $ip =~ s/User://i; # Strip User: prefix, if present
+
+    # This query must always go to Meta
+    my $switch = 0;
+    my $protocol = $self->{'protocol'};
+    my $host     = $self->{'host'};
+    my $path     = $self->{'path'};
+    if (! ($self->{'host'} eq 'meta.wikimedia.org') or (
+            ($self->{'host'} eq 'secure.wikimedia.org') and ($self->{'path'} eq 'wikipedia/meta/w')
+            )) {
+        $switch = 1;
+        carp "GlobalBlocking queries go to Meta; temporarily changing API URL...";# if $self->{'debug'};
+        if ($protocol eq 'https') { #Stay on https if they were using it
+            $self->set_wiki({
+                protocol => 'https',
+                host     => 'secure.wikimedia.org',
+                path     => 'wikipedia/meta/w',
+            });
+        }
+        else {
+            $self->set_wiki({
+                protocol => 'http',
+                host     => 'meta.wikimedia.org',
+                path     => 'w',
+            });
+        }
+    }
+
+    # http://meta.wikimedia.org/w/api.php?action=query&list=logevents&letype=gblblock&letitle=User:127.0.0.1&lelimit=1&leprop=ids
+    my $hash = {
+        action  => 'query',
+        list    => 'logevents',
+        letype  => 'gblblock',
+        letitle => "User:$ip", # Ensure the User: prefix is there!
+        lelimit => 1,
+        leprop  => 'ids',
+    };
+    my $res = $self->{api}->api($hash);
+
+    # Reset wiki back to their original values
+    if ($switch) {
+        carp "GlobalBlocking query done; resetting API URL...";# if $self->{'debug'};
+        $self->set_wiki({
+            protocol => $protocol,
+            host     => $host,
+            path     => $path,
+        });
+    }
+
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
+    my $number = scalar @{ $res->{'query'}->{'logevents'} }; # The number of blocks returned
+
+    if ($number == 1) {
+        return 1;
+    }
+    elsif ($number == 0) {
+        return 0;
+    }
+    else {
+        return; # UNPOSSIBLE!
+    }
+}
+
 
 ################
 # Internal use #

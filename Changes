@@ -17,6 +17,7 @@ Vers. Rel.Mgr. SVN  Date
           to do more queries. Note that this controls the number of queries, not the number of results fetched per query. See POD for details
         * get_log() was added to support the basics of searching the log.
         * Support for basic auth was added (issue 68).
+        * Support for GlobalBlocking queries was added.
 
 3.0.0 Mike.lif r282 30 May 2010
     Changes made since 2.3.0
