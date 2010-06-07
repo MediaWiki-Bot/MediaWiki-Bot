@@ -16,7 +16,9 @@ use Test::More tests => 1;
 
 use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new('MediaWiki::Bot tests', 'admin');
+my $bot = MediaWiki::Bot->new({
+    agent   => 'MediaWiki::Bot tests',
+});
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});

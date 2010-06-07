@@ -16,8 +16,9 @@ use Test::More tests => 2;
 
 use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new();
-#$bot->set_wiki( "wiki.xyrael.net","w" );
+my $bot = MediaWiki::Bot->new({
+    agent   => 'MediaWiki::Bot tests',
+});
 
 my $rand = rand();
 my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests');
@@ -29,6 +30,7 @@ SKIP: {
     }
     #ok( $status->isa("HTTP::Response") );
 
+    sleep(1);
     my $is = $bot->get_text('User:ST47/test');
     is($is, $rand, 'Did whole-page editing successfully');
 
@@ -39,6 +41,7 @@ SKIP: {
         section => 'new',
         summary => 'MediaWiki::Bot tests',
     });
+    sleep(1);
     $is = $bot->get_text('User:ST47/test');
     my $ought = <<"END";
 $rand

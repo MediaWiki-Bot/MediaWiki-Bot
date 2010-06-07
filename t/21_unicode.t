@@ -17,7 +17,9 @@ use Test::More tests => 7;
 use MediaWiki::Bot;
 use utf8;
 
-my $bot = MediaWiki::Bot->new();
+my $bot = MediaWiki::Bot->new({
+    agent   => 'MediaWiki::Bot tests',
+});
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});

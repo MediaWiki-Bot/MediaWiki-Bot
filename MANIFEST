@@ -43,6 +43,7 @@ t/30_search.t
 t/31_get_log.t
 t/32_was_g_blocked.t
 t/33_is_g_blocked.t
+t/34_was_locked.t
 t/97_pod.t
 t/98_pod_coverage.t
 t/99_pod_kwalitee.t

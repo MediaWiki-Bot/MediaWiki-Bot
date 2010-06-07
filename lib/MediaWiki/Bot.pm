@@ -2018,14 +2018,15 @@ sub is_g_blocked {
         bgprop  => 'address',
         bgip    => $ip, # So handy! It searches for blocks affecting this IP or IP range, including rangeblocks! Can't get that from UI.
     });
-    return unless ($res->{'query'}->{'globalblocks'}->[0]);
+    return $self->_handle_api_error() unless $res;
+    return 0 unless ($res->{'query'}->{'globalblocks'}->[0]);
 
     return $res->{'query'}->{'globalblocks'}->[0]->{'address'};
 }
 
 =head2 was_g_blocked($ip)
 
-Returns whether an IP/range was ever globally blocked.
+Returns whether an IP/range was ever globally blocked. You should probably call this method only when your bot is operating on Meta.
 
 =cut
 
@@ -2034,30 +2035,15 @@ sub was_g_blocked {
     my $ip   = shift;
     $ip =~ s/User://i; # Strip User: prefix, if present
 
-    # This query must always go to Meta
-    my $switch = 0;
-    my $protocol = $self->{'protocol'};
-    my $host     = $self->{'host'};
-    my $path     = $self->{'path'};
-    if (! ($self->{'host'} eq 'meta.wikimedia.org') or (
-            ($self->{'host'} eq 'secure.wikimedia.org') and ($self->{'path'} eq 'wikipedia/meta/w')
-            )) {
-        $switch = 1;
-        carp "GlobalBlocking queries go to Meta; temporarily changing API URL...";# if $self->{'debug'};
-        if ($protocol eq 'https') { #Stay on https if they were using it
-            $self->set_wiki({
-                protocol => 'https',
-                host     => 'secure.wikimedia.org',
-                path     => 'wikipedia/meta/w',
-            });
-        }
-        else {
-            $self->set_wiki({
-                protocol => 'http',
-                host     => 'meta.wikimedia.org',
-                path     => 'w',
-            });
-        }
+    # This query should always go to Meta
+    unless ($self->{api}->{config}->{api_url} =~
+        m,
+            http://meta.wikimedia.org/w/api.php
+                |
+            https://secure.wikimedia.org/wikipedia/meta/w/api.php
+        ,x # /x flag is pretty awesome :)
+        ) {
+        carp "GlobalBlocking queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{'debug'};
     }
 
     # http://meta.wikimedia.org/w/api.php?action=query&list=logevents&letype=gblblock&letitle=User:127.0.0.1&lelimit=1&leprop=ids
@@ -2070,16 +2056,6 @@ sub was_g_blocked {
         leprop  => 'ids',
     };
     my $res = $self->{api}->api($hash);
-
-    # Reset wiki back to their original values
-    if ($switch) {
-        carp "GlobalBlocking query done; resetting API URL...";# if $self->{'debug'};
-        $self->set_wiki({
-            protocol => $protocol,
-            host     => $host,
-            path     => $path,
-        });
-    }
 
     if (!$res) {
         return $self->_handle_api_error();
@@ -2094,6 +2070,50 @@ sub was_g_blocked {
     }
     else {
         return; # UNPOSSIBLE!
+    }
+}
+
+=head2 was_locked($user)
+
+Returns whether a user was ever locked.
+
+=cut
+
+sub was_locked {
+    my $self = shift;
+    my $user = shift;
+
+    # This query should always go to Meta
+    unless ($self->{api}->{config}->{api_url} =~
+        m,
+            http://meta.wikimedia.org/w/api.php
+                |
+            https://secure.wikimedia.org/wikipedia/meta/w/api.php
+        ,x # /x flag is pretty awesome :)
+        ) {
+        carp "CentralAuth queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{'debug'};
+    }
+
+    $user =~ s/^User://i;
+    $user =~ s/\@global$//i;
+    my $res = $self->{'api'}->api({
+        action  => 'query',
+        list    => 'logevents',
+        letype  => 'globalauth',
+        letitle => "User:$user\@global",
+        lelimit => 1,
+        leprop  => 'ids',
+    });
+    return $self->_handle_api_error() unless $res;
+    my $number = scalar @{ $res->{'query'}->{'logevents'} };
+    if ($number == 1) {
+        return 1;
+    }
+    elsif ($number == 0) {
+        return 0;
+    }
+    else {
+        return;
     }
 }
 

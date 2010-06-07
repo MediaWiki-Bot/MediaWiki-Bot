@@ -15,7 +15,9 @@ use Test::More tests => 4;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new('STWP');
+my $bot = MediaWiki::Bot->new({
+    agent   => 'MediaWiki::Bot tests',
+});
 
 is($bot->login('Perlwikipedia testing', 'test'), 1, 'Log in');
 ok($bot->_is_loggedin(),                            "Double-check we're logged in");

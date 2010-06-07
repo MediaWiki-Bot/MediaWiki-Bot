@@ -15,7 +15,9 @@ use Test::More tests => 7;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new('make test');
+my $bot = MediaWiki::Bot->new({
+    agent   => 'MediaWiki::Bot tests',
+});
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});

@@ -17,7 +17,9 @@ use MediaWiki::Bot;
 SKIP: {
     skip('wiki.xyrael.net is down', 5);
 
-    my $bot = MediaWiki::Bot->new('make test');
+    my $bot = MediaWiki::Bot->new({
+        agent   => 'MediaWiki::Bot tests',
+    });
     $bot->set_wiki('wiki.xyrael.net', 'w');
 
     if(defined($ENV{'PWPMakeTestSetWikiHost'})) {

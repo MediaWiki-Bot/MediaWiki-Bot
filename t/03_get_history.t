@@ -15,7 +15,9 @@ use Test::More tests => 1;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new();
+my $bot = MediaWiki::Bot->new({
+    agent   => 'MediaWiki::Bot tests',
+});
 
 my @history = $bot->get_history('User:Shadow1/perlwikipedia/Check', 1);
 is($history[0]->{comment}, 'Perlwikipedia tests');

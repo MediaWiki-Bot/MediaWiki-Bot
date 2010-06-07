@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 3;
+use Test::More tests => 2;
 
 #########################
 
@@ -18,16 +18,18 @@ use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests',
+    host    => 'meta.wikimedia.org',
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my @pages = $bot->search('Main Page');
-isa_ok(\@pages, 'ARRAY', 'Right return type');
-is($pages[0], 'Main Page', 'Found [[Main Page]]');
+# Hasn't been locked (yet)
+my $result = $bot->was_locked('Jimbo Wales');
+is($result, 0, 'lock history');
 
-@pages = $bot->search('62c77d65adf258464e0f0820696b871251c21eb4');
-is(scalar @pages, 0, 'No results found for a nonsensical search');
+# I was once locked
+$result = $bot->was_locked('Mike.lifeguard');
+is($result, 1, 'lock history');
 
