@@ -2007,12 +2007,13 @@ sub get_log {
 sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimestamp)
     my $self = shift;
     my $page = shift;
+    my $type = shift || 'edit';
 
     my $hash = {
         action  => 'query',
         titles  => $page,
         prop    => 'info|revisions',
-        intoken => 'edit'
+        intoken => $type,
     };
     my $res = $self->{api}->api($hash);
     my ($id, $data) = %{ $res->{query}->{pages} };
