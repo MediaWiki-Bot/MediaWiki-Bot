@@ -2,6 +2,8 @@ use 5.008008;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
+BEGIN{push @INC, "./lib"}
+
 WriteMakefile(
     NAME              => 'MediaWiki::Bot',
     VERSION_FROM      => 'lib/MediaWiki/Bot.pm', # Finds $VERSION
@@ -18,7 +20,8 @@ WriteMakefile(
                             Digest::MD5         => 2.39,
                         },
                         ($] >= 5.005 # Add these new keywords supported since 5.005
-                            ? (ABSTRACT_FROM => 'lib/MediaWiki/Bot.pm', AUTHOR => 'Perlwikipedia team') # Retrieve abstract from module
+                            ? ( ABSTRACT_FROM => 'lib/MediaWiki/Bot.pm',
+                                AUTHOR => 'Perlwikibot team') # Retrieve abstract from module
                             : ()
                         ),
     LICENSE           => 'gpl',
