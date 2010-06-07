@@ -175,6 +175,7 @@ sub new {
     $self->{assert}                   = $assert;
     $self->{operator}                 = $operator;
     $self->{api}                      = MediaWiki::API->new();
+    $self->{api}->{ua}->agent($agent);
 
     # Set wiki if these are set
     $self->set_wiki({
