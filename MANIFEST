@@ -1,15 +1,16 @@
 Changes
+Debian_CPANTS.txt
+gpl.txt
 INSTALL
+lib/MediaWiki/Bot.pm
+lib/perlwikipedia.pm
+lib/PWP.pm
 LICENSE
 Makefile.PL
 MANIFEST
 META.yml
-README
-TODO
-lib/MediaWiki/Bot.pm
-lib/PWP.pm
 misc/Login.pl
-gpl.txt
+README
 t/00_initialize.t
 t/01_login.t
 t/02_edit.t
@@ -47,3 +48,4 @@ t/34_was_locked.t
 t/97_pod.t
 t/98_pod_coverage.t
 t/99_pod_kwalitee.t
+TODO
