@@ -18,7 +18,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.2.1';
+our $VERSION = '3.2.2';
 
 =head1 NAME
 
@@ -100,6 +100,9 @@ path sets the path to api.php (with no trailing slash).
 =item *
 login_data is a hashref of credentials to pass to login(). See that section for a description.
 
+=item *
+debug is whether to provide debug output.
+
 =back
 
 For example:
@@ -131,6 +134,7 @@ sub new {
     my $host;
     my $path;
     my $login_data;
+    my $debug;
     if (ref $_[0] eq 'HASH') {
         $agent      = $_[0]->{'agent'};
         $assert     = $_[0]->{'assert'};
@@ -140,6 +144,7 @@ sub new {
         $host       = $_[0]->{'host'};
         $path       = $_[0]->{'path'};
         $login_data = $_[0]->{'login_data'};
+        $debug      = $_[0]->{'debug'};
     }
     else {
         $agent      = shift;
@@ -149,6 +154,7 @@ sub new {
         $protocol   = shift;
         $host       = shift;
         $path       = shift;
+        $debug      = shift;
     }
 
     $assert   =~ s/[&?]assert=// if $assert; # Strip out param part, leaving just the value
@@ -174,6 +180,7 @@ sub new {
     $self->{errstr}                   = '';
     $self->{assert}                   = $assert;
     $self->{operator}                 = $operator;
+    $self->{debug}                    = $debug || 0;
     $self->{api}                      = MediaWiki::API->new();
     $self->{api}->{ua}->agent($agent);
 
