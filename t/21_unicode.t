@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 #########################
 
@@ -54,3 +54,16 @@ SKIP: {
 }
 my $unititle=$bot->get_text("User:ST47/testőá");
 is($unititle, "testőácontenthere", 'Loaded correct data from page with unicode title');
+
+my $bigtext = <<'end';
+more text... éółŽć
+ \n
+oh, hello there: ãďᶑⅷ
+
+
+ʬഌ𐎪𐑞ᥤ༒ꀥ
+
+ᐐàáâãäåæ
+end
+my $text = $bot->get_text('User:Mike.lifeguard/21_unicode.t');
+is("$text\n", $bigtext, 'Loaded a wide range of unicode chars correctly');
