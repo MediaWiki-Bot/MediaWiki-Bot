@@ -30,8 +30,10 @@ my $bot_alias=PWP->new;
 ok(defined $bot_alias, 'new() works');
 ok($bot_alias->isa('MediaWiki::Bot'), 'Right class');
 
-print STDERR "\r# Thanks for using MediaWiki::Bot. If any of these tests fail,
-# Or you need any other assistance with the module, please
-# either visit our web-based bug tracker at
-# http://perlwikipedia.googlecode.com/ or email me at
-# DCOLLINS\@cpan.org --ST47\n";
+print STDERR <<"_end_";
+\r# Thanks for using MediaWiki::Bot. If any of these tests
+# fail, or you need any other assistance with the module,
+# please email our support mailing list at
+# <perlwikibot\@googlegroups.com>, or submit a bug to our
+# tracker <http://perlwikipedia.googlecode.com/>.
+_end_
