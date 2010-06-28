@@ -29,6 +29,10 @@ SKIP: {
 
     my $rand = rand();
     print STDERR "\rYou should receive another error message here regarding a failed assertion.\n";
-    my $status = $bot->edit('User:ST47/test', $rand, 'false');
+    my $status = $bot->edit({
+        page    => 'User:ST47/test',
+        text    => $rand,
+        assert  => 'false'
+    });
     is($status->{'edit'}->{'result'}, 'Failure', 'Intentionally bad assertion');
 }
