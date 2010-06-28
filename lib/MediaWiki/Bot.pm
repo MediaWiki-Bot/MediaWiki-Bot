@@ -255,16 +255,6 @@ sub set_wiki {
     $host =~ s,/$,,;
     $path =~ s,/$,,;
 
-    if ($protocol eq 'https') {
-        use Crypt::SSLeay;
-    }
-    elsif ($protocol eq 'http') {
-        #un-use Crypt::SSLeay;
-    }
-    else {
-        $protocol = 'http';
-    }
-
     # Invalidate wiki-specific cached data
     if (($self->{'host'} ne $host)
         or ($self->{'path'} ne $path)
