@@ -14,7 +14,7 @@ use MediaWiki::API;
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
-    print "Found plugin $plugin\n";
+    #print "Found plugin $plugin\n";
     $plugin->import();
 }
 
