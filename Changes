@@ -9,6 +9,8 @@ Vers. Rel.Mgr. SVN  Date
         * Setting a useragent now works
         * is_g_blocked() checks if an IP/range is currently blocked, as well as what the address is
         * was_g_blocked() checks if an IP/range was ever globally blocked
+        * "Loaded Plugin X" messages were removed
+        * INSTALL has slightly better instructions
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
