@@ -1041,7 +1041,7 @@ Returns an array containing the names of all pages in the specified category (in
     my @pages = $bot->get_pages_in_category("Category:People on stamps of Gabon");
     print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
 
-The options hashref is as described in the section on linksearch().
+The options hashref is as described in the section on linksearch(). Use { max => 0 } to get all results.
 
 =cut
 
@@ -1062,7 +1062,8 @@ sub get_pages_in_category {
         list    => 'categorymembers',
         cmtitle => $category,
     };
-    $options->{'max'} = 1 unless $options->{'max'};
+    $options->{'max'} = 1 unless defined($options->{'max'});
+    delete($options->{'max'}) if $options->{'max'} == 0;
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
@@ -1085,8 +1086,9 @@ sub get_all_pages_in_category {
     my $self          = shift;
     my $base_category = shift;
     my $options       = shift;
+    $options->{'max'} = 0; # Get all results
 
-    my @first         = $self->get_pages_in_category($base_category);
+    my @first         = $self->get_pages_in_category($base_category, $options);
     my %data;
 
     foreach my $page (@first) {
@@ -1096,7 +1098,7 @@ sub get_all_pages_in_category {
         my $cat_ns_name = $ns_data->{'14'};
 
         if ($page =~ /^$cat_ns_name:/) {
-            my @pages = $self->get_all_pages_in_category($page);
+            my @pages = $self->get_all_pages_in_category($page, $options);
             foreach (@pages) {
                 $data{$_} = '';
             }
