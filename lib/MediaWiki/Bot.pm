@@ -193,7 +193,11 @@ sub new {
 
     # Log-in, and maybe autoconfigure
     if ($login_data) {
-        $self->login($login_data) or carp "Couldn't log in with supplied settings";
+        my $success = $self->login($login_data);
+        unless ($success) {
+            carp "Couldn't log in with supplied settings";
+            return;
+        }
     }
 
     $self->{api}->{config}->{max_lag}         = $maxlag || 5;

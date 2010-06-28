@@ -11,6 +11,7 @@ Vers. Rel.Mgr. SVN  Date
         * was_g_blocked() checks if an IP/range was ever globally blocked
         * "Loaded Plugin X" messages were removed
         * INSTALL has slightly better instructions
+        * The constructor now returns false when auto-login fails
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
