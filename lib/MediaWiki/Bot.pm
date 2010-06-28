@@ -504,9 +504,7 @@ sub edit {
     $hash->{'section'} = $section if defined($section);
 
     my $res = $self->{api}->api($hash); # Check if MediaWiki::API::edit() is good enough
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
         if ($self->{mech}->{agent}) {
             carp 'Assertion failed as ' . $self->{mech}->{agent};
@@ -576,9 +574,7 @@ sub move {
     $hash->{'noredirect'} = $opts->{'noredirect'} if defined($opts->{'noredirect'});
 
     my $res = $self->{api}->edit($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return $res; # should we return something more useful?
 }
 
@@ -616,9 +612,7 @@ sub get_history {
     $hash->{direction} = $direction if ($direction);
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my ($id) = keys %{ $res->{query}->{pages} };
     my $array = $res->{query}->{pages}->{$id}->{revisions};
 
@@ -667,18 +661,14 @@ sub get_text {
     $hash->{rvsection} = $section if ($section);
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
-    else {
+    return $self->_handle_api_error() unless $res;
         my ($id, $data) = %{ $res->{query}->{pages} };
-        if ($id == -1) { # Page doesn't exist
-            return;
-        }
-        else { # Page exists
-            my $wikitext = $data->{revisions}[0]->{'*'};
-            return $wikitext;
-        }
+    if ($id == -1) { # Page doesn't exist
+        return;
+    }
+    else { # Page exists
+        my $wikitext = $data->{revisions}[0]->{'*'};
+        return $wikitext;
     }
 }
 
@@ -701,9 +691,7 @@ sub get_id {
     };
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my ($id, $data) = %{ $res->{query}->{pages} };
     if ($id == -1) {
         return;
@@ -742,9 +730,7 @@ sub get_pages {
     map { $diff->{$_} = 1; } @pages;
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
 
     foreach my $id (keys %{ $res->{query}->{pages} }) {
         my $page = $res->{'query'}->{'pages'}->{$id};
@@ -853,12 +839,8 @@ sub undo {
     };
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
-    else {
-        return $res;
-    }
+    return $self->_handle_api_error() unless $res;
+    return $res;
 }
 
 =head2 get_last($page, $user)
@@ -888,14 +870,10 @@ sub get_last {
             rvexcludeuser => $user,
         }
     );
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
-    else {
-        my ($id, $data) = %{ $res->{query}->{pages} };
-        my $revid = $data->{'revisions'}[0]->{'revid'};
-        return $revid;
-    }
+    return $self->_handle_api_error() unless $res;
+    my ($id, $data) = %{ $res->{query}->{pages} };
+    my $revid = $data->{'revisions'}[0]->{'revid'};
+    return $revid;
 }
 
 =head2 update_rc($limit[,$options_hashref])
@@ -935,9 +913,7 @@ sub update_rc {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # Not a ref when using callback
     my @rc_table;
     foreach my $hash (@{$res}) {
@@ -998,9 +974,7 @@ sub what_links_here {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
@@ -1054,9 +1028,7 @@ sub list_transclusions {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
@@ -1099,9 +1071,7 @@ sub get_pages_in_category {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # Not a hashref when using callback
     my @pages;
     foreach my $hash (@$res) {
@@ -1190,9 +1160,7 @@ sub linksearch {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
@@ -1251,17 +1219,12 @@ sub purge_page {
     }
 
     my $res  = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
+    return $self->_handle_api_error() unless $res;
+    my $success = 0;
+    foreach my $hashref (@{$res->{'purge'}}) {
+        $success++ if exists $hashref->{'purged'};
     }
-    else {
-        my $success = 0;
-        foreach my $hashref (@{$res->{'purge'}}) {
-            $success++ if exists $hashref->{'purged'};
-        }
-        return $success;
-    }
-
+    return $success;
 }
 
 =head2 get_namespace_names
@@ -1280,9 +1243,7 @@ sub get_namespace_names {
             siprop => 'namespaces'
         }
     );
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     foreach my $id (keys %{ $res->{query}->{namespaces} }) {
         $return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
     }
@@ -1335,21 +1296,17 @@ sub is_blocked {
         bkprop  => 'id',
     };
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
+    return $self->_handle_api_error() unless $res;
+
+    my $number = scalar @{$res->{query}->{"blocks"}}; # The number of blocks returned
+    if ($number == 1) {
+        return 1;
+    }
+    elsif ($number == 0) {
+        return 0;
     }
     else {
-        my $number = scalar @{$res->{query}->{"blocks"}}; # The number of blocks returned
-
-        if ($number == 1) {
-            return 1;
-        }
-        elsif ($number == 0) {
-            return 0;
-        }
-        else {
-            return; # UNPOSSIBLE!
-        }
+        return; # UNPOSSIBLE!
     }
 }
 
@@ -1387,9 +1344,7 @@ sub test_image_exists {
 
     #use Data::Dumper; print Dumper($hash);
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
 
     #use Data::Dumper; print Dumper($res);
     foreach my $id (keys %{ $res->{query}->{pages} }) {
@@ -1438,9 +1393,7 @@ sub get_pages_in_namespace {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # Not a ref when using callback
     my @return;
     foreach (@{$res}) {
@@ -1469,9 +1422,7 @@ sub count_contributions {
         },
         { max => 1 }
     );
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my $return = ${$res}[0]->{'editcount'};
 
     if ($return or $_[0] > 1) {
@@ -1501,9 +1452,7 @@ sub last_active {
         },
         { max => 1 }
     );
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return ${$res}[0]->{'timestamp'};
 }
 
@@ -1525,9 +1474,7 @@ sub recent_edit_to_page {
         },
         { max => 1 }
     );
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my ($id, $data) = %{ $res->{query}->{pages} };
     return $data->{revisions}[0]->{timestamp};
 }
@@ -1566,9 +1513,7 @@ sub get_users {
     $hash->{rvdir}     = $direction if ($direction);
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my ($id) = keys %{ $res->{query}->{pages} };
     my $array = $res->{query}->{pages}->{$id}->{revisions};
     foreach (@{$array}) {
@@ -1599,21 +1544,17 @@ sub was_blocked {
     };
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
+    return $self->_handle_api_error() unless $res;
+
+    my $number = scalar @{$res->{'query'}->{'logevents'}}; # The number of blocks returned
+    if ($number == 1) {
+        return 1;
+    }
+    elsif ($number == 0) {
+        return 0;
     }
     else {
-        my $number = scalar @{$res->{'query'}->{'logevents'}}; # The number of blocks returned
-
-        if ($number == 1) {
-            return 1;
-        }
-        elsif ($number == 0) {
-            return 0;
-        }
-        else {
-            return; # UNPOSSIBLE!
-        }
+        return; # UNPOSSIBLE!
     }
 }
 
@@ -1648,9 +1589,7 @@ sub expandtemplates {
         text    => $text,
     };
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my $expanded = $res->{'expandtemplates'}->{'*'};
 
     return $expanded;
@@ -1808,9 +1747,7 @@ sub diff {
     }
 
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my @revids = keys %{ $res->{'query'}->{'pages'} };
     my $diff = $res->{'query'}->{'pages'}->{$revids[0]}->{'revisions'}->[0]->{'diff'}->{'*'};
 
@@ -1867,9 +1804,7 @@ sub prefixindex {
 
     my $res = $self->{api}->list($hash, $options);
 
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # Not a ref when using callback hook
     my @pages;
     foreach my $hashref (@$res) {
@@ -1923,9 +1858,7 @@ sub search {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (!ref $res); # Not a ref when used with callback
     my @pages;
     foreach my $result (@$res) {
@@ -2001,9 +1934,7 @@ sub get_log {
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # Not a ref when using callback
 
     return $res;
@@ -2066,9 +1997,7 @@ sub was_g_blocked {
     };
     my $res = $self->{api}->api($hash);
 
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my $number = scalar @{ $res->{'query'}->{'logevents'} }; # The number of blocks returned
 
     if ($number == 1) {
@@ -2143,9 +2072,7 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
         intoken => $type,
     };
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my ($id, $data) = %{ $res->{query}->{pages} };
     my $edittoken = $data->{'edittoken'};
     my $tokentimestamp = $data->{'starttimestamp'};
@@ -2169,9 +2096,7 @@ sub _is_loggedin {
         meta    => 'userinfo',
     };
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
     my $is = $res->{'query'}->{'userinfo'}->{'name'};
     my $ought = $self->{username};
     carp "Testing if logged in: we are $is, think we should be $ought" if $self->{debug};
@@ -2188,9 +2113,7 @@ sub _do_autoconfig {
         uiprop  => 'rights|groups',
     };
     my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
+    return $self->_handle_api_error() unless $res;
 
     my $is = $res->{'query'}->{'userinfo'}->{'name'};
     my $ought = $self->{username};
@@ -2232,53 +2155,49 @@ sub _get_sitematrix {
     my $self = shift;
 
     my $res = $self->{api}->api( { action => 'sitematrix' } );
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
-    else {
-        my %sitematrix = %{ $res->{'sitematrix'} };
-#        use Data::Dumper;
-#        print Dumper(\%sitematrix) and die;
-        # This hash is a monstrosity (see http://sprunge.us/dfBD?pl), and needs
-        # lots of post-processing to have a sane data structure :\
-        my %map;
-        foreach my $hashref (%sitematrix) {
-            if (ref $hashref ne 'HASH') { # Yes, there are non-hashrefs in here, wtf?!
-                if ($hashref eq 'specials'){
-                    foreach my $special (@{ $sitematrix{'specials'} }) {
-                        my $db     = $special->{'code'};
-                        my $domain = $special->{'url'};
-                        $domain    =~ s,^http://,,;
-
-                        $map{$db} = $domain;
-                        $map{$domain} = $db;
-                    }
-                }
-                next;
-            }
-
-            my $lang = $hashref->{'code'};
-
-            foreach my $wiki_ref ($hashref->{'site'}) {
-                foreach my $wiki_ref2 (@$wiki_ref) {
-                    my $family = $wiki_ref2->{'code'};
-                    my $domain = $wiki_ref2->{'url'};
+    return $self->_handle_api_error() unless $res;
+    my %sitematrix = %{ $res->{'sitematrix'} };
+#    use Data::Dumper;
+#    print Dumper(\%sitematrix) and die;
+    # This hash is a monstrosity (see http://sprunge.us/dfBD?pl), and needs
+    # lots of post-processing to have a sane data structure :\
+    my %map;
+    foreach my $hashref (%sitematrix) {
+        if (ref $hashref ne 'HASH') { # Yes, there are non-hashrefs in here, wtf?!
+            if ($hashref eq 'specials'){
+                foreach my $special (@{ $sitematrix{'specials'} }) {
+                    my $db     = $special->{'code'};
+                    my $domain = $special->{'url'};
                     $domain    =~ s,^http://,,;
-
-                    my $db = $lang . $family; # Is simple concatenation /always/ correct?
 
                     $map{$db} = $domain;
                     $map{$domain} = $db;
                 }
             }
+            next;
         }
 
-        # This could be saved to disk with Storable. Next time you call this
-        # method, if mtime is less than, say, 14d, you could load it from
-        # disk instead of over network.
-        $self->{'sitematrix'} = \%map;
-        return $self->{'sitematrix'};
+        my $lang = $hashref->{'code'};
+
+        foreach my $wiki_ref ($hashref->{'site'}) {
+            foreach my $wiki_ref2 (@$wiki_ref) {
+                my $family = $wiki_ref2->{'code'};
+                my $domain = $wiki_ref2->{'url'};
+                $domain    =~ s,^http://,,;
+
+                my $db = $lang . $family; # Is simple concatenation /always/ correct?
+
+                $map{$db} = $domain;
+                $map{$domain} = $db;
+            }
+        }
     }
+
+    # This could be saved to disk with Storable. Next time you call this
+    # method, if mtime is less than, say, 14d, you could load it from
+    # disk instead of over network.
+    $self->{'sitematrix'} = \%map;
+    return $self->{'sitematrix'};
 }
 
 sub _get_ns_data {
