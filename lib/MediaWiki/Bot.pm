@@ -486,6 +486,7 @@ sub edit {
     $markasbot = 1 unless defined($markasbot);
 
     my ($edittoken, $lastedit, $tokentime) = $self->_get_edittoken($page);
+    return $self->_handle_api_error() unless $edittoken;
     my $hash = {
         action          => 'edit',
         title           => $page,
@@ -2142,6 +2143,9 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
         intoken => $type,
     };
     my $res = $self->{api}->api($hash);
+    if (!$res) {
+        return $self->_handle_api_error();
+    }
     my ($id, $data) = %{ $res->{query}->{pages} };
     my $edittoken = $data->{'edittoken'};
     my $tokentimestamp = $data->{'starttimestamp'};
