@@ -16,7 +16,7 @@ use Test::More tests => 4;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (01_login.t)',
 });
 
 is($bot->login('Perlwikipedia testing', 'test'), 1, 'Log in');

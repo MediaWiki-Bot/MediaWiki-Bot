@@ -16,7 +16,7 @@ use Test::More tests => 7;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (25_list_transclusions.t)',
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {

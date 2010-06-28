@@ -17,7 +17,7 @@ use warnings;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (26_purge_page.t)',
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {

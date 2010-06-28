@@ -16,7 +16,7 @@ use Test::More tests => 1;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (03_get_history.t)',
 });
 
 my @history = $bot->get_history('User:Shadow1/perlwikipedia/Check', 1);

@@ -16,7 +16,7 @@ use Test::More tests => 1;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (04_revert.t)',
 });
 $bot->set_wiki('localhost', 'wiki');
 

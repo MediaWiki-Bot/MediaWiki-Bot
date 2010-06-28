@@ -17,7 +17,7 @@ use Test::More tests => 2;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (15_was_blocked.t)',
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {

@@ -17,7 +17,7 @@ use Test::More tests => 2;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (32_was_g_blocked.t)',
     host    => 'meta.wikimedia.org',
 });
 

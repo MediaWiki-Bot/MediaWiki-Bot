@@ -18,7 +18,7 @@ use MediaWiki::Bot;
 use utf8;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (21_unicode.t)',
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {

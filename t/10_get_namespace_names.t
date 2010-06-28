@@ -16,7 +16,7 @@ use Test::More tests => 1;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (10_get_namespace_names.t)',
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {

@@ -18,7 +18,7 @@ SKIP: {
     skip('wiki.xyrael.net is down', 5);
 
     my $bot = MediaWiki::Bot->new({
-        agent   => 'MediaWiki::Bot tests',
+        agent   => 'MediaWiki::Bot tests (08_get_pages_in_category.t)',
     });
     $bot->set_wiki('wiki.xyrael.net', 'w');
 

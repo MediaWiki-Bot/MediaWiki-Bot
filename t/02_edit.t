@@ -17,11 +17,11 @@ use Test::More tests => 2;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (02_edit.t)',
 });
 
 my $rand = rand();
-my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests');
+my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests (02_edit.t)');
 #eval { use Data::Dumper; print STDERR Dumper($status); };
 #if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
 SKIP: {
@@ -39,14 +39,14 @@ SKIP: {
         page    => 'User:ST47/test',
         text    => $rand2,
         section => 'new',
-        summary => 'MediaWiki::Bot tests',
+        summary => 'MediaWiki::Bot tests (02_edit.t)',
     });
     sleep(1);
     $is = $bot->get_text('User:ST47/test');
     my $ought = <<"END";
 $rand
 
-== MediaWiki::Bot tests ==
+== MediaWiki::Bot tests (02_edit.t) ==
 
 $rand2
 END

@@ -19,7 +19,7 @@ BEGIN {
 # its man page ( perldoc Test::More ) for help writing this test script.
 
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests',
+    agent   => 'MediaWiki::Bot tests (00_initialize.t)',
 });
 
 ok(defined $bot, 'new() works');
