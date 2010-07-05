@@ -22,4 +22,4 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 }
 
 my @rc = $bot->update_rc(2);
-ok(defined $rc[0]->{'title'});
+ok(defined $rc[0]->{'pagename'});
