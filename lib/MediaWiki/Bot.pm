@@ -1050,12 +1050,20 @@ sub get_pages_in_category {
     my $category = shift;
     my $options  = shift;
 
-    unless ($category =~ m/^Category:/) {
-        my $ns_data = $self->_get_ns_data();
-        my $cat_ns_name = $ns_data->{'14'};
-
-        $category = "$cat_ns_name:$category" unless ($category =~ m/^$cat_ns_name:/);
+    if ($category =~ m/:/) { # It might have a namespace name
+        my ($cat, $title) = split(/:/, $category, 2);
+        if ($cat ne 'Category') { # 'Category' is a canonical name for ns14
+            my $ns_data = $self->_get_ns_data();
+            my $cat_ns_name = $ns_data->{'14'}; # ns14 gives us the localized name for 'Category'
+            if ($cat ne $cat_ns_name) {
+                $category = "$cat_ns_name:$category";
+            }
+        }
     }
+    else { # Definitely no namespace name, since there's no colon
+        $category = "Category:$category";
+    }
+    warn "Category to fetch is [[$category]]" if $self->{'debug'};
 
     my $hash = {
         action  => 'query',
@@ -1086,18 +1094,18 @@ sub get_all_pages_in_category {
     my $self          = shift;
     my $base_category = shift;
     my $options       = shift;
-    $options->{'max'} = 0; # Get all results
+    $options->{'max'} = 0 unless defined($options->{'max'});
 
     my @first         = $self->get_pages_in_category($base_category, $options);
     my %data;
 
+    my $ns_data = $self->_get_ns_data();
+    my $cat_ns_name = $ns_data->{'14'};
     foreach my $page (@first) {
         $data{$page} = '';
 
-        my $ns_data = $self->_get_ns_data();
-        my $cat_ns_name = $ns_data->{'14'};
-
-        if ($page =~ /^$cat_ns_name:/) {
+        if ($page =~ m/^$cat_ns_name:/) {
+            # FIXME: No protection against infinite loops here!
             my @pages = $self->get_all_pages_in_category($page, $options);
             foreach (@pages) {
                 $data{$_} = '';
@@ -2257,10 +2265,15 @@ sub _get_sitematrix {
 sub _get_ns_data {
     my $self = shift;
 
-    my %ns_data = $self->{'ns_data'} ? %{$self->{'ns_data'}} : $self->get_namespace_names();
+    # If we have it already, return the cached data
+    return $self->{'ns_data'} if exists($self->{'ns_data'});
+
+    # If we haven't returned by now, we have to ask the API
+    my %ns_data = $self->get_namespace_names();
     my %reverse = reverse %ns_data;
     %ns_data = (%ns_data, %reverse);
     $self->{'ns_data'} = \%ns_data; # Save for later use
+
     return $self->{'ns_data'};
 }
 
