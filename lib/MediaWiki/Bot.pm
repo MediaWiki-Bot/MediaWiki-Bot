@@ -18,7 +18,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.1.2';
+our $VERSION = '3.1.3';
 
 =head1 NAME
 
@@ -1034,30 +1034,40 @@ Returns an array containing the names of all pages in the specified category (in
 sub get_pages_in_category {
     my $self     = shift;
     my $category = shift;
+    my $options  = shift;
 
-    unless ($category =~ m/^Category:/) {
-        my $ns_data = $self->_get_ns_data();
-        my $cat_ns_name = $ns_data->{'14'};
+    if ($category =~ m/:/) { # It might have a namespace name
+        my ($cat, $title) = split(/:/, $category, 2);
+        if ($cat ne 'Category') { # 'Category' is a canonical name for ns14
+            my $ns_data = $self->_get_ns_data();
+            my $cat_ns_name = $ns_data->{'14'}; # ns14 gives us the localized name for 'Category'
+            if ($cat ne $cat_ns_name) {
+                $category = "$cat_ns_name:$category";
+            }
+        }
+    }
+    else { # Definitely no namespace name, since there's no colon
+        $category = "Category:$category";
+    }
+    warn "Category to fetch is [[$category]]" if $self->{'debug'};
 
-        $category = "$cat_ns_name:$category" unless ($category =~ m/^$cat_ns_name:/);
-    }
+    my $hash = {
+        action  => 'query',
+        list    => 'categorymembers',
+        cmtitle => $category,
+    };
+    $options->{'max'} = 1 unless defined($options->{'max'});
+    delete($options->{'max'}) if $options->{'max'} == 0;
 
-    my @return;
-    my $res = $self->{api}->list(
-        {
-            action  => 'query',
-            list    => 'categorymembers',
-            cmtitle => $category,
-            cmlimit => 500
-        },
-    );
-    if (!$res) {
-        return $self->_handle_api_error();
+    my $res = $self->{api}->list($hash, $options);
+    return if (! ref $res); # Not a hashref when using callback
+    return $self->_handle_api_error() unless $res;
+    my @pages;
+    foreach my $hash (@$res) {
+        my $title = $hash->{'title'};
+        push @pages, $title;
     }
-    foreach (@{$res}) {
-        push @return, $_->{title};
-    }
-    return @return;
+    return @pages;
 }
 
 =head2 get_all_pages_in_category($category_name)
@@ -1069,16 +1079,19 @@ Returns an array containing the names of ALL pages in the specified category (in
 sub get_all_pages_in_category {
     my $self          = shift;
     my $base_category = shift;
+    my $options       = shift;
+    $options->{'max'} = 0 unless defined($options->{'max'});
+
     my @first         = $self->get_pages_in_category($base_category);
     my %data;
 
+    my $ns_data = $self->_get_ns_data();
+    my $cat_ns_name = $ns_data->{'14'};
     foreach my $page (@first) {
         $data{$page} = '';
 
-        my $ns_data = $self->_get_ns_data();
-        my $cat_ns_name = $ns_data->{'14'};
-
         if ($page =~ /^$cat_ns_name:/) {
+            # FIXME: No protection against infinite loops here!
             my @pages = $self->get_all_pages_in_category($page);
             foreach (@pages) {
                 $data{$_} = '';
