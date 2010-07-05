@@ -28,7 +28,6 @@ SKIP: {
 #   skip("Skipping edit test for now",2);
 
     my $rand = rand();
-    print STDERR "\rYou should receive another error message here regarding a failed assertion.\n";
     my $status = $bot->edit({
         page    => 'User:ST47/test',
         text    => $rand,

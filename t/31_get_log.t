@@ -59,4 +59,3 @@ isa_ok($log, 'ARRAY', 'Right return type');
 isa_ok($log->[0], 'HASH', 'Contains the right data structure');
 is(scalar @$log, 2, 'right size');
 is_deeply($log, $std, 'The same - all the way down');
-

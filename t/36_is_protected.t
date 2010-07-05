@@ -30,4 +30,3 @@ is($result->{'Ambrax'},             undef,   '[[Ambrax]] protection');
 # [[User talk:Mike.lifeguard]] is probably not protected
 $result = $bot->is_protected("User talk:Mike.lifeguard");
 is($result,             undef,   '[[User talk:Mike.lifeguard]] protection');
-

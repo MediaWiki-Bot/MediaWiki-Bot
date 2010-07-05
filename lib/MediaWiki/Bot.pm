@@ -195,7 +195,7 @@ sub new {
     if ($login_data) {
         my $success = $self->login($login_data);
         unless ($success) {
-            carp "Couldn't log in with supplied settings";
+            carp "Couldn't log in with supplied settings" if $self->{'debug'};
             return;
         }
     }
@@ -501,7 +501,7 @@ sub edit {
     return $self->_handle_api_error() unless $res;
     if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
         if ($self->{mech}->{agent}) {
-            carp 'Assertion failed as ' . $self->{mech}->{agent};
+            carp 'Assertion failed as ' . $self->{mech}->{agent} if $self->{'debug'};
             if ($self->{operator}) {
                 my $optalk = $self->get_text('User talk:' . $self->{operator});
                 if (defined($optalk)) {
@@ -522,7 +522,7 @@ sub edit {
             return;
         }
         else {
-            carp 'Assertion failed';
+            carp 'Assertion failed' if $self->{'debug'};
         }
     }
     return $res;
@@ -2144,8 +2144,10 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
 
 sub _handle_api_error {
     my $self = shift;
-    carp 'Error code: ' . $self->{api}->{error}->{code};
-    carp $self->{api}->{error}->{details};
+    carp 'Error code '
+        . $self->{api}->{error}->{code}
+        . ": "
+        . $self->{api}->{error}->{details} if $self->{'debug'};
     $self->{error} = $self->{api}->{error};
     return;
 }

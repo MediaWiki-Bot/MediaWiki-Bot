@@ -25,4 +25,3 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 
 my $revid = $bot->get_last('Main Page', 'Not a real editor');
 cmp_ok($revid, '>', 0, 'Find the last revision');
-

@@ -30,4 +30,3 @@ is(scalar @pages, 3, 'Correct number of pages');
 is($pages[0]->{'title'}, 'User:Mike.lifeguard/29 prefixindex.t',     'Page 0 correct');
 is($pages[1]->{'title'}, 'User:Mike.lifeguard/29 prefixindex.t/one', 'Page 1 correct');
 is($pages[2]->{'title'}, 'User:Mike.lifeguard/29 prefixindex.t/two', 'Page 2 correct');
-

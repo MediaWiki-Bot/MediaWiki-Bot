@@ -34,7 +34,6 @@ like($pages[0], qr/^Template/, 'Template namespace found');
 is(scalar @pages, $page_limit, 'Correct number of pages retrieved');
 
 $namespace_id = 'non-existent';
-print STDERR "\rYou should receive an error message below. This is an expected part of the test.\n";
 @pages = $bot->get_pages_in_namespace($namespace_id);
 
 is($pages[0], undef, 'Error code received');

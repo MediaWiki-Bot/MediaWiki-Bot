@@ -58,4 +58,3 @@ If I removed your favourite link, I consider it to be spam. If you disagree, rev
 </tr>
 END-DIFF
 is($is, $ought, 'Retrieved diff correctly');
-

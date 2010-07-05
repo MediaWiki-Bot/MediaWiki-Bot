@@ -27,7 +27,6 @@ my $cookiemonster = MediaWiki::Bot->new('STWP');
 is ($cookiemonster->login('Perlwikipedia testing'), 1, 'Cookie log in');
 ok($bot->_is_loggedin(),                            "Double-check we're cookie logged in");
 
-print STDERR "\rYou should recieve an warning here about a failed login.\n";
 my $failbot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests (01_login.t)',
     login_data => { username => "Mike's test account", password => '' },

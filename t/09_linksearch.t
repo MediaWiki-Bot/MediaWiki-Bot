@@ -31,4 +31,3 @@ ok(     defined $pages[0]->{'url'},                         'The hash contains a
 like(   $pages[0]->{'url'},             qr/example\.com/,   'The URL is one we requested');
 ok(     defined $pages[0]->{'title'},                       'The has contains a page title');
 like(   $pages[0]->{'title'},           qr/\w+/,            'The title looks valid');
-

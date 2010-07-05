@@ -32,4 +32,3 @@ is($result, 0, 'lock history');
 # I was once locked
 $result = $bot->was_locked('Mike.lifeguard');
 is($result, 1, 'lock history');
-
