@@ -1074,8 +1074,8 @@ sub get_pages_in_category {
     delete($options->{'max'}) if $options->{'max'} == 0;
 
     my $res = $self->{api}->list($hash, $options);
-    return $self->_handle_api_error() unless $res;
     return if (! ref $res); # Not a hashref when using callback
+    return $self->_handle_api_error() unless $res;
     my @pages;
     foreach my $hash (@$res) {
         my $title = $hash->{'title'};
