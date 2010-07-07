@@ -2059,21 +2059,21 @@ sub was_locked {
     }
 }
 
-=head2 is_protected($page)
+=head2 get_protection($page)
 
-This returns whether a page is protected or not. If you care beyond true/false, information about page protection is returned as a array of up to two hashrefs. Each hashref has a type, level, and expiry. Levels are 'sysop' and 'autoconfirmed'; types are 'move' and 'edit'; expiry is a timestamp. Additionally, the key 'cascade' will exist if cascading protection is used.
+Returns data on page protection. If you care beyond true/false, information about page protection is returned as a array of up to two hashrefs. Each hashref has a type, level, and expiry. Levels are 'sysop' and 'autoconfirmed'; types are 'move' and 'edit'; expiry is a timestamp. Additionally, the key 'cascade' will exist if cascading protection is used.
 
     my $page = "Main Page";
     $bot->edit({
         page    => $page,
         text    => rand(),
         summary => 'test',
-    }) unless $bot->is_protected($page);
+    }) unless $bot->get_protection($page);
 
 You can also pass an arrayref of page titles to do bulk queries:
 
     my @pages = ("Main Page", "User:Mike.lifeguard", "Project:Sandbox");
-    my $answer = $bot->is_protected(\@pages);
+    my $answer = $bot->get_protection(\@pages);
     foreach my $title (keys %$answer) {
         my $protected = $answer->{$title};
         print "$title is protected\n" if $protected;
@@ -2082,7 +2082,7 @@ You can also pass an arrayref of page titles to do bulk queries:
 
 =cut
 
-sub is_protected {
+sub get_protection {
     my $self = shift;
     my $page = shift;
     if (ref $page eq 'ARRAY') {
@@ -2116,6 +2116,10 @@ sub is_protected {
     else {
         return $out_data;
     }
+}
+
+sub is_protected {
+    return $self->get_protection(@_);
 }
 
 ################
