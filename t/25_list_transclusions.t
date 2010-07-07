@@ -25,13 +25,17 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 
 my @pages = $bot->list_transclusions('Template:Tlx', 'redirects', undef, {max=>1});
 
-ok(     defined $pages[0],                                  'Something was returned');
+ok(     defined($pages[0]),                                 'Something was returned');
 isa_ok( $pages[0],                      'HASH',             'A hash was returned');
-ok(     defined $pages[0]->{'title'},                       'The hash contains a title');
+ok(     defined($pages[0]->{'title'}),                      'The hash contains a title');
 like(   $pages[0]->{'title'},           qr/\w+/,            'The title looks valid');
-ok(     defined $pages[0]->{'redirect'},                    'Redirect status is defined');
-ok(     defined($pages[0]->{'redirect'}),                   'We got a redirect when we asked for it');
+ok(     defined($pages[0]->{'redirect'}),                   'Redirect status is defined');
+ok(     $pages[0]->{'redirect'},                            'We got a redirect when we asked for it');
 
-@pages = $bot->what_links_here('Template:Tlx', 'nonredirects', undef, {max=>1});
-
-isnt(     defined($pages[0]->{'redirect'}),                   'We got a normal link when we asked for no redirects');
+$bot->what_links_here('Template:Tlx', 'nonredirects', undef, { max => 1, hook => \&test_hook});
+my $is_redir;
+sub test_hook {
+    my ($res) = @_;
+    $is_redir = $res->[0]->{'redirect'};
+}
+isnt(     $is_redir,                                        'We got a normal link when we asked for no redirects');

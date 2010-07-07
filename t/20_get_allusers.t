@@ -24,8 +24,6 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-SKIP:{
-    skip('Mediawiki bug, limit is broken, off by one error', 1);
-    my @array=$bot->get_allusers(10);
-    is(scalar(@array), 10, 'Got 10 users');
-}
+my @array = $bot->get_allusers(10);
+is(scalar(@array), 10, 'Got 10 users');
+

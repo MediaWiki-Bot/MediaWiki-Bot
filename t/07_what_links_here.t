@@ -32,6 +32,11 @@ like(   $pages[0]->{'title'},           qr/\w+/,            'The title looks val
 ok(     defined $pages[0]->{'redirect'},                    'Redirect status is defined');
 ok(     defined($pages[0]->{'redirect'}),                   'We got a redirect when we asked for it');
 
-@pages = $bot->what_links_here('Main Page', 'nonredirects', undef, {max=>1});
-
-isnt(     defined($pages[0]->{'redirect'}),                   'We got a normal link when we asked for no redirects');
+$bot->what_links_here("Meta:Sandbox", 'nonredirects', 0, {max => 1, hook => \&mysub});
+my $is_redir;
+sub mysub {
+    my ($res) = @_;
+    my $hash = $res->[0];
+    $is_redir = $hash->{'redirect'};
+}
+isnt(     $is_redir,                                        'We got a normal link when we asked for no redirects');

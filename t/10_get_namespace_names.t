@@ -25,3 +25,4 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 
 my %namespaces = $bot->get_namespace_names;
 is($namespaces{1}, "Talk");
+

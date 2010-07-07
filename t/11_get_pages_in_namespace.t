@@ -28,7 +28,7 @@ my $namespace_id = '10';
 my $page_limit = 1;
 
 my @pages = $bot->get_pages_in_namespace($namespace_id);
-like($pages[0], qr/^Template/, 'Template namespace found');
+like($pages[0], qr/^Template:/, 'Template namespace found');
 
 @pages = $bot->get_pages_in_namespace($namespace_id, $page_limit);
 is(scalar @pages, $page_limit, 'Correct number of pages retrieved');
@@ -38,3 +38,4 @@ $namespace_id = 'non-existent';
 
 is($pages[0], undef, 'Error code received');
 is($bot->{error}->{code}, 3, 'Error code in MediaWiki::Bot object');
+

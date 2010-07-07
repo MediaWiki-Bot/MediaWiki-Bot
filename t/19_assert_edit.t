@@ -24,14 +24,11 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-SKIP: {
-#   skip("Skipping edit test for now",2);
+my $rand = rand();
+my $status = $bot->edit({
+    page    => 'User:ST47/test',
+    text    => $rand,
+    assert  => 'false'
+});
+is($status->{'edit'}->{'result'}, 'Failure', 'Intentionally bad assertion');
 
-    my $rand = rand();
-    my $status = $bot->edit({
-        page    => 'User:ST47/test',
-        text    => $rand,
-        assert  => 'false'
-    });
-    is($status->{'edit'}->{'result'}, 'Failure', 'Intentionally bad assertion');
-}
