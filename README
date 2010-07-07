@@ -1,22 +1,50 @@
 MediaWiki::Bot version 3.1.0
 ============================
 
-This is MediaWiki::Bot, a Perl module designed to interface with the
-online encyclopedia Wikipedia, and other MediaWiki-powered sites.
+This is MediaWiki::Bot, a Perl module designed to interface with wikis using
+the MediaWiki wiki software like popular online encyclopedia project Wikipedia.
+
+SUPPORT
+-------
+
+First, check the online documentation. If your question is not answered there,
+you can contact the development team in three ways, listed here from most to
+least preferred:
+
+ 1. Email perlwikibot@googlegroups.com
+ 2. Submit a bug to http://perlwikipedia.googlecode.com
+ 3. Join #perlwikipedia on irc.freenode.net
 
 INSTALLATION
 ------------
 
-To install this module type the following:
+There are two ways to install this. If you use the CPAN shell to install
+MediaWiki::Bot, the entire process is automated:
 
-   perl Makefile.PL
-   make
-   make test
-   make install
+    user@host:~$ sudo -i
+    root@host:~# cpan
+    cpan> install MediaWiki::Bot
+    ...
+
+You might have CPAN configured such that you don't need to become root
+initially.
+
+Otherwise, you can install it manually. First install the dependencies (listed
+below), then install MediaWiki::Bot. To install this module type the following
+in the root directory:
+
+   user@host:~$ perl Makefile.PL
+   user@host:~$ make
+   user@host:~$ make test
+   user@host:~$ sudo make install
+
+You might use other methods to become root instead of sudo.
 
 The test scripts included with this distribution of MediaWiki::Bot
-require a working Internet connection. If the test phase will not
-complete, you can (probably) safely install the module anyway.
+require a working internet connection. If the test suite fails,
+it might be safe to install the module anyway. When in doubt,
+email perlwikibot@googlegroups.com with the complete output of the
+test suite and ask for advice.
 
 DEPENDENCIES
 ------------
