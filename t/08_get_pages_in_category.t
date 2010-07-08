@@ -7,7 +7,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 8;
+use Test::More tests => 9;
 
 #########################
 
@@ -18,6 +18,9 @@ use MediaWiki::Bot;
 my $bot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests (08_get_pages_in_category.t)',
 });
+
+my @loop_pages = $bot->get_all_pages_in_category('Category:Category loop', { max => 5 });
+is(     scalar @loop_pages, 1,              'Category loop protection works');
 
 my @pages = $bot->get_all_pages_in_category('Category:Wikipedia external links cleanup', { max => 51 });
 ok(     defined $pages[0],                  'Get big category');

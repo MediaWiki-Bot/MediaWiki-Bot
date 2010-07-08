@@ -1084,11 +1084,14 @@ sub get_pages_in_category {
     return @pages;
 }
 
-=head2 get_all_pages_in_category($category_name)
+=head2 get_all_pages_in_category($category_name[,$options_hashref])
 
-Returns an array containing the names of ALL pages in the specified category (include the Category: prefix), including sub-categories.
+Returns an array containing the names of ALL pages in the specified category (include the Category: prefix), including sub-categories. The $options_hashref is the same as described for get_pages_in_category().
 
 =cut
+
+{   # Instead of using the state pragma, use a bare block
+my %data;
 
 sub get_all_pages_in_category {
     my $self          = shift;
@@ -1097,23 +1100,35 @@ sub get_all_pages_in_category {
     $options->{'max'} = 0 unless defined($options->{'max'});
 
     my @first         = $self->get_pages_in_category($base_category, $options);
-    my %data;
+    %data = () unless $_[0];    # This is a special flag for internal use.
+                                # It marks a call to this method as being
+                                # internal. Since %data is a fake state variable,
+                                # it needs to be cleared for every *external*
+                                # call, but not cleared when the call is recursive.
 
     my $ns_data = $self->_get_ns_data();
     my $cat_ns_name = $ns_data->{'14'};
-    foreach my $page (@first) {
-        $data{$page} = '';
 
+    foreach my $page (@first) {
         if ($page =~ m/^$cat_ns_name:/) {
-            # FIXME: No protection against infinite loops here!
-            my @pages = $self->get_all_pages_in_category($page, $options);
-            foreach (@pages) {
-                $data{$_} = '';
+            if (!exists($data{$page})) {
+                $data{$page} = '';
+                my @pages = $self->get_all_pages_in_category($page, $options, 1);
+                foreach (@pages) {
+                    $data{$_}= '';
+                }
             }
+            else {
+                $data{$page} = '';
+            }
+        }
+        else {
+            $data{$page} = '';
         }
     }
     return keys %data;
 }
+} # This ends the bare block around get_all_pages_in_category()
 
 =head2 linksearch($link[,$ns[,$protocol[,$options]]])
 
