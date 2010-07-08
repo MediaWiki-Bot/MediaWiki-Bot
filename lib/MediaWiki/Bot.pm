@@ -2118,7 +2118,14 @@ sub get_protection {
     }
 }
 
+=head2 is_protected($page)
+
+This is a synonym for get_protection(), which should be used in preference.
+
+=cut
+
 sub is_protected {
+    my $self = shift;
     return $self->get_protection(@_);
 }
 
