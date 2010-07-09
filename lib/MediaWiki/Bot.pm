@@ -2170,6 +2170,47 @@ sub patrol {
         return $res;
     }
 }
+
+=head2 email($user, $subject, $body)
+
+This allows you to send emails through the wiki. All 3 of $user (without the User: prefix), $subject and $body are required. If $user is an arrayref, this will send the same email (subject and body) to all users.
+
+=cut
+
+sub email {
+    my $self    = shift;
+    my $user    = shift;
+    my $subject = shift;
+    my $body    = shift;
+
+    if (ref $user eq 'ARRAY') {
+        my @return;
+        foreach my $target (@$user) {
+            my $res = $self->email($target, $subject, $body);
+            push(@return, $res);
+        }
+        return @return;
+    }
+
+    $user =~ s/^User://;
+    if ($user =~ m/:/) {
+        my $user_ns_name = $self->_get_ns_data()->{2};
+        $user =~ s/^$user_ns_name://;
+    }
+
+    my ($token) = $self->_get_edittoken();
+    my $res = $self->{api}->api({
+        action  => 'emailuser',
+        target  => $user,
+        subject => $subject,
+        text    => $body,
+        token   => $token,
+    });
+    return $self->_handle_api_error() unless $res;
+    return $res;
+}
+
+
 ################
 # Internal use #
 ################
