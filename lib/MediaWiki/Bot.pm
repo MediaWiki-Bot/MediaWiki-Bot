@@ -2155,9 +2155,12 @@ sub patrol {
     my $rcid = shift;
 
     if (ref $rcid eq 'ARRAY') {
+        my @return;
         foreach my $id (@$rcid) {
-            $self->patrol($id);
+            my $res = $self->patrol($id);
+            push(@return, $res);
         }
+        return @return;
     }
     else {
         my ($token) = $self->_get_edittoken();
