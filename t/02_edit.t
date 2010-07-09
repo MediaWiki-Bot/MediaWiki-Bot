@@ -16,19 +16,25 @@ use Test::More tests => 2;
 
 use MediaWiki::Bot;
 
+my $username = $ENV{'PWPUsername'};
+my $password = $ENV{'PWPPassword'};
+my $login_data;
+if (defined($username) and defined($password)) {
+    $login_data = { username => $username, password => $password };
+}
+
 my $bot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests (02_edit.t)',
+    login_data => $login_data,
 });
 
 my $rand = rand();
 my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests (02_edit.t)');
-#eval { use Data::Dumper; print STDERR Dumper($status); };
-#if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
+
 SKIP: {
-    if ($status == 3 and $bot->{error}->{code} == 3) {
+    if ((defined($bot->{'error'}->{'code'})) and ($bot->{'error'}->{'code'} == 3)) {
         skip 'You are blocked, cannot use editing tests', 1;
     }
-    #ok( $status->isa("HTTP::Response") );
 
     sleep(1);
     my $is = $bot->get_text('User:ST47/test');

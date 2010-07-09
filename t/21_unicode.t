@@ -17,8 +17,16 @@ use Test::More tests => 8;
 use MediaWiki::Bot;
 use utf8;
 
+my $username = $ENV{'PWPUsername'};
+my $password = $ENV{'PWPPassword'};
+my $login_data;
+if (defined($username) and defined($password)) {
+    $login_data = { username => $username, password => $password };
+}
+
 my $bot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests (21_unicode.t)',
+    login_data => $login_data,
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
@@ -31,18 +39,18 @@ is($load, $string, 'Is our string the same as what we load?');
 
 my $old = $bot->get_text('User:ST47/unicode2');
 my $rand = rand();
-my $status = $bot->edit('User:ST47/unicode2', "$rand\n$string\n", 'PWP test');
+my $status = $bot->edit('User:ST47/unicode2', "$rand\n$string\n", 'MediaWiki::Bot tests (21_unicode.t)');
 SKIP: {
     if ($status == 3 and $bot->{error}->{code} == 3) {
         skip 'You are blocked, cannot use editing tests', 4;
     }
     my $rand2 = rand();
-    $bot->edit('User:ST47/unicode3', "$rand2\n$load\n", 'PWP test (éółŽć)');
+    $bot->edit('User:ST47/unicode3', "$rand2\n$load\n", 'MediaWiki::Bot tests (21_unicode.t) (éółŽć)');
     my @history = $bot->get_history('User:ST47/unicode3', 1);
-    is($history[0]->{comment}, 'PWP test (éółŽć)', 'Use unicode in edit summary correctly');
+    is($history[0]->{comment}, 'MediaWiki::Bot tests (21_unicode.t) (éółŽć)', 'Use unicode in edit summary correctly');
     my $rand3 = rand();
     sleep 1;
-    $bot->edit('User:ST47/éółŽć', "$rand3\n$load\n", 'PWP test');
+    $bot->edit('User:ST47/éółŽć', "$rand3\n$load\n", 'MediaWiki::Bot tests (21_unicode.t)');
     sleep 1;
     my $new = $bot->get_text('User:ST47/unicode2');
     isnt($new, $old, 'Successfully saved test string');             # new from 42; old from 29
