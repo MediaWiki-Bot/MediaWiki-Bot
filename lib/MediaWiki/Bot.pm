@@ -2144,13 +2144,39 @@ sub is_protected {
     return $self->get_protection(@_);
 }
 
+=head2 patrol($rcid)
+
+Marks a page or revision identified by the rcid as patrolled. To mark several rcids as patrolled, you may pass an arrayref.
+
+=cut
+
+sub patrol {
+    my $self = shift;
+    my $rcid = shift;
+
+    if (ref $rcid eq 'ARRAY') {
+        foreach my $id (@$rcid) {
+            $self->patrol($id);
+        }
+    }
+    else {
+        my ($token) = $self->_get_edittoken();
+        my $res = $self->{api}->api({
+            action  => 'patrol',
+            rcid    => $rcid,
+            token   => $token,
+        });
+        return $self->_handle_api_error() unless $res;
+        return $res;
+    }
+}
 ################
 # Internal use #
 ################
 
 sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimestamp)
     my $self = shift;
-    my $page = shift;
+    my $page = shift || 'Main Page';
     my $type = shift || 'edit';
 
     my $hash = {
