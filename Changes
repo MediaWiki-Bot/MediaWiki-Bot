@@ -3,6 +3,11 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
+3.1.5 Mike.lif r376 11 July 2010
+    Changes made since 3.1.2
+        * get_all_pages_in_category() now has protection against infinite recursion due to category loops
+        * get_pages() now actually accepts an arrayref of pages, as documented.
+        * get_(all_)pages_in_category now have consistent input parsing
 3.1.2 Mike.lif r332 07 June 2010
     Changes made since 3.1.1
         * Setting a useragent now works

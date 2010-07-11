@@ -18,7 +18,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.1.4';
+our $VERSION = '3.1.5';
 
 =head1 NAME
 
