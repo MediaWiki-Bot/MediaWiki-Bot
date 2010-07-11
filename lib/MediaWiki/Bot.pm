@@ -712,7 +712,7 @@ Returns the text of the specified pages in a hashref. Content of undef means pag
 
 sub get_pages {
     my $self  = shift;
-    my @pages = @_;
+    my @pages = (ref $_[0] eq 'ARRAY') ? @{$_[0]} : @_;
     my %return;
 
     my $hash = {
