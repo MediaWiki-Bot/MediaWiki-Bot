@@ -15,20 +15,23 @@ use Test::More tests => 5;
 # its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
+my $username = defined($ENV{'PWPUsername'}) ? $ENV{'PWPUsername'} : 'Perlwikipedia testing';
+my $password = defined($ENV{'PWPPassword'}) ? $ENV{'PWPPassword'} : 'test';
+
 my $bot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests (01_login.t)',
 });
 
-is($bot->login('Perlwikipedia testing', 'test'), 1, 'Log in');
-ok($bot->_is_loggedin(),                            "Double-check we're logged in");
+is($bot->login($username, $password), 1, 'Log in');
+ok($bot->_is_loggedin(), q{Double-check we're logged in});
 
-my $cookiemonster = MediaWiki::Bot->new('STWP');
+my $cookiemonster = MediaWiki::Bot->new();
 
-is ($cookiemonster->login('Perlwikipedia testing'), 1, 'Cookie log in');
-ok($bot->_is_loggedin(),                            "Double-check we're cookie logged in");
+is ($cookiemonster->login($username), 1, 'Cookie log in');
+ok($bot->_is_loggedin(), q{Double-check we're cookie logged in});
 
 my $failbot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests (01_login.t)',
     login_data => { username => "Mike's test account", password => '' },
 });
-ok(!$failbot,                                       "Auto-login failed");
+is($failbot, undef, 'Auto-login failed');

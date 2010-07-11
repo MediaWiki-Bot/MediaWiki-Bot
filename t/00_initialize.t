@@ -37,9 +37,17 @@ ok(defined $bot_alias_2, 'new() works');
 ok($bot_alias_2->isa('MediaWiki::Bot'), 'Right class');
 
 print STDERR <<"_end_";
-\r# Thanks for using MediaWiki::Bot. If any of these tests
-# fail, or you need any other assistance with the module,
-# please email our support mailing list at
-# <perlwikibot\@googlegroups.com>, or submit a bug to our
-# tracker <http://perlwikipedia.googlecode.com/>.
+\r# Thanks for using MediaWiki::Bot. If any of these
+# tests fail, or you need any other assistance with
+# the module, please email our support mailing list
+# at perlwikibot\@googlegroups.com, or submit a bug
+# to our tracker http://perlwikipedia.googlecode.com
 _end_
+print STDERR <<"_end_" if (!defined($ENV{'PWPUsername'}) and !defined($ENV{'PWPPassword'}));
+#
+# If you want, you can log in for editing tests.
+# To log in for those tests, stop the test suite now,
+# set the environment variables PWPUsername and
+# PWPPassword, and run the test suite.
+_end_
+sleep(2)
