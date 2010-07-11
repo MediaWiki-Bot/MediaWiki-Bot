@@ -1,5 +1,5 @@
 use strict;
-use MediaWiki::Bot; BEGIN{ *PWP:: = \%MediaWiki::Bot:: } our $VERSION=$PWP::VERSION;
+use MediaWiki::Bot; BEGIN{ *perlwikipedia:: = \%MediaWiki::Bot:: } our $VERSION=$perlwikipedia::VERSION;
 1;
 
 =head1 NAME

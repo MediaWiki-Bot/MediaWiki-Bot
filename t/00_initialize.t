@@ -7,10 +7,11 @@
 
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More tests => 9;
 BEGIN {
     use_ok('MediaWiki::Bot');
     use_ok('PWP');
+    use_ok('perlwikipedia');
 };
 
 #########################
@@ -25,10 +26,15 @@ my $bot = MediaWiki::Bot->new({
 ok(defined $bot, 'new() works');
 ok($bot->isa('MediaWiki::Bot'), 'Right class');
 
-my $bot_alias=PWP->new;
+my $bot_alias = PWP->new();
 
 ok(defined $bot_alias, 'new() works');
 ok($bot_alias->isa('MediaWiki::Bot'), 'Right class');
+
+my $bot_alias_2 = perlwikipedia->new();
+
+ok(defined $bot_alias_2, 'new() works');
+ok($bot_alias_2->isa('MediaWiki::Bot'), 'Right class');
 
 print STDERR <<"_end_";
 \r# Thanks for using MediaWiki::Bot. If any of these tests
