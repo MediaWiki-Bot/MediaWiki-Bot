@@ -14,6 +14,7 @@ use MediaWiki::API;
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
+
     #print "Found plugin $plugin\n";
     $plugin->import();
 }
@@ -135,6 +136,7 @@ sub new {
     my $path;
     my $login_data;
     my $debug;
+
     if (ref $_[0] eq 'HASH') {
         $agent      = $_[0]->{'agent'};
         $assert     = $_[0]->{'assert'};
@@ -147,14 +149,14 @@ sub new {
         $debug      = $_[0]->{'debug'};
     }
     else {
-        $agent      = shift;
-        $assert     = shift;
-        $operator   = shift;
-        $maxlag     = shift;
-        $protocol   = shift;
-        $host       = shift;
-        $path       = shift;
-        $debug      = shift;
+        $agent    = shift;
+        $assert   = shift;
+        $operator = shift;
+        $maxlag   = shift;
+        $protocol = shift;
+        $host     = shift;
+        $path     = shift;
+        $debug    = shift;
     }
 
     $assert   =~ s/[&?]assert=// if $assert; # Strip out param part, leaving just the value
@@ -168,27 +170,27 @@ sub new {
 
     my $self = bless({}, $package);
     $self->{mech} = WWW::Mechanize->new(
-            cookie_jar => {},
-            onerror => \&Carp::carp,
-            stack_depth => 1
+        cookie_jar  => {},
+        onerror     => \&Carp::carp,
+        stack_depth => 1
     );
     $self->{mech}->agent($agent);
-    $self->{protocol}                 = $protocol || 'http';
-    $self->{host}                     = $host || 'en.wikipedia.org';
-    $self->{path}                     = $path || 'w';
-    $self->{debug}                    = 0;
-    $self->{errstr}                   = '';
-    $self->{assert}                   = $assert;
-    $self->{operator}                 = $operator;
-    $self->{debug}                    = $debug || 0;
-    $self->{api}                      = MediaWiki::API->new();
+    $self->{protocol} = $protocol || 'http';
+    $self->{host}     = $host     || 'en.wikipedia.org';
+    $self->{path}     = $path     || 'w';
+    $self->{debug}    = 0;
+    $self->{errstr}   = '';
+    $self->{assert}   = $assert;
+    $self->{operator} = $operator;
+    $self->{debug}    = $debug    || 0;
+    $self->{api}      = MediaWiki::API->new();
     $self->{api}->{ua}->agent($agent);
 
     # Set wiki if these are set
     $self->set_wiki({
-        protocol => $self->{protocol},
-        host     => $self->{host},
-        path     => $self->{path},
+            protocol => $self->{protocol},
+            host     => $self->{host},
+            path     => $self->{path},
     });
 
     # Log-in, and maybe autoconfigure
@@ -246,12 +248,12 @@ sub set_wiki {
     }
 
     # Set defaults
-    $protocol = 'http' unless $protocol;
-    $host = 'en.wikipedia.org' unless $host;
-    $path = 'w' unless $path;
+    $protocol = 'http'             unless $protocol;
+    $host     = 'en.wikipedia.org' unless $host;
+    $path     = 'w'                unless $path;
 
     # Clean up the parts we will build a URL with
-    $protocol   =~ s,://$,,;
+    $protocol =~ s,://$,,;
     if ($host =~ m,^(http|https)(://)?, && !$protocol) {
         $protocol = $1;
     }
@@ -260,16 +262,16 @@ sub set_wiki {
     $path =~ s,/$,,;
 
     # Invalidate wiki-specific cached data
-    if (($self->{'host'} ne $host)
+    if (   ($self->{'host'} ne $host)
         or ($self->{'path'} ne $path)
-        or ($self->{'protocol'} ne $protocol)
-    ) {
+        or ($self->{'protocol'} ne $protocol))
+    {
         delete $self->{'ns_data'} if $self->{'ns_data'};
     }
 
     $self->{protocol} = $protocol;
-    $self->{host} = $host;
-    $self->{path} = $path;
+    $self->{host}     = $host;
+    $self->{path}     = $path;
 
     $self->{api}->{config}->{api_url} = "$protocol://$host/$path/api.php";
     print "Wiki set to $protocol://$host/$path/api.php\n" if $self->{debug};
@@ -330,14 +332,14 @@ sub login {
     my $autoconfig;
     my $basic_auth;
     if (ref $_[0] eq 'HASH') {
-        $username = $_[0]->{'username'};
-        $password = $_[0]->{'password'};
+        $username   = $_[0]->{'username'};
+        $password   = $_[0]->{'password'};
         $autoconfig = defined($_[0]->{'autoconfig'}) ? $_[0]->{'autoconfig'} : 1;
         $basic_auth = $_[0]->{'basic_auth'};
     }
     else {
-        $username = shift;
-        $password = shift;
+        $username   = shift;
+        $password   = shift;
         $autoconfig = 0;
     }
 
@@ -354,12 +356,12 @@ sub login {
 
     # This seems to not do what we want. Cookies are loaded, but a
     # subsequent userinfo query shows the bot is not logged in.
-    my $cookies  = ".mediawiki-bot-$username-cookies";
+    my $cookies = ".mediawiki-bot-$username-cookies";
     $self->{mech}->{cookie_jar}->load($cookies);
-    $self->{mech}->{cookie_jar}->{ignore_discard}=1;
+    $self->{mech}->{cookie_jar}->{ignore_discard} = 1;
     $self->{api}->{ua}->{cookie_jar}->load($cookies);
 
-    $self->{username} = $username; # Remember who we are
+    $self->{username} = $username;    # Remember who we are
     my $logged_in = $self->_is_loggedin();
     if ($logged_in) {
         $self->_do_autoconfig() if $autoconfig;
@@ -380,7 +382,7 @@ sub login {
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
     $self->{mech}->{cookie_jar}->save($cookies);
 
-#use Data::Dumper; print Dumper $self->{mech}->{cookie_jar};
+    #use Data::Dumper; print Dumper $self->{mech}->{cookie_jar};
     $logged_in = $self->_is_loggedin();
     $self->_do_autoconfig() if ($autoconfig and $logged_in);
     carp "Logged in successfully with password" if ($logged_in and $self->{debug});
@@ -396,7 +398,7 @@ Tells MediaWiki::Bot to start/stop using APIHighLimits for certain queries.
 =cut
 
 sub set_highlimits {
-    my $self       = shift;
+    my $self = shift;
     my $highlimits = shift || 1;
 
     $self->{highlimits} = $highlimits;
@@ -412,7 +414,7 @@ The logout procedure deletes the login tokens and other browser cookies.
 =cut
 
 sub logout {
-    my $self     = shift;
+    my $self = shift;
 
     my $hash = {
         action => 'logout',
@@ -451,23 +453,24 @@ sub edit {
     my $section;
 
     if (ref $_[0] eq 'HASH') {
-        $page       = $_[0]->{'page'};
-        $text       = $_[0]->{'text'};
-        $summary    = $_[0]->{'summary'};
-        $is_minor   = $_[0]->{'is_minor'};
-        $assert     = $_[0]->{'assert'};
-        $markasbot  = $_[0]->{'markasbot'};
-        $section    = $_[0]->{'section'};
+        $page      = $_[0]->{'page'};
+        $text      = $_[0]->{'text'};
+        $summary   = $_[0]->{'summary'};
+        $is_minor  = $_[0]->{'is_minor'};
+        $assert    = $_[0]->{'assert'};
+        $markasbot = $_[0]->{'markasbot'};
+        $section   = $_[0]->{'section'};
     }
     else {
-        $page       = shift;
-        $text       = shift;
-        $summary    = shift;
-        $is_minor   = shift;
-        $assert     = shift;
-        $markasbot  = shift;
-        $section    = shift;
+        $page      = shift;
+        $text      = shift;
+        $summary   = shift;
+        $is_minor  = shift;
+        $assert    = shift;
+        $markasbot = shift;
+        $section   = shift;
     }
+
     # Set defaults
     $summary = 'BOT: Changing page text' unless $summary;
     if ($assert) {
@@ -482,18 +485,18 @@ sub edit {
     my ($edittoken, $lastedit, $tokentime) = $self->_get_edittoken($page);
     return $self->_handle_api_error() unless $edittoken;
     my $hash = {
-        action          => 'edit',
-        title           => $page,
-        token           => $edittoken,
-        text            => $text,
-        md5             => md5_hex(encode_utf8($text)), # Guard against data corruption
-                                                        # Pass only bytes to md5_hex()
-        summary         => $summary,
-        basetimestamp   => $lastedit,  # Guard against edit conflicts
-        starttimestamp  => $tokentime, # Guard against the page being deleted/moved
-        bot             => $markasbot,
-        assert          => $assert,
-        minor           => $is_minor,
+        action         => 'edit',
+        title          => $page,
+        token          => $edittoken,
+        text           => $text,
+        md5            => md5_hex(encode_utf8($text)),    # Guard against data corruption
+                                                          # Pass only bytes to md5_hex()
+        summary        => $summary,
+        basetimestamp  => $lastedit,                      # Guard against edit conflicts
+        starttimestamp => $tokentime,                     # Guard against the page being deleted/moved
+        bot            => $markasbot,
+        assert         => $assert,
+        minor          => $is_minor,
     };
     $hash->{'section'} = $section if defined($section);
 
@@ -507,15 +510,15 @@ sub edit {
                 if (defined($optalk)) {
                     print "Sending warning!\n";
                     $self->edit(
-                        page        => "User talk:$self->{operator}",
-                        text        => $optalk
-                                        . "\n\n==Error with "
-                                        . $self->{mech}->{agent} . "==\n"
-                                        . $self->{mech}->{agent}
-                                        . ' needs to be logged in! ~~~~',
-                        summary     => 'bot issue',
-                        is_minor    => 0,
-                        assert      => ''
+                        page => "User talk:$self->{operator}",
+                        text => $optalk
+                            . "\n\n==Error with "
+                            . $self->{mech}->{agent} . "==\n"
+                            . $self->{mech}->{agent}
+                            . ' needs to be logged in! ~~~~',
+                        summary  => 'bot issue',
+                        is_minor => 0,
+                        assert   => ''
                     );
                 }
             }
@@ -559,10 +562,10 @@ sub move {
     my $opts   = shift;
 
     my $hash = {
-        action  => 'move',
-        from    => $from,
-        to      => $to,
-        reason  => $reason,
+        action => 'move',
+        from   => $from,
+        to     => $to,
+        reason => $reason,
     };
     $hash->{'movetalk'}   = $opts->{'movetalk'}   if defined($opts->{'movetalk'});
     $hash->{'noredirect'} = $opts->{'noredirect'} if defined($opts->{'noredirect'});
@@ -615,7 +618,7 @@ sub get_history {
         my $user  = $hash->{user};
         my ($timestamp_date, $timestamp_time) = split(/T/, $hash->{timestamp});
         $timestamp_time =~ s/Z$//;
-        my $comment =$hash->{comment};
+        my $comment = $hash->{comment};
         push(
             @return,
             {
@@ -624,8 +627,7 @@ sub get_history {
                 timestamp_date => $timestamp_date,
                 timestamp_time => $timestamp_time,
                 comment        => $comment,
-            }
-        );
+            });
     }
     return @return;
 }
@@ -640,10 +642,10 @@ Returns an the wikitext of the specified page. If $revid is defined, it will ret
 =cut
 
 sub get_text {
-    my $self       = shift;
-    my $pagename   = shift;
-    my $revid      = shift;
-    my $section    = shift;
+    my $self     = shift;
+    my $pagename = shift;
+    my $revid    = shift;
+    my $section  = shift;
 
     my $hash = {
         action => 'query',
@@ -656,11 +658,11 @@ sub get_text {
 
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
-        my ($id, $data) = %{ $res->{query}->{pages} };
-    if ($id == -1) { # Page doesn't exist
+    my ($id, $data) = %{ $res->{query}->{pages} };
+    if ($id == -1) {    # Page doesn't exist
         return;
     }
-    else { # Page exists
+    else {              # Page exists
         my $wikitext = $data->{revisions}[0]->{'*'};
         return $wikitext;
     }
@@ -744,7 +746,7 @@ sub get_pages {
             if (!defined $revisions) {
                 $return{ $page->{'title'} } = $revisions;
             }
-            elsif (length($revisions) < 150 && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) { # FRAGILE!
+            elsif (length($revisions) < 150 && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {    # FRAGILE!
                 my $redirect_to = $1;
                 $return{ $page->{'title'} } = $self->get_text($redirect_to);
             }
@@ -763,6 +765,7 @@ sub get_pages {
         'Image'      => 'File',
         'Image talk' => 'File talk',
     };
+
     # Only for those article names that remained after the first part
     # If we're here we are dealing most likely with a WP:CSD type of article name
     for my $title (keys %$diff) {
@@ -802,7 +805,7 @@ sub revert {
     my $summary  = shift || "Reverting to old revision $revid";
 
     my $text = $self->get_text($pagename, $revid);
-    my $res  = $self->edit($pagename, $text, $summary);
+    my $res = $self->edit($pagename, $text, $summary);
     return $res;
 }
 
@@ -818,18 +821,18 @@ sub undo {
     my $revid   = shift;
     my $summary = shift || "Reverting revision #$revid";
     my $after   = shift;
-    $summary = "Reverting edits between #$revid & #$after" if defined($after); # Is that clear? Correct?
+    $summary = "Reverting edits between #$revid & #$after" if defined($after);    # Is that clear? Correct?
 
     my ($edittoken, $basetimestamp, $starttimestamp) = $self->_get_edittoken($page);
     my $hash = {
-        action          => 'edit',
-        title           => $page,
-        undo            => $revid,
-        undoafter       => $after,
-        summary         => $summary,
-        token           => $edittoken,
-        starttimestamp  => $starttimestamp,
-        basetimestamp   => $basetimestamp,
+        action         => 'edit',
+        title          => $page,
+        undo           => $revid,
+        undoafter      => $after,
+        summary        => $summary,
+        token          => $edittoken,
+        starttimestamp => $starttimestamp,
+        basetimestamp  => $basetimestamp,
     };
 
     my $res = $self->{api}->api($hash);
@@ -854,16 +857,14 @@ sub get_last {
 
     my $revertto = 0;
 
-    my $res = $self->{api}->api(
-        {
+    my $res = $self->{api}->api({
             action        => 'query',
             titles        => $page,
             prop          => 'revisions',
             rvlimit       => 1,
             rvprop        => 'ids|user',
             rvexcludeuser => $user,
-        }
-    );
+    });
     return $self->_handle_api_error() unless $res;
     my ($id, $data) = %{ $res->{query}->{pages} };
     my $revid = $data->{'revisions'}[0]->{'revid'};
@@ -908,18 +909,17 @@ sub update_rc {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (! ref $res); # Not a ref when using callback
+    return if (!ref $res);    # Not a ref when using callback
     my @rc_table;
     foreach my $hash (@{$res}) {
         push(
             @rc_table,
             {
-                title          => $hash->{'title'},
-                revid          => $hash->{'revid'},
-                old_revid      => $hash->{'old_revid'},
-                timestamp      => $hash->{'timestamp'},
-            }
-        );
+                title     => $hash->{'title'},
+                revid     => $hash->{'revid'},
+                old_revid => $hash->{'old_revid'},
+                timestamp => $hash->{'timestamp'},
+            });
     }
     return @rc_table;
 }
@@ -952,8 +952,8 @@ sub what_links_here {
     my $ns      = shift;
     my $options = shift;
 
-    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY'); # Allow array of namespaces
-    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) { # Verify $filter
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');    # Allow array of namespaces
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {    # Verify $filter
         $filter = $1;
     }
 
@@ -969,10 +969,10 @@ sub what_links_here {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (! ref $res); # When using a callback hook, this won't be a reference
+    return if (!ref $res);    # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
-        my $title = $hashref->{'title'};
+        my $title    = $hashref->{'title'};
         my $redirect = defined($hashref->{'redirect'});
         push @links, { title => $title, redirect => $redirect };
     }
@@ -1007,7 +1007,7 @@ sub list_transclusions {
     my $options = shift;
 
     $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
-    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) { # Verify $filter
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {    # Verify $filter
         $filter = $1;
     }
 
@@ -1023,10 +1023,10 @@ sub list_transclusions {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (! ref $res); # When using a callback hook, this won't be a reference
+    return if (!ref $res);    # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
-        my $title = $hashref->{'title'};
+        my $title    = $hashref->{'title'};
         my $redirect = defined($hashref->{'redirect'});
         push @links, { title => $title, redirect => $redirect };
     }
@@ -1050,17 +1050,17 @@ sub get_pages_in_category {
     my $category = shift;
     my $options  = shift;
 
-    if ($category =~ m/:/) { # It might have a namespace name
+    if ($category =~ m/:/) {    # It might have a namespace name
         my ($cat, $title) = split(/:/, $category, 2);
-        if ($cat ne 'Category') { # 'Category' is a canonical name for ns14
-            my $ns_data = $self->_get_ns_data();
-            my $cat_ns_name = $ns_data->{'14'}; # ns14 gives us the localized name for 'Category'
+        if ($cat ne 'Category') {    # 'Category' is a canonical name for ns14
+            my $ns_data     = $self->_get_ns_data();
+            my $cat_ns_name = $ns_data->{'14'};        # ns14 gives us the localized name for 'Category'
             if ($cat ne $cat_ns_name) {
                 $category = "$cat_ns_name:$category";
             }
         }
     }
-    else { # Definitely no namespace name, since there's no colon
+    else {                                             # Definitely no namespace name, since there's no colon
         $category = "Category:$category";
     }
     warn "Category to fetch is [[$category]]" if $self->{'debug'};
@@ -1074,7 +1074,7 @@ sub get_pages_in_category {
     delete($options->{'max'}) if $options->{'max'} == 0;
 
     my $res = $self->{api}->list($hash, $options);
-    return if (! ref $res); # Not a hashref when using callback
+    return if (!ref $res);    # Not a hashref when using callback
     return $self->_handle_api_error() unless $res;
     my @pages;
     foreach my $hash (@$res) {
@@ -1090,45 +1090,45 @@ Returns an array containing the names of ALL pages in the specified category (in
 
 =cut
 
-{   # Instead of using the state pragma, use a bare block
-my %data;
+{    # Instead of using the state pragma, use a bare block
+    my %data;
 
-sub get_all_pages_in_category {
-    my $self          = shift;
-    my $base_category = shift;
-    my $options       = shift;
-    $options->{'max'} = 0 unless defined($options->{'max'});
+    sub get_all_pages_in_category {
+        my $self          = shift;
+        my $base_category = shift;
+        my $options       = shift;
+        $options->{'max'} = 0 unless defined($options->{'max'});
 
-    my @first         = $self->get_pages_in_category($base_category, $options);
-    %data = () unless $_[0];    # This is a special flag for internal use.
-                                # It marks a call to this method as being
-                                # internal. Since %data is a fake state variable,
-                                # it needs to be cleared for every *external*
-                                # call, but not cleared when the call is recursive.
+        my @first = $self->get_pages_in_category($base_category, $options);
+        %data = () unless $_[0];    # This is a special flag for internal use.
+                                    # It marks a call to this method as being
+                                    # internal. Since %data is a fake state variable,
+                                    # it needs to be cleared for every *external*
+                                    # call, but not cleared when the call is recursive.
 
-    my $ns_data = $self->_get_ns_data();
-    my $cat_ns_name = $ns_data->{'14'};
+        my $ns_data     = $self->_get_ns_data();
+        my $cat_ns_name = $ns_data->{'14'};
 
-    foreach my $page (@first) {
-        if ($page =~ m/^$cat_ns_name:/) {
-            if (!exists($data{$page})) {
-                $data{$page} = '';
-                my @pages = $self->get_all_pages_in_category($page, $options, 1);
-                foreach (@pages) {
-                    $data{$_}= '';
+        foreach my $page (@first) {
+            if ($page =~ m/^$cat_ns_name:/) {
+                if (!exists($data{$page})) {
+                    $data{$page} = '';
+                    my @pages = $self->get_all_pages_in_category($page, $options, 1);
+                    foreach (@pages) {
+                        $data{$_} = '';
+                    }
+                }
+                else {
+                    $data{$page} = '';
                 }
             }
             else {
                 $data{$page} = '';
             }
         }
-        else {
-            $data{$page} = '';
-        }
+        return keys %data;
     }
-    return keys %data;
-}
-} # This ends the bare block around get_all_pages_in_category()
+}    # This ends the bare block around get_all_pages_in_category()
 
 =head2 linksearch($link[,$ns[,$protocol[,$options]]])
 
@@ -1180,12 +1180,12 @@ sub linksearch {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (! ref $res); # When using a callback hook, this won't be a reference
+    return if (!ref $res);    # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
         my $url  = $hashref->{'url'};
         my $page = $hashref->{'title'};
-        push(@links, {'url' => $url, 'title' => $page});
+        push(@links, { 'url' => $url, 'title' => $page });
     }
     return @links;
 }
@@ -1224,23 +1224,23 @@ sub purge_page {
     my $page = shift;
 
     my $hash;
-    if (ref $page eq 'ARRAY') {             # If it is an array reference...
+    if (ref $page eq 'ARRAY') {    # If it is an array reference...
         $hash = {
-            action  => 'purge',
-            titles  => join('|',@$page),    # dereference it and purge all those titles
+            action => 'purge',
+            titles => join('|', @$page),    # dereference it and purge all those titles
         };
     }
     else {                                  # Just one page
         $hash = {
-            action  => 'purge',
-            titles  => $page,
+            action => 'purge',
+            titles => $page,
         };
     }
 
-    my $res  = $self->{api}->api($hash);
+    my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
     my $success = 0;
-    foreach my $hashref (@{$res->{'purge'}}) {
+    foreach my $hashref (@{ $res->{'purge'} }) {
         $success++ if exists $hashref->{'purged'};
     }
     return $success;
@@ -1255,13 +1255,11 @@ get_namespace_names returns a hash linking the namespace id, such as 1, to its n
 sub get_namespace_names {
     my $self = shift;
     my %return;
-    my $res = $self->{api}->api(
-        {
+    my $res = $self->{api}->api({
             action => 'query',
             meta   => 'siteinfo',
             siprop => 'namespaces'
-        }
-    );
+    });
     return $self->_handle_api_error() unless $res;
     foreach my $id (keys %{ $res->{query}->{namespaces} }) {
         $return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
@@ -1283,7 +1281,7 @@ Gets a list of pages which include a certain image.
 sub links_to_image {
     my $self = shift;
     my $page = shift;
-    my $url = "$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page";
+    my $url  = "$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page";
     print "Retrieving $url\n" if $self->{debug};
     my $res = $self->{mech}->get($url);
     $res->decoded_content =~ m/div class=\"linkstoimage\" id=\"linkstoimage\"(.+?)\<\/ul\>/is;
@@ -1317,7 +1315,7 @@ sub is_blocked {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
 
-    my $number = scalar @{$res->{query}->{"blocks"}}; # The number of blocks returned
+    my $number = scalar @{ $res->{query}->{"blocks"} };    # The number of blocks returned
     if ($number == 1) {
         return 1;
     }
@@ -1389,7 +1387,6 @@ sub test_image_exists {
     }
 }
 
-
 =head2 get_pages_in_namespace($namespace_id, $page_limit)
 
 Returns an array containing the names of all pages in the specified namespace. The $namespace_id must be a number, not a namespace name. Setting $page_limit is optional. If $page_limit is over 500, it will be rounded up to the next multiple of 500.
@@ -1397,10 +1394,10 @@ Returns an array containing the names of all pages in the specified namespace. T
 =cut
 
 sub get_pages_in_namespace {
-    my $self       = shift;
-    my $namespace  = shift;
-    my $limit      = shift || 500;
-    my $options    = shift;
+    my $self      = shift;
+    my $namespace = shift;
+    my $limit     = shift || 500;
+    my $options   = shift;
     $limit = 5000 if $self->{'highlimits'};
 
     my $hash = {
@@ -1413,7 +1410,7 @@ sub get_pages_in_namespace {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (! ref $res); # Not a ref when using callback
+    return if (!ref $res);    # Not a ref when using callback
     my @return;
     foreach (@{$res}) {
         push @return, $_->{title};
@@ -1430,17 +1427,15 @@ Uses the API to count $user's contributions.
 sub count_contributions {
     my $self     = shift;
     my $username = shift;
-    $username =~ s/User://i; # Strip namespace
+    $username =~ s/User://i;    # Strip namespace
 
-    my $res = $self->{api}->list(
-        {
+    my $res = $self->{api}->list({
             action  => 'query',
             list    => 'users',
             ususers => $username,
             usprop  => 'editcount'
         },
-        { max => 1 }
-    );
+        { max => 1 });
     return $self->_handle_api_error() unless $res;
     my $return = ${$res}[0]->{'editcount'};
 
@@ -1462,15 +1457,13 @@ sub last_active {
     my $self     = shift;
     my $username = shift;
     unless ($username =~ /User:/i) { $username = "User:" . $username; }
-    my $res = $self->{api}->list(
-        {
+    my $res = $self->{api}->list({
             action  => 'query',
             list    => 'usercontribs',
             ucuser  => $username,
             uclimit => 1
         },
-        { max => 1 }
-    );
+        { max => 1 });
     return $self->_handle_api_error() unless $res;
     return ${$res}[0]->{'timestamp'};
 }
@@ -1484,15 +1477,13 @@ Returns timestamp and username for most recent (top) edit to $page.
 sub recent_edit_to_page {
     my $self = shift;
     my $page = shift;
-    my $res  = $self->{api}->api(
-        {
+    my $res  = $self->{api}->api({
             action  => 'query',
             prop    => 'revisions',
             titles  => $page,
             rvlimit => 1
         },
-        { max => 1 }
-    );
+        { max => 1 });
     return $self->_handle_api_error() unless $res;
     my ($id, $data) = %{ $res->{query}->{pages} };
     return $data->{revisions}[0]->{timestamp};
@@ -1515,8 +1506,7 @@ sub get_users {
     my @revisions;
 
     if ($limit > 50) {
-        $self->{errstr} =
-"Error requesting history for $pagename: Limit may not be set to values above 50";
+        $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
         carp $self->{errstr};
         return 1;
     }
@@ -1550,14 +1540,14 @@ Returns 1 if $user has ever been blocked.
 sub was_blocked {
     my $self = shift;
     my $user = shift;
-    $user =~ s/User://i; # Strip User: prefix, if present
+    $user =~ s/User://i;    # Strip User: prefix, if present
 
     # http://en.wikipedia.org/w/api.php?action=query&list=logevents&letype=block&letitle=User:127.0.0.1&lelimit=1&leprop=ids
     my $hash = {
         action  => 'query',
         list    => 'logevents',
         letype  => 'block',
-        letitle => "User:$user", # Ensure the User: prefix is there!
+        letitle => "User:$user",    # Ensure the User: prefix is there!
         lelimit => 1,
         leprop  => 'ids',
     };
@@ -1565,7 +1555,7 @@ sub was_blocked {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
 
-    my $number = scalar @{$res->{'query'}->{'logevents'}}; # The number of blocks returned
+    my $number = scalar @{ $res->{'query'}->{'logevents'} };    # The number of blocks returned
     if ($number == 1) {
         return 1;
     }
@@ -1603,9 +1593,9 @@ sub expandtemplates {
     }
 
     my $hash = {
-        action  => 'expandtemplates',
-        title   => $page,
-        text    => $text,
+        action => 'expandtemplates',
+        title  => $page,
+        text   => $text,
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
@@ -1627,13 +1617,11 @@ sub get_allusers {
 
     $limit = 500 unless $limit;
 
-    my $res = $self->{api}->api(
-        {
+    my $res = $self->{api}->api({
             action  => 'query',
             list    => 'allusers',
             aulimit => $limit
-        }
-    );
+    });
 
     for my $ref (@{ $res->{query}->{allusers} }) {
         push @return, $ref->{name};
@@ -1674,14 +1662,14 @@ sub db_to_domain {
     if (ref $wiki eq 'ARRAY') {
         my @return;
         foreach my $w (@$wiki) {
-            $wiki =~ s/_p$//; # Strip off a _p suffix, if present
+            $wiki =~ s/_p$//;    # Strip off a _p suffix, if present
             my $domain = $self->{'sitematrix'}->{$w} || undef;
             push(@return, $domain);
         }
         return \@return;
     }
     else {
-        $wiki =~ s/_p$//; # Strip off a _p suffix, if present
+        $wiki =~ s/_p$//;        # Strip off a _p suffix, if present
         my $domain = $self->{'sitematrix'}->{$wiki} || undef;
         return $domain;
     }
@@ -1753,12 +1741,12 @@ sub diff {
     }
 
     my $hash = {
-        action      => 'query',
-        prop        => 'revisions',
-        rvdiffto    => $oldid,
+        action   => 'query',
+        prop     => 'revisions',
+        rvdiffto => $oldid,
     };
     if ($title) {
-        $hash->{'titles'} = $title;
+        $hash->{'titles'}  = $title;
         $hash->{'rvlimit'} = 1;
     }
     elsif ($revid) {
@@ -1768,7 +1756,7 @@ sub diff {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
     my @revids = keys %{ $res->{'query'}->{'pages'} };
-    my $diff = $res->{'query'}->{'pages'}->{$revids[0]}->{'revisions'}->[0]->{'diff'}->{'*'};
+    my $diff   = $res->{'query'}->{'pages'}->{ $revids[0] }->{'revisions'}->[0]->{'diff'}->{'*'};
 
     return $diff;
 }
@@ -1799,7 +1787,7 @@ sub prefixindex {
     my $filter  = shift;
     my $options = shift;
 
-    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) { # Verify
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {    # Verify
         $filter = $1;
     }
 
@@ -1813,21 +1801,21 @@ sub prefixindex {
     }
 
     my $hash = {
-        action      => 'query',
-        list        => 'allpages',
-        apprefix    => $prefix,
+        action   => 'query',
+        list     => 'allpages',
+        apprefix => $prefix,
     };
-    $hash->{'apnamespace'} = $ns if $ns;
+    $hash->{'apnamespace'}   = $ns     if $ns;
     $hash->{'apfilterredir'} = $filter if $filter;
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
 
     return $self->_handle_api_error() unless $res;
-    return if (! ref $res); # Not a ref when using callback hook
+    return if (!ref $res);    # Not a ref when using callback hook
     my @pages;
     foreach my $hashref (@$res) {
-        my $title = $hashref->{'title'};
+        my $title    = $hashref->{'title'};
         my $redirect = defined($hashref->{'redirect'});
         push @pages, { title => $title, redirect => $redirect };
     }
@@ -1861,15 +1849,16 @@ sub search {
     my $ns      = shift || 0;
     my $options = shift;
 
-    if (ref $ns eq 'ARRAY') { # Accept a hashref
+    if (ref $ns eq 'ARRAY') {    # Accept a hashref
         $ns = join('|', @$ns);
     }
 
     my $hash = {
-        action      => 'query',
-        list        => 'search',
-        srsearch    => $term,
-        srwhat      => 'text',
+        action   => 'query',
+        list     => 'search',
+        srsearch => $term,
+        srwhat   => 'text',
+
         #srinfo      => 'totalhits',
         srprop      => 'size',
         srredirects => 0,
@@ -1878,7 +1867,7 @@ sub search {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res); # Not a ref when used with callback
+    return if (!ref $res);    # Not a ref when used with callback
     my @pages;
     foreach my $result (@$res) {
         my $title = $result->{'title'};
@@ -1939,22 +1928,22 @@ sub get_log {
     my $user     = $data->{'user'};
     my $target   = $data->{'target'};
 
-    my $ns_data = $self->_get_ns_data();
+    my $ns_data      = $self->_get_ns_data();
     my $user_ns_name = $ns_data->{'2'};
     $user =~ s/^$user_ns_name://;
 
     my $hash = {
-        action  => 'query',
-        list    => 'logevents',
+        action => 'query',
+        list   => 'logevents',
     };
-    $hash->{'letype'} = $log_type if $log_type;
-    $hash->{'leuser'} = $user if $user;
-    $hash->{'letitle'} = $target if $target;
+    $hash->{'letype'}  = $log_type if $log_type;
+    $hash->{'leuser'}  = $user     if $user;
+    $hash->{'letitle'} = $target   if $target;
     $options->{'max'} = 1 unless $options->{'max'};
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (! ref $res); # Not a ref when using callback
+    return if (!ref $res);    # Not a ref when using callback
 
     return $res;
 }
@@ -1971,11 +1960,11 @@ sub is_g_blocked {
 
     # http://en.wikipedia.org/w/api.php?action=query&list=globalblocks&bglimit=1&bgprop=address&bgip=127.0.0.1
     my $res = $self->{api}->api({
-        action  => 'query',
-        list    => 'globalblocks',
-        bglimit => 1,
-        bgprop  => 'address',
-        bgip    => $ip, # So handy! It searches for blocks affecting this IP or IP range, including rangeblocks! Can't get that from UI.
+            action  => 'query',
+            list    => 'globalblocks',
+            bglimit => 1,
+            bgprop  => 'address',
+            bgip    => $ip,              # So handy! It searches for blocks affecting this IP or IP range, including rangeblocks! Can't get that from UI.
     });
     return $self->_handle_api_error() unless $res;
     return 0 unless ($res->{'query'}->{'globalblocks'}->[0]);
@@ -2010,14 +1999,14 @@ sub was_g_blocked {
         action  => 'query',
         list    => 'logevents',
         letype  => 'gblblock',
-        letitle => "User:$ip", # Ensure the User: prefix is there!
+        letitle => "User:$ip",    # Ensure the User: prefix is there!
         lelimit => 1,
         leprop  => 'ids',
     };
     my $res = $self->{api}->api($hash);
 
     return $self->_handle_api_error() unless $res;
-    my $number = scalar @{ $res->{'query'}->{'logevents'} }; # The number of blocks returned
+    my $number = scalar @{ $res->{'query'}->{'logevents'} };    # The number of blocks returned
 
     if ($number == 1) {
         return 1;
@@ -2041,25 +2030,26 @@ sub was_locked {
     my $user = shift;
 
     # This query should always go to Meta
-    unless ($self->{api}->{config}->{api_url} =~
-        m,
+    unless (
+        $self->{api}->{config}->{api_url} =~ m,
             http://meta.wikimedia.org/w/api.php
                 |
             https://secure.wikimedia.org/wikipedia/meta/w/api.php
-        ,x # /x flag is pretty awesome :)
-        ) {
+        ,x    # /x flag is pretty awesome :)
+        )
+    {
         carp "CentralAuth queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{'debug'};
     }
 
     $user =~ s/^User://i;
     $user =~ s/\@global$//i;
     my $res = $self->{'api'}->api({
-        action  => 'query',
-        list    => 'logevents',
-        letype  => 'globalauth',
-        letitle => "User:$user\@global",
-        lelimit => 1,
-        leprop  => 'ids',
+            action  => 'query',
+            list    => 'logevents',
+            letype  => 'globalauth',
+            letitle => "User:$user\@global",
+            lelimit => 1,
+            leprop  => 'ids',
     });
     return $self->_handle_api_error() unless $res;
     my $number = scalar @{ $res->{'query'}->{'logevents'} };
@@ -2105,10 +2095,10 @@ sub get_protection {
     }
 
     my $hash = {
-        action  => 'query',
-        titles  => $page,
-        prop    => 'info',
-        inprop  => 'protection',
+        action => 'query',
+        titles => $page,
+        prop   => 'info',
+        inprop => 'protection',
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
@@ -2117,7 +2107,7 @@ sub get_protection {
 
     my $out_data;
     foreach my $item (keys %$data) {
-        my $title = $data->{$item}->{'title'};
+        my $title      = $data->{$item}->{'title'};
         my $protection = $data->{$item}->{'protection'};
         if (@$protection == 0) {
             $protection = undef;
@@ -2165,9 +2155,9 @@ sub patrol {
     else {
         my ($token) = $self->_get_edittoken();
         my $res = $self->{api}->api({
-            action  => 'patrol',
-            rcid    => $rcid,
-            token   => $token,
+                action => 'patrol',
+                rcid   => $rcid,
+                token  => $token,
         });
         return $self->_handle_api_error() unless $res;
         return $res;
@@ -2232,9 +2222,9 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
     my ($id, $data) = %{ $res->{query}->{pages} };
-    my $edittoken = $data->{'edittoken'};
+    my $edittoken      = $data->{'edittoken'};
     my $tokentimestamp = $data->{'starttimestamp'};
-    my $basetimestamp = $data->{'revisions'}[0]->{'timestamp'};
+    my $basetimestamp  = $data->{'revisions'}[0]->{'timestamp'};
     return ($edittoken, $basetimestamp, $tokentimestamp);
 }
 
@@ -2252,12 +2242,12 @@ sub _is_loggedin {
     my $self = shift;
 
     my $hash = {
-        action =>  'query',
-        meta    => 'userinfo',
+        action => 'query',
+        meta   => 'userinfo',
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
-    my $is = $res->{'query'}->{'userinfo'}->{'name'};
+    my $is    = $res->{'query'}->{'userinfo'}->{'name'};
     my $ought = $self->{username};
     carp "Testing if logged in: we are $is, think we should be $ought" if $self->{debug};
     return ($is eq $ought);
@@ -2268,25 +2258,26 @@ sub _do_autoconfig {
 
     # http://en.wikipedia.org/w/api.php?action=query&meta=userinfo&uiprop=rights|groups
     my $hash = {
-        action  => 'query',
-        meta    => 'userinfo',
-        uiprop  => 'rights|groups',
+        action => 'query',
+        meta   => 'userinfo',
+        uiprop => 'rights|groups',
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
 
-    my $is = $res->{'query'}->{'userinfo'}->{'name'};
+    my $is    = $res->{'query'}->{'userinfo'}->{'name'};
     my $ought = $self->{username};
+
     # Should we try to recover by logging in again? croak?
     carp "We're logged in as $is but we should be logged in as $ought" if ($is ne $ought);
 
-    my @rights = @{ $res->{'query'}->{'userinfo'}->{'rights'} };
-    my $has_bot = 0;
+    my @rights            = @{ $res->{'query'}->{'userinfo'}->{'rights'} };
+    my $has_bot           = 0;
     my $has_apihighlimits = 0;
-    my $default_assert = 'user'; # At a *minimum*, the bot should be logged in.
+    my $default_assert    = 'user';                                           # At a *minimum*, the bot should be logged in.
     foreach my $right (@rights) {
         if ($right eq 'bot') {
-            $has_bot = 1;
+            $has_bot        = 1;
             $default_assert = 'bot';
         }
         elsif ($right eq 'apihighlimits') {
@@ -2294,7 +2285,7 @@ sub _do_autoconfig {
         }
     }
 
-    my @groups = @{ $res->{'query'}->{'userinfo'}->{'groups'} };
+    my @groups   = @{ $res->{'query'}->{'userinfo'}->{'groups'} };
     my $is_sysop = 0;
     foreach my $group (@groups) {
         if ($group eq 'sysop') {
@@ -2314,23 +2305,24 @@ sub _do_autoconfig {
 sub _get_sitematrix {
     my $self = shift;
 
-    my $res = $self->{api}->api( { action => 'sitematrix' } );
+    my $res = $self->{api}->api({ action => 'sitematrix' });
     return $self->_handle_api_error() unless $res;
     my %sitematrix = %{ $res->{'sitematrix'} };
-#    use Data::Dumper;
-#    print Dumper(\%sitematrix) and die;
+
+    #    use Data::Dumper;
+    #    print Dumper(\%sitematrix) and die;
     # This hash is a monstrosity (see http://sprunge.us/dfBD?pl), and needs
     # lots of post-processing to have a sane data structure :\
     my %map;
     foreach my $hashref (%sitematrix) {
-        if (ref $hashref ne 'HASH') { # Yes, there are non-hashrefs in here, wtf?!
-            if ($hashref eq 'specials'){
+        if (ref $hashref ne 'HASH') {    # Yes, there are non-hashrefs in here, wtf?!
+            if ($hashref eq 'specials') {
                 foreach my $special (@{ $sitematrix{'specials'} }) {
                     my $db     = $special->{'code'};
                     my $domain = $special->{'url'};
-                    $domain    =~ s,^http://,,;
+                    $domain =~ s,^http://,,;
 
-                    $map{$db} = $domain;
+                    $map{$db}     = $domain;
                     $map{$domain} = $db;
                 }
             }
@@ -2343,11 +2335,11 @@ sub _get_sitematrix {
             foreach my $wiki_ref2 (@$wiki_ref) {
                 my $family = $wiki_ref2->{'code'};
                 my $domain = $wiki_ref2->{'url'};
-                $domain    =~ s,^http://,,;
+                $domain =~ s,^http://,,;
 
-                my $db = $lang . $family; # Is simple concatenation /always/ correct?
+                my $db = $lang . $family;    # Is simple concatenation /always/ correct?
 
-                $map{$db} = $domain;
+                $map{$db}     = $domain;
                 $map{$domain} = $db;
             }
         }
@@ -2370,7 +2362,7 @@ sub _get_ns_data {
     my %ns_data = $self->get_namespace_names();
     my %reverse = reverse %ns_data;
     %ns_data = (%ns_data, %reverse);
-    $self->{'ns_data'} = \%ns_data; # Save for later use
+    $self->{'ns_data'} = \%ns_data;    # Save for later use
 
     return $self->{'ns_data'};
 }
