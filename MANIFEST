@@ -1,5 +1,4 @@
 Changes
-Debian_CPANTS.txt
 gpl.txt
 INSTALL
 lib/MediaWiki/Bot.pm
@@ -9,7 +8,6 @@ LICENSE
 Makefile.PL
 MANIFEST
 META.yml
-misc/Login.pl
 README
 t/00_initialize.t
 t/01_login.t
@@ -27,7 +25,6 @@ t/12_get_text.t
 t/13_count_contributions.t
 t/14_last_active.t
 t/15_was_blocked.t
-t/16_get_namespace_names.t
 t/18_get_pages.t
 t/19_assert_edit.t
 t/20_get_allusers.t
