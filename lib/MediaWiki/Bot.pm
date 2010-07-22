@@ -302,7 +302,7 @@ Setting an appropriate default assert.
 
 =back
 
-You can skip this autoconfiguration by passing C<autoconfig =Z<>> 0>
+You can skip this autoconfiguration by passing C<autoconfig =E<gt> 0>
 
 For backward compatibility, you can call this as
 
