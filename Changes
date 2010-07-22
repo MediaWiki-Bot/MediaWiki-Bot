@@ -3,6 +3,9 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
+3.1.6 Mike.lif HEAD Unreleased
+    Changes made since 3.1.5
+        * Handling of null path to api.php was fixed
 3.1.5 Mike.lif r376 11 July 2010
     Changes made since 3.1.2
         * get_all_pages_in_category() now has protection against infinite recursion due to category loops

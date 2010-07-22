@@ -167,9 +167,6 @@ sub new {
             stack_depth => 1
     );
     $self->{mech}->agent($agent);
-    $self->{protocol}                 = $protocol || 'http';
-    $self->{host}                     = $host || 'en.wikipedia.org';
-    $self->{path}                     = $path || 'w';
     $self->{debug}                    = 0;
     $self->{errstr}                   = '';
     $self->{assert}                   = $assert;
@@ -177,11 +174,11 @@ sub new {
     $self->{api}                      = MediaWiki::API->new();
     $self->{api}->{ua}->agent($agent);
 
-    # Set wiki if these are set
-    $self->set_wiki({
-        protocol => $self->{protocol},
-        host     => $self->{host},
-        path     => $self->{path},
+    # Set wiki (handles setting $self->{host} etc)
+     $self->set_wiki({
+            protocol => $protocol,
+            host     => $host,
+            path     => $path,
     });
 
     # Log-in, and maybe autoconfigure
@@ -235,9 +232,9 @@ sub set_wiki {
     }
 
     # Set defaults
-    $protocol = 'http' unless $protocol;
-    $host = 'en.wikipedia.org' unless $host;
-    $path = 'w' unless $path;
+    $protocol = 'http' unless defined($protocol);
+    $host = 'en.wikipedia.org' unless defined($host);
+    $path = 'w' unless defined($path);
 
     # Clean up the parts we will build a URL with
     $protocol   =~ s,://$,,;
@@ -259,9 +256,9 @@ sub set_wiki {
     }
 
     # Invalidate wiki-specific cached data
-    if (($self->{'host'} ne $host)
-        or ($self->{'path'} ne $path)
-        or ($self->{'protocol'} ne $protocol)
+    if (   ((defined($self->{'host'})) and ($self->{'host'} ne $host))
+        or ((defined($self->{'path'})) and ($self->{'path'} ne $path))
+        or ((defined($self->{'protocol'})) and ($self->{'protocol'} ne $protocol))
     ) {
         delete $self->{'ns_data'} if $self->{'ns_data'};
     }
@@ -270,8 +267,10 @@ sub set_wiki {
     $self->{host} = $host;
     $self->{path} = $path;
 
-    $self->{api}->{config}->{api_url} = "$protocol://$host/$path/api.php";
-    print "Wiki set to $protocol://$host/$path/api.php\n" if $self->{debug};
+    $self->{api}->{config}->{api_url} = $path
+        ? "$protocol://$host/$path/api.php"
+        : "$protocol://$host/api.php"; # $path is '', so don't use http://domain.com//api.php
+    print "Wiki set to " . $self->{api}->{config}{api_url} . "\n" if $self->{debug};
 
     return 1;
 }
