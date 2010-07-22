@@ -15,6 +15,7 @@ Vers. Rel.Mgr. SVN  Date
         * is_protected() checks whether a page is protected or not
         * It is now possible to get all results from get_pages_in_category() by setting max to zero in the options hashref
         * Handling of null path to api.php was fixed
+        * Useragent format now follows the RFC
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
