@@ -3,7 +3,7 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
-3.2.0 Mike.lif UNRELEASED
+3.2.0 Mike.lif HEAD Unreleased
     Changes made since 3.1.0
         * BREAKING CHANGE: The constructor now returns false when auto-login fails
         * Some cached data is now invalidated when set_wiki() is called
@@ -14,6 +14,10 @@ Vers. Rel.Mgr. SVN  Date
         * INSTALL has slightly better instructions
         * is_protected() checks whether a page is protected or not
         * It is now possible to get all results from get_pages_in_category() by setting max to zero in the options hashref
+        * get_all_pages_in_category() now has protection against infinite recursion due to category loops
+        * get_pages() now actually accepts an arrayref of pages, as documented.
+        * get_(all_)pages_in_category now have consistent input parsing
+        * misc/Login.pl was removed
         * Handling of null path to api.php was fixed
         * Useragent format now follows the RFC
 3.1.0 Mike.lif r302 05 June 2010
