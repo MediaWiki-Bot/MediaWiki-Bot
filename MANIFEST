@@ -42,6 +42,11 @@ t/31_get_log.t
 t/32_was_g_blocked.t
 t/33_is_g_blocked.t
 t/34_was_locked.t
+t/35_secure.t
+t/36_get_protected.t
+t/37_email.t
+t/38_move.t
+t/39_api_url.t
 t/97_pod.t
 t/98_pod_coverage.t
 t/99_pod_kwalitee.t
