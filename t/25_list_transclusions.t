@@ -3,16 +3,12 @@
 
 #########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 use strict;
 use warnings;
 use Test::More tests => 7;
 
 #########################
 
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
@@ -39,3 +35,4 @@ sub test_hook {
     $is_redir = $res->[0]->{'redirect'};
 }
 isnt(     $is_redir,                                        'We got a normal link when we asked for no redirects');
+

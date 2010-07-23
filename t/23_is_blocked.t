@@ -3,16 +3,11 @@
 
 #########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 use strict;
 use warnings;
 use Test::More tests => 2;
 
 #########################
-
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
 
 use MediaWiki::Bot;
 
@@ -32,3 +27,4 @@ is($result, 0, 'current blocks');
 # (del/undel) 23:44, 31 December 2006 Agathoclea (talk | contribs | block) blocked Deathtonoobs (talk | contribs) with an expiry time of indefinite (vandalism only - offensive username) (unblock | change block)
 $result = $bot->is_blocked('User:Deathtonoobs');
 is($result, 1, 'current blocks');
+

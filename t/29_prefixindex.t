@@ -3,16 +3,11 @@
 
 #########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 use strict;
 use warnings;
 use Test::More tests => 4;
 
 #########################
-
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
 
 use MediaWiki::Bot;
 
@@ -30,3 +25,4 @@ is(scalar @pages, 3, 'Correct number of pages');
 is($pages[0]->{'title'}, 'User:Mike.lifeguard/29 prefixindex.t',     'Page 0 correct');
 is($pages[1]->{'title'}, 'User:Mike.lifeguard/29 prefixindex.t/one', 'Page 1 correct');
 is($pages[2]->{'title'}, 'User:Mike.lifeguard/29 prefixindex.t/two', 'Page 2 correct');
+

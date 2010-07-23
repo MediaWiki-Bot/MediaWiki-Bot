@@ -3,16 +3,12 @@
 
 #########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 use strict;
 use warnings;
 use Test::More tests => 10;
 
 #########################
 
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new({
@@ -42,3 +38,4 @@ is(     $wikis->[0],            'enwiktionary',         'en.wiktionary.org was f
 is(     $wikis->[1],            'bat-smgwiki',          'bat-smg.wikipedia.org was found');
 is(     $wikis->[2],            undef,                  "this.dont.exist wasn't found");
 is(     $wikis->[3],            'meta',                 'meta.wikimedia.org was found');
+

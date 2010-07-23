@@ -3,16 +3,11 @@
 
 #########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 use strict;
 use warnings;
 use Test::More tests => 2;
 
 #########################
-
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
 
 use MediaWiki::Bot;
 
@@ -29,3 +24,4 @@ is($result, 15580374, 'Main Page found');
 
 $result = $bot->get_text('egaP niaM');
 is($result, undef, 'No page found');
+
