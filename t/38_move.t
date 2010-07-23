@@ -23,6 +23,16 @@ SKIP: {
         agent   => 'MediaWiki::Bot tests (38_move.t)',
         login_data => { username => $username, password => $password },
     });
+    my $res = $bot->{api}->api({
+        action => 'query',
+        meta   => 'userinfo',
+        uiprop => 'rights',
+    });
+    my @rights = @{ $res->{'query'}->{'userinfo'}->{'rights'} };
+    # grep is slow; might be worth using List::Util if the main module gains that as a dependency
+    if (! grep $_ eq 'suppressredirect', @rights) {
+        skip( qq{The account doesn't have the 'suppressredirect' right}, 3);
+    }
 
     my $rand = rand();
     my $status = $bot->move('User:Mike.lifeguard/38_move.t', "User:Mike.lifeguard/$rand", 'MediaWiki::Bot tests (38_move.t)');
