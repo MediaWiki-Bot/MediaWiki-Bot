@@ -1273,26 +1273,75 @@ sub get_namespace_names {
     }
 }
 
-=head2 links_to_image($page)
+=head2 image_usage($image[,$ns[,$filter,[$options]]])
 
-Gets a list of pages which include a certain image.
+Gets a list of pages which include a certain image. Additional parameters are the namespace number to fetch results from (or an arrayref of multiple namespace numbers); $filter is 'all', 'redirect' (to return only redirects), or 'nonredirects' (to return no redirects). $options is a hashref as described in the section for linksearch().
+
+    my @pages = $bot->image_usage("File:Albert Einstein Head.jpg");
+
+or, make use of the options hashref to do incremental processing:
+
+    $bot->image_usage("File:Albert Einstein Head.jpg", undef, undef, {hook=>\&mysub, max=>5});
+    sub mysub {
+        my $res = shift;
+        foreach my $page (@$res) {
+            my $title = $page->{'title'};
+            print "$title\n";
+        }
+    }
+
+=cut
+
+sub image_usage {
+    my $self    = shift;
+    my $image   = shift;
+    my $ns      = shift;
+    my $filter  = shift;
+    my $options = shift;
+
+    if ($image !~ m/^File:|Image:/) {
+        my $ns_data = $self->_get_ns_data();
+        my $image_ns_name = $ns_data->{'6'};
+        if ($image !~ m/^\Q$image_ns_name\E:/) {
+            $image = "$image_ns_name:$image";
+        }
+    }
+
+    $options->{'max'} = 1 unless defined($options->{'max'});
+    delete($options->{'max'}) if $options->{'max'} == 0;
+
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
+
+    my $hash = {
+        action          => 'query',
+        list            => 'imageusage',
+        iutitle         => $image,
+        iunamespace     => $ns,
+    };
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {
+        $hash->{'iufilterredir'} = $1;
+    }
+    my $res = $self->{api}->list($hash, $options);
+    return $self->_handle_api_error() unless $res;
+    return 1 if (!ref $res);    # When using a callback hook, this won't be a reference
+    my @pages;
+    foreach my $hashref (@$res) {
+        my $title = $hashref->{'title'};
+        push(@pages, $title);
+    }
+
+    return @pages;
+}
+
+=head2 links_to_image($image)
+
+A backward-compatible call to image_usage(). You can provide only the image name.
 
 =cut
 
 sub links_to_image {
     my $self = shift;
-    my $page = shift;
-    my $url  = "$self->{protocol}://$self->{host}/$self->{path}/index.php?title=$page";
-    print "Retrieving $url\n" if $self->{debug};
-    my $res = $self->{mech}->get($url);
-    $res->decoded_content =~ m/div class=\"linkstoimage\" id=\"linkstoimage\"(.+?)\<\/ul\>/is;
-    my $list = $1;
-    my @list;
-
-    while ($list =~ /title=\"(.+?)\"/ig) {
-        push @list, $1;
-    }
-    return @list;
+    return $self->image_usage($_[0]);
 }
 
 =head2 is_blocked($user)
