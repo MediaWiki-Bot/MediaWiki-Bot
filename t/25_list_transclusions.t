@@ -30,6 +30,6 @@ like(   $pages[0]->{'title'},           qr/\w+/,            'The title looks val
 ok(     defined $pages[0]->{'redirect'},                    'Redirect status is defined');
 ok(     defined($pages[0]->{'redirect'}),                   'We got a redirect when we asked for it');
 
-@pages = $bot->what_links_here('Template:Tlx', 'nonredirects', undef, {max=>1});
+@pages = $bot->list_transclusions('Template:Tlx', 'nonredirects', undef, {max=>1});
 
 isnt(     defined($pages[0]->{'redirect'}),                   'We got a normal link when we asked for no redirects');
