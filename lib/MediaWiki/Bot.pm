@@ -2359,46 +2359,66 @@ sub _get_sitematrix {
     return $self->_handle_api_error() unless $res;
     my %sitematrix = %{ $res->{'sitematrix'} };
 
-    #    use Data::Dumper;
-    #    print Dumper(\%sitematrix) and die;
+#    use Data::Dumper;
+#    print STDERR Dumper(\%sitematrix) and die;
     # This hash is a monstrosity (see http://sprunge.us/dfBD?pl), and needs
     # lots of post-processing to have a sane data structure :\
-    my %map;
-    foreach my $hashref (%sitematrix) {
+    my %by_db;
+    SECTION: foreach my $hashref (%sitematrix) {
         if (ref $hashref ne 'HASH') {    # Yes, there are non-hashrefs in here, wtf?!
             if ($hashref eq 'specials') {
-                foreach my $special (@{ $sitematrix{'specials'} }) {
+                SPECIAL: foreach my $special (@{ $sitematrix{'specials'} }) {
+                    next SPECIAL if (exists($special->{'private'})
+                                or exists($special->{'fishbowl'}));
                     my $db     = $special->{'code'};
                     my $domain = $special->{'url'};
                     $domain =~ s,^http://,,;
 
-                    $map{$db}     = $domain;
-                    $map{$domain} = $db;
+                    $by_db{$db}     = $domain;
+#                    $by_db{$domain} = $db;
                 }
             }
-            next;
+            next SECTION;
         }
 
         my $lang = $hashref->{'code'};
 
-        foreach my $wiki_ref ($hashref->{'site'}) {
-            foreach my $wiki_ref2 (@$wiki_ref) {
+        WIKI: foreach my $wiki_ref ($hashref->{'site'}) {
+            WIKI2: foreach my $wiki_ref2 (@$wiki_ref) {
                 my $family = $wiki_ref2->{'code'};
                 my $domain = $wiki_ref2->{'url'};
                 $domain =~ s,^http://,,;
 
                 my $db = $lang . $family;    # Is simple concatenation /always/ correct?
 
-                $map{$db}     = $domain;
-                $map{$domain} = $db;
+                $by_db{$db}     = $domain;
+#                $by_db{$domain} = $db;
             }
         }
     }
 
+    # Now filter out closed wikis
+    my $response = $self->{api}->{ua}->get('http://noc.wikimedia.org/conf/closed.dblist');
+    if ($response->is_success()) {
+        my @closed_list = split(/\n/, $response->decoded_content);
+        CLOSED: foreach my $closed (@closed_list) {
+            delete($by_db{$closed});
+        }
+    }
+
+    # Now merge in the reverse, so you can look up by domain as well as db
+    my %by_domain;
+    while (my ($key, $value) = each %by_db) {
+        $by_domain{$value} = $key;
+    }
+    %by_db = (%by_db, %by_domain);
+
     # This could be saved to disk with Storable. Next time you call this
     # method, if mtime is less than, say, 14d, you could load it from
     # disk instead of over network.
-    $self->{'sitematrix'} = \%map;
+    $self->{'sitematrix'} = \%by_db;
+#    use Data::Dumper;
+#    print STDERR Dumper($self->{'sitematrix'}) and die;
     return $self->{'sitematrix'};
 }
 
