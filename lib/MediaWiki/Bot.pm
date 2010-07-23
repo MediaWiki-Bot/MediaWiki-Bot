@@ -353,19 +353,20 @@ sub login {
         );
     }
 
-    # This seems to not do what we want. Cookies are loaded, but a
-    # subsequent userinfo query shows the bot is not logged in.
-    my $cookies = ".mediawiki-bot-$username-cookies";
-    $self->{mech}->{cookie_jar}->load($cookies);
-    $self->{mech}->{cookie_jar}->{ignore_discard} = 1;
-    $self->{api}->{ua}->{cookie_jar}->load($cookies);
+    $self->{'username'} = $username;    # Remember who we are
 
-    $self->{username} = $username;    # Remember who we are
-    my $logged_in = $self->_is_loggedin();
-    if ($logged_in) {
-        $self->_do_autoconfig() if $autoconfig;
-        carp "Logged in successfully with cookies" if $self->{debug};
-        return 1; # If we're already logged in, nothing more is needed
+    my $cookies = ".mediawiki-bot-$username-cookies";
+    if (-r $cookies) {
+        $self->{mech}->{cookie_jar}->load($cookies);
+        $self->{mech}->{cookie_jar}->{ignore_discard} = 1;
+        $self->{api}->{ua}->{cookie_jar}->load($cookies);
+
+        my $logged_in = $self->_is_loggedin();
+        if ($logged_in) {
+            $self->_do_autoconfig() if $autoconfig;
+            carp "Logged in successfully with cookies" if $self->{debug};
+            return 1; # If we're already logged in, nothing more is needed
+        }
     }
 
     unless ($password) {
@@ -379,13 +380,14 @@ sub login {
     }) or return $self->_handle_api_error();
 
     $self->{mech}->{cookie_jar}->extract_cookies($self->{api}->{response});
-    $self->{mech}->{cookie_jar}->save($cookies);
+    # If you can write to the file or create a file in this dir, save cookies to a file
+    $self->{mech}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
 
-    #use Data::Dumper; print Dumper $self->{mech}->{cookie_jar};
-    $logged_in = $self->_is_loggedin();
-    $self->_do_autoconfig() if ($autoconfig and $logged_in);
-    carp "Logged in successfully with password" if ($logged_in and $self->{debug});
-    return $logged_in;
+    if (($res->{'lgusername'} eq $self->{'username'}) and ($res->{'result'} eq 'Success')) {
+        $self->_do_autoconfig() if $autoconfig;
+        carp "Logged in successfully with password" if $self->{debug};
+    }
+    return (($res->{'lgusername'} eq $self->{'username'}) and ($res->{'result'} eq 'Success'));
 }
 
 =head2 set_highlimits($flag)

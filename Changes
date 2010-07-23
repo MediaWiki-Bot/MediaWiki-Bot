@@ -20,6 +20,7 @@ Vers. Rel.Mgr. SVN  Date
         * misc/Login.pl was removed
         * Handling of null path to api.php was fixed
         * Useragent format now follows the RFC
+        * Performance of login() was improved by about 30%
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
