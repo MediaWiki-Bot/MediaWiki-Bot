@@ -28,7 +28,7 @@ like(   $pages[0]->{'title'},           qr/\w+/,            'The title looks val
 ok(     defined($pages[0]->{'redirect'}),                   'Redirect status is defined');
 ok(     $pages[0]->{'redirect'},                            'We got a redirect when we asked for it');
 
-$bot->what_links_here('Template:Tlx', 'nonredirects', undef, { max => 1, hook => \&test_hook});
+$bot->list_transclusions('Template:Tlx', 'nonredirects', undef, { max => 1, hook => \&test_hook});
 my $is_redir;
 sub test_hook {
     my ($res) = @_;
