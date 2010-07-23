@@ -5,11 +5,21 @@
 
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests => 13;
 BEGIN {
-    use_ok('MediaWiki::Bot');
-    use_ok('PWP');
-    use_ok('perlwikipedia');
+    my $bail_diagnostic = <<'end';
+There was a problem use-ing the module. Typically,
+this means you have installed MediaWiki::Bot without
+the prerequisites. Please check the documentation for
+installation instructions, or ask for help from the
+members of perlwikibot@googlegroups.com.
+
+The test suite will bail out now; doing more testing is
+pointless since everything will fail.
+end
+    use_ok('MediaWiki::Bot') or BAIL_OUT($bail_diagnostic);
+    use_ok('PWP')            or BAIL_OUT($bail_diagnostic);
+    use_ok('perlwikipedia')  or BAIL_OUT($bail_diagnostic);
 };
 
 #################################
@@ -32,17 +42,9 @@ sleep(2);
 
 #######################
 # Simple initialization
-my $bot = MediaWiki::Bot->new();
-ok(defined $bot, 'new() works');
-ok($bot->isa('MediaWiki::Bot'), 'Right class');
-
-my $bot_alias = PWP->new();
-ok(defined $bot_alias, 'new() works');
-ok($bot_alias->isa('MediaWiki::Bot'), 'Right class');
-
-my $bot_alias_2 = perlwikipedia->new();
-ok(defined $bot_alias_2, 'new() works');
-ok($bot_alias_2->isa('MediaWiki::Bot'), 'Right class');
+my $bot   = new_ok('MediaWiki::Bot');
+my $bot_2 = new_ok('PWP');
+my $bot_3 = new_ok('perlwikipedia');
 
 #########################
 # Some deeper diagnostics
@@ -66,9 +68,10 @@ is($test_one->{api}->{config}->{api_url},   "http://$host/api.php",         'api
 like($bot->{api}->{ua}->agent(),            qr{^MediaWiki::Bot/\d\.\d\.\d{1,2}$}, 'Useragent built correctly');
 
 my $test_two = MediaWiki::Bot->new({
-    agent   => $useragent,
-    host    => $host,
-    path    => undef,
+    host        => $host,
+    path        => undef,
+    operator    => $operator,
 });
-is($test_two->{api}->{config}->{api_url}, 'http://127.0.0.1/w/api.php', 'api.php with undef path is OK');
+is(  $test_two->{api}->{config}->{api_url}, 'http://127.0.0.1/w/api.php',   'api.php with undef path is OK');
+like($test_two->{api}->{ua}->agent(),       qr/\Q$operator\E/,              'operator appears in the useragent');
 
