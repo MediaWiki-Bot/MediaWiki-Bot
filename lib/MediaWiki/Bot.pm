@@ -2368,14 +2368,15 @@ sub _get_sitematrix {
         if (ref $hashref ne 'HASH') {    # Yes, there are non-hashrefs in here, wtf?!
             if ($hashref eq 'specials') {
                 SPECIAL: foreach my $special (@{ $sitematrix{'specials'} }) {
-                    next SPECIAL if (exists($special->{'private'})
-                                or exists($special->{'fishbowl'}));
+                    next SPECIAL
+                        if (exists($special->{'private'})
+                        or exists($special->{'fishbowl'}));
+
                     my $db     = $special->{'code'};
                     my $domain = $special->{'url'};
                     $domain =~ s,^http://,,;
 
                     $by_db{$db}     = $domain;
-#                    $by_db{$domain} = $db;
                 }
             }
             next SECTION;
@@ -2392,7 +2393,6 @@ sub _get_sitematrix {
                 my $db = $lang . $family;    # Is simple concatenation /always/ correct?
 
                 $by_db{$db}     = $domain;
-#                $by_db{$domain} = $db;
             }
         }
     }
