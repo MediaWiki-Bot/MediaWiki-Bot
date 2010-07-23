@@ -21,6 +21,7 @@ Vers. Rel.Mgr. SVN  Date
         * Handling of null path to api.php was fixed
         * Useragent format now follows the RFC
         * Performance of login() was improved by about 30%
+        * Calls to list-based methods which use a callback hook now return true for error-checking. Calls which don't use a callback are unchanged.
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.

@@ -910,7 +910,7 @@ sub update_rc {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # Not a ref when using callback
+    return 1 if (!ref $res);    # Not a ref when using callback
     my @rc_table;
     foreach my $hash (@{$res}) {
         push(
@@ -970,7 +970,7 @@ sub what_links_here {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # When using a callback hook, this won't be a reference
+    return 1 if (!ref $res);    # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
         my $title    = $hashref->{'title'};
@@ -1024,7 +1024,7 @@ sub list_transclusions {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # When using a callback hook, this won't be a reference
+    return 1 if (!ref $res);    # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
         my $title    = $hashref->{'title'};
@@ -1075,7 +1075,7 @@ sub get_pages_in_category {
     delete($options->{'max'}) if $options->{'max'} == 0;
 
     my $res = $self->{api}->list($hash, $options);
-    return if (!ref $res);    # Not a hashref when using callback
+    return 1 if (!ref $res);    # Not a hashref when using callback
     return $self->_handle_api_error() unless $res;
     my @pages;
     foreach my $hash (@$res) {
@@ -1181,7 +1181,7 @@ sub linksearch {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # When using a callback hook, this won't be a reference
+    return 1 if (!ref $res);    # When using a callback hook, this won't be a reference
     my @links;
     foreach my $hashref (@$res) {
         my $url  = $hashref->{'url'};
@@ -1411,7 +1411,7 @@ sub get_pages_in_namespace {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # Not a ref when using callback
+    return 1 if (!ref $res);    # Not a ref when using callback
     my @return;
     foreach (@{$res}) {
         push @return, $_->{title};
@@ -1813,7 +1813,7 @@ sub prefixindex {
     my $res = $self->{api}->list($hash, $options);
 
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # Not a ref when using callback hook
+    return 1 if (!ref $res);    # Not a ref when using callback hook
     my @pages;
     foreach my $hashref (@$res) {
         my $title    = $hashref->{'title'};
@@ -1868,7 +1868,7 @@ sub search {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # Not a ref when used with callback
+    return 1 if (!ref $res);    # Not a ref when used with callback
     my @pages;
     foreach my $result (@$res) {
         my $title = $result->{'title'};
@@ -1944,7 +1944,7 @@ sub get_log {
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return if (!ref $res);    # Not a ref when using callback
+    return 1 if (!ref $res);    # Not a ref when using callback
 
     return $res;
 }
