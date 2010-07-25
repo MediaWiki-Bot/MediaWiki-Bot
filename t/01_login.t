@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More tests => 8;
 
 #########################
 
@@ -20,8 +20,11 @@ my $bot = MediaWiki::Bot->new({
     agent   => $useragent,
 });
 
-is($bot->login({ username => $username, password => $password }), 1, 'Log in');
-ok($bot->_is_loggedin(), q{Double-check we're logged in});
+isa_ok($bot, 'MediaWiki::Bot'); # Make sure we have a bot object to work with
+is($bot->login({ username => $username, password => $password, do_sul => 1 }), 11, q{SUL login});
+ok($bot->_is_loggedin(),                                        q{Double-check we're logged in});
+is($bot->set_wiki({host=>'meta.wikimedia.org'}), 1,             q{Switched wikis OK});
+ok($bot->_is_loggedin(),                                        q{Double-check we're logged in via SUL});
 
 my $cookiemonster = MediaWiki::Bot->new({
     agent   => $useragent,
@@ -32,6 +35,6 @@ ok($bot->_is_loggedin(), q{Double-check we're cookie logged in});
 
 my $failbot = MediaWiki::Bot->new({
     agent   => $useragent,
-    login_data => { username => "Mike's test account", password => '' },
+    login_data => { username => q{Mike's test account}, password => q{} },
 });
 is($failbot, undef, 'Auto-login failed');
