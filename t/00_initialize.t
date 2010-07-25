@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use Test::More tests => 6;
 BEGIN {
-    use_ok('MediaWiki::Bot');
+    use_ok('MediaWiki::Bot') || BAIL_OUT( qq{`use` failed; continuing with testing is pointless; bailing out} );
     use_ok('PWP');
 };
 
