@@ -3,24 +3,39 @@
 
 #########################
 
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More tests => 8;
 
 #########################
 
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
 use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new('STWP');
+my $username = defined($ENV{'PWPUsername'}) ? $ENV{'PWPUsername'} : 'Perlwikipedia testing';
+my $password = defined($ENV{'PWPPassword'}) ? $ENV{'PWPPassword'} : 'test';
 
-is($bot->login('Perlwikipedia testing', 'test'), 1, 'Log in');
-ok($bot->_is_loggedin(),                            "Double-check we're logged in");
+my $useragent = 'MediaWiki::Bot tests (01_login.t)';
 
-my $cookiemonster = MediaWiki::Bot->new('STWP');
+my $bot = MediaWiki::Bot->new({
+    agent   => $useragent,
+});
 
-is ($cookiemonster->login('Perlwikipedia testing'), 1, 'Cookie log in');
-ok($bot->_is_loggedin(),                            "Double-check we're cookie logged in");
+isa_ok($bot, 'MediaWiki::Bot'); # Make sure we have a bot object to work with
+is($bot->login({ username => $username, password => $password, do_sul => 1 }), 11, q{SUL login});
+ok($bot->_is_loggedin(),                                        q{Double-check we're logged in});
+is($bot->set_wiki({host=>'meta.wikimedia.org'}), 1,             q{Switched wikis OK});
+ok($bot->_is_loggedin(),                                        q{Double-check we're logged in via SUL});
+
+my $cookiemonster = MediaWiki::Bot->new({
+    agent   => $useragent,
+});
+
+is($cookiemonster->login($username), 1, 'Cookie log in');
+ok($bot->_is_loggedin(), q{Double-check we're cookie logged in});
+
+my $failbot = MediaWiki::Bot->new({
+    agent   => $useragent,
+    login_data => { username => q{Mike's test account}, password => q{} },
+});
+is($failbot, undef, 'Auto-login failed');
+

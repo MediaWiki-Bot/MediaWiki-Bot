@@ -8,6 +8,7 @@ Vers. Rel.Mgr. SVN  Date
         * Handling of null path to api.php was fixed
         * The test suite was filled out
         * Default useragent now follows RFC 1945
+        * login() can now do SUL; see POD for details
 3.1.5 Mike.lif r376 11 July 2010
     Changes made since 3.1.2
         * get_all_pages_in_category() now has protection against infinite recursion due to category loops
