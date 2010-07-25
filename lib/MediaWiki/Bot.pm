@@ -156,7 +156,7 @@ sub new {
 
     # Set defaults
     unless ($agent) {
-        $agent  = "MediaWiki::Bot $VERSION";
+        $agent  = "MediaWiki::Bot/$VERSION";
         $agent .= " (User:$operator)" if $operator;
     }
 
