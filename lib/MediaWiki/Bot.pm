@@ -18,7 +18,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.1.5';
+our $VERSION = '3.1.6';
 
 =head1 NAME
 
@@ -26,26 +26,25 @@ MediaWiki::Bot - a MediaWiki bot framework written in Perl
 
 =head1 SYNOPSIS
 
-use MediaWiki::Bot;
+    use MediaWiki::Bot;
 
-my $bot = MediaWiki::Bot->new({
-    useragent   => 'MediaWiki::Bot 3.0.0 (User:Mike.lifeguard)',
-    assert      => 'bot',
-    protocol    => 'https',
-    host        => 'secure.wikimedia.org',
-    path        => 'wikipedia/meta/w',
-    login_data  => { username => "Mike's bot account", password => "password" },
-});
+    my $bot = MediaWiki::Bot->new({
+        useragent   => 'MediaWiki::Bot/3.1.6 (User:Mike.lifeguard)',
+        assert      => 'bot',
+        protocol    => 'https',
+        host        => 'secure.wikimedia.org',
+        path        => 'wikipedia/meta/w',
+        login_data  => { username => "Mike's bot account", password => "password" },
+    });
 
-my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
-print "Reverting to $revid\n" if defined($revid);
-$bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+    my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+    print "Reverting to $revid\n" if defined($revid);
+    $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
 
 =head1 DESCRIPTION
 
-MediaWiki::Bot is a framework that can be used to write Wikipedia bots.
-
-Many of the methods use the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
+MediaWiki::Bot is a framework that can be used to write bots to interface with
+the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
 
 =head1 AUTHOR
 
@@ -53,7 +52,7 @@ The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins, Mike.lif
 
 =head1 COPYING
 
-Copyright (C) 2006, 2007 by the MediaWiki::Bot team
+Copyright (C) 2006, 2007, 2010 by the MediaWiki::Bot team
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -95,7 +94,7 @@ protocol allows you to specify 'http' or 'https' (default is 'http'). This is co
 host sets the domain name of the wiki to connect to.
 
 =item *
-path sets the path to api.php (with no trailing slash).
+path sets the path to api.php (with no leading or trailing slash).
 
 =item *
 login_data is a hashref of data to pass to login(). See that section for a description.
@@ -105,7 +104,7 @@ login_data is a hashref of data to pass to login(). See that section for a descr
 For example:
 
     my $bot = MediaWiki::Bot->new({
-        useragent   => 'MediaWiki::Bot 3.0.0 (User:Mike.lifeguard)',
+        useragent   => 'MediaWiki::Bot/3.1.6 (User:Mike.lifeguard)',
         assert      => 'bot',
         protocol    => 'https',
         host        => 'secure.wikimedia.org',
@@ -115,7 +114,7 @@ For example:
 
 For backward compatibility, you can specify up to three parameters:
 
-    my $bot = MediaWiki::Bot->new('MediaWiki::Bot 2.3.1 (User:Mike.lifeguard)', $assert, $operator);
+    my $bot = MediaWiki::Bot->new('MediaWiki::Bot/3.1.6 (User:Mike.lifeguard)', $assert, $operator);
 
 This deprecated form will never do auto-login or autoconfiguration.
 
@@ -195,13 +194,9 @@ sub new {
     return $self;
 }
 
-=head2 set_wiki($host[,$path[,$protocol]])
+=head2 set_wiki($options)
 
-Set what wiki to use. $host is the domain name; $path is the path before api.php (usually 'w'); $protocol is either 'http' or 'https'. For example:
-
-    $bot->set_wiki('de.wikipedia.org', 'w');
-
-will tell it to use http://de.wikipedia.org/w/index.php. The default settings are 'en.wikipedia.org' with a path of 'w'. You can also pass a hashref using keys with the same names as these parameters. To use the secure server:
+Set what wiki to use. Host is the domain name; path is the path before api.php (usually 'w'); protocol is either 'http' or 'https'. For example:
 
     $bot->set_wiki(
         protocol    => 'https',
@@ -212,6 +207,8 @@ will tell it to use http://de.wikipedia.org/w/index.php. The default settings ar
 For backward compatibility, you can specify up to two parameters in this deprecated form:
 
     $bot->set_wiki($host, $path);
+
+The default settings are 'en.wikipedia.org' with a path of 'w'.
 
 =cut
 
@@ -279,12 +276,10 @@ sub set_wiki {
 
 Logs the use $username in, optionally using $password. First, an attempt will be made to use cookies to log in. If this fails, an attempt will be made to use the password provided to log in, if any. If the login was successful, returns true; false otherwise.
 
-    $bot->login(
-        {
+    $bot->login({
             username => $username,
             password => $password,
-        }
-    ) or die "Login failed";
+    }) or die "Login failed";
 
 Once logged in, attempt to do some simple auto-configuration. At present, this consists of:
 
@@ -301,7 +296,7 @@ Setting an appropriate default assert.
 
 =back
 
-You can skip this autoconfiguration by passing C<autoconfig =Z<>> 0>
+You can skip this autoconfiguration by passing C<autoconfig =E<gt> 0>
 
 For backward compatibility, you can call this as
 
@@ -515,6 +510,15 @@ movetalk specifies whether to attempt to the talk page.
 
 =item *
 noredirect specifies whether to suppress creation of a redirect.
+
+=item *
+movesubpages specifies whether to move subpages, if applicable.
+
+=item *
+watch and unwatch add or remove the page and the redirect from your watchlist
+
+=item *
+ignorewarnings ignores warnings.
 
 =back
 
@@ -1239,7 +1243,7 @@ sub purge_page {
 
 }
 
-=head2 get_namespace_names
+=head2 get_namespace_names()
 
 get_namespace_names returns a hash linking the namespace id, such as 1, to its named equivalent, such as "Talk".
 
