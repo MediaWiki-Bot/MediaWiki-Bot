@@ -47,27 +47,6 @@ MediaWiki::Bot - a MediaWiki bot framework written in Perl
 MediaWiki::Bot is a framework that can be used to write bots which interface
 with the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
 
-=head1 AUTHOR
-
-The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins, Mike.lifeguard) and others.
-
-=head1 COPYING
-
-Copyright (C) 2006, 2007, 2010 by the MediaWiki::Bot team
-
-This library is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 =head1 METHODS
 
 =head2 new($options_hashref)
@@ -2444,6 +2423,27 @@ sub _get_ns_data {
 }
 
 1;
+
+=head1 AUTHOR
+
+The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins, Mike.lifeguard) and others.
+
+=head1 COPYING
+
+Copyright (C) 2006, 2007, 2010 by the MediaWiki::Bot team
+
+This library is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =head1 ERROR HANDLING
 
