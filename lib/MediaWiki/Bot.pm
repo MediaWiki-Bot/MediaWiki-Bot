@@ -456,8 +456,8 @@ Tells MediaWiki::Bot to start/stop using APIHighLimits for certain queries.
 =cut
 
 sub set_highlimits {
-    my $self = shift;
-    my $highlimits = shift || 1;
+    my $self       = shift;
+    my $highlimits = defined($_[0]) ? shift : 1;
 
     $self->{highlimits} = $highlimits;
     return 1;
@@ -1626,7 +1626,7 @@ sub get_users {
     if ($limit > 50) {
         $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
         carp $self->{errstr};
-        return 1;
+        return;
     }
     my $hash = {
         action  => 'query',
@@ -1635,17 +1635,18 @@ sub get_users {
         rvprop  => 'ids|timestamp|user|comment',
         rvlimit => $limit
     };
-
     $hash->{rvstartid} = $rvstartid if ($rvstartid);
     $hash->{rvdir}     = $direction if ($direction);
 
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
+
     my ($id) = keys %{ $res->{query}->{pages} };
     my $array = $res->{query}->{pages}->{$id}->{revisions};
     foreach (@{$array}) {
         push @return, $_->{user};
     }
+
     return @return;
 }
 

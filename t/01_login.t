@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 8;
+use Test::More tests => 12;
 
 #########################
 
@@ -38,3 +38,9 @@ my $failbot = MediaWiki::Bot->new({
     login_data => { username => q{Mike's test account}, password => q{} },
 });
 is($failbot, undef, 'Auto-login failed');
+
+is($bot->logout(), 1,                               q{logout returned true});
+ok(!$bot->_is_loggedin(),                           q{Double-check we're actually logged out});
+is($bot->set_wiki({host=>'en.wikipedia.org'}), 1,   q{Switched wikis OK});
+ok(!$bot->_is_loggedin(),                           q{Double-check we're logged out for SUL});
+

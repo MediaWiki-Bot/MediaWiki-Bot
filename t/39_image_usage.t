@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 #########################
 
@@ -15,15 +15,13 @@ my $bot = MediaWiki::Bot->new({
     agent   => 'MediaWiki::Bot tests (39_image_usage.t)',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 my @pages = $bot->image_usage('File:Albert Einstein Head.jpg', undef, undef, { max => 1 });
+my @pages_bc = $bot->links_to_image('File:Albert Einstein Head.jpg', undef, undef, { max => 1 });
 ok(     @pages,                                             'No error');
 cmp_ok( scalar @pages,                  '>', 1,             'More than one result');
 ok(     defined($pages[0]),                                 'Something was returned');
 like(   $pages[0],                      qr/\w+/,            'The title looks valid');
+is_deeply(\@pages, \@pages_bc,                              'The BC method returned the same as the current method');
 
 SKIP: {
     skip('Need to find an image that has redirects pointing at it', 1);
