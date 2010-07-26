@@ -912,8 +912,10 @@ sub undo {
 Returns the revid of the last revision to $page not made by $user. undef is returned if no result was found, as would be the case if the page is deleted.
 
     my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
-    print "Reverting to $revid\n" if defined($revid);
-    $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+    if defined($revid) {
+        print "Reverting to $revid\n";
+        $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+    }
 
 =cut
 
