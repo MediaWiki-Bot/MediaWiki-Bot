@@ -1463,46 +1463,46 @@ Checks if an image exists at $page. 0 means no, 1 means yes, local, 2 means on c
 
 sub test_image_exists {
     my $self  = shift;
-    my @pages = @_;
+    my $image = shift;
 
-    my $titles = join('|', @pages);
-    my $return;
-    $titles =~ s/\|{2,}/\|/g;
-    $titles =~ s/\|$//;
+#    my $multi = 0;
+#    if (ref $image eq 'ARRAY') {
+#        $image = join('|', @$image);
+#        $multi = 1; # so we know whether to return a hash or a single scalar
+#    }
 
-    my $hash = {
+    my $res = $self->{api}->api({
         action  => 'query',
-        titles  => $titles,
+        titles  => $image,
         iilimit => 1,
         prop    => 'imageinfo'
-    };
-
-    #use Data::Dumper; print Dumper($hash);
-    my $res = $self->{api}->api($hash);
+    });
     return $self->_handle_api_error() unless $res;
 
-    #use Data::Dumper; print Dumper($res);
+#    my @return;
+#    use Data::Dumper; print STDERR Dumper($res) and die;
     foreach my $id (keys %{ $res->{query}->{pages} }) {
         my $title = $res->{query}->{pages}->{$id}->{title};
         if ($res->{query}->{pages}->{$id}->{imagerepository} eq 'shared') {
-            $return->{$title} = 2;
+            return 2; #push @return, 2;
         }
-        elsif (defined($res->{query}->{pages}->{$id}->{missing})) {
-            $return->{$title} = 0;
+        elsif (exists($res->{query}->{pages}->{$id}->{missing})) {
+            return 0; #push @return, 0;
         }
         elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq '') {
-            $return->{$title} = 3;
+            return 3; #push @return, 3;
         }
         elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq 'local') {
-            $return->{$title} = 1;
+            return 1; #push @return, 1;
         }
     }
-    if (scalar(@pages) == 1) {
-        return $return->{ $pages[0] };
-    }
-    else {
-        return $return;
-    }
+    return;
+#    if ($multi) {
+#        return @return;
+#    }
+#    else {
+#        return shift(@return);
+#    }
 }
 
 =head2 get_pages_in_namespace($namespace_id, $page_limit)

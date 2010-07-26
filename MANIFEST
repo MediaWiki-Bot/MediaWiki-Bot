@@ -47,6 +47,7 @@ t/36_get_protected.t
 t/37_email.t
 t/38_move.t
 t/39_image_usage.t
+t/41_test_image_exists.t
 t/97_pod.t
 t/98_pod_coverage.t
 t/99_pod_kwalitee.t
