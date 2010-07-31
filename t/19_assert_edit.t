@@ -25,5 +25,15 @@ my $status = $bot->edit({
     text    => $rand,
     assert  => 'false'
 });
-is($status->{'edit'}->{'result'}, 'Failure', 'Intentionally bad assertion');
 
+SKIP: {
+    if (defined($bot->{'error'}->{'code'}) and $bot->{'error'}->{'code'} == 3) {
+        skip q{You're blocked; cannot use this test}, 1;
+    }
+    if (defined($status->{'edit'}->{'result'})) {
+        is($status->{'edit'}->{'result'}, 'Failure',    'Intentionally bad assertion');
+    }
+    else {
+        is($status->{'edit'}->{'result'}, undef,        'Intentionally bad assertion');
+    }
+}

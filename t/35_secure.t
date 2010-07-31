@@ -25,7 +25,7 @@ my $status = $bot->edit({
     summary => 'MediaWiki::Bot tests (35_secure.t)',
 });
 SKIP: {
-    if ($status == 3 and $bot->{error}->{code} == 3) {
+    if (defined($bot->{error}->{code}) and $bot->{error}->{code} == 3) {
         skip 'You are blocked, cannot use editing tests', 1;
     }
 
