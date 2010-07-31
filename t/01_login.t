@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 #########################
 
@@ -23,6 +23,7 @@ my $bot = MediaWiki::Bot->new({
 isa_ok($bot, 'MediaWiki::Bot'); # Make sure we have a bot object to work with
 is($bot->login({ username => $username, password => $password, do_sul => 1 }), 11, q{SUL login});
 ok($bot->_is_loggedin(),                                        q{Double-check we're logged in});
+is($bot->{'host'}, 'en.wikipedia.org',                          q{We're still on the wiki we started on});
 is($bot->set_wiki({host=>'meta.wikimedia.org'}), 1,             q{Switched wikis OK});
 ok($bot->_is_loggedin(),                                        q{Double-check we're logged in via SUL});
 

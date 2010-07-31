@@ -350,7 +350,11 @@ sub login {
     }
 
     if ($do_sul) {
-        my $debug = $self->{'debug'};   # Remember this for later
+        my $debug    = $self->{'debug'};   # Remember this for later
+        my $host     = $self->{'host'};
+        my $path     = $self->{'path'};
+        my $protocol = $self->{'protocol'};
+
         $self->{'debug'} = 0;           # Turn off debugging for these internal calls
         my @logins;                     # Keep track of our successes
         my @WMF_projects = qw(
@@ -381,6 +385,11 @@ sub login {
             print ($success ? " OK\n" : " FAILED\n") if $debug;
             push(@logins, $success);
         }
+        $self->set_wiki({           # Switch back to original wiki
+            protocol => $protocol,
+            host     => $host,
+            path     => $path,
+        });
 
         my $sum = 0;
         $sum += $_ for @logins;
