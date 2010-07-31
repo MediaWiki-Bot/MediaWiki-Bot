@@ -17,15 +17,12 @@ use Test::More tests => 2;
 use MediaWiki::Bot;
 
 my $bot = MediaWiki::Bot->new();
-#$bot->set_wiki( "wiki.xyrael.net","w" );
 
 my $rand = rand();
 my $status = $bot->edit('User:ST47/test', $rand, 'MediaWiki::Bot tests');
-#eval { use Data::Dumper; print STDERR Dumper($status); };
-#if ($@) {print STDERR "#Couldn't load Data::Dumper\n"}
 SKIP: {
-    if ($status == 3 and $bot->{error}->{code} == 3) {
-        skip 'You are blocked, cannot use editing tests', 1;
+    if (defined($bot->{'error'}->{'code'}) and $bot->{error}->{code} == 3) {
+        skip 'You are blocked, cannot use editing tests', 2;
     }
     #ok( $status->isa("HTTP::Response") );
 

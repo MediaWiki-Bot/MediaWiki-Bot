@@ -31,8 +31,8 @@ my $old = $bot->get_text('User:ST47/unicode2');
 my $rand = rand();
 my $status = $bot->edit('User:ST47/unicode2', "$rand\n$string\n", 'PWP test');
 SKIP: {
-    if ($status == 3 and $bot->{error}->{code} == 3) {
-        skip 'You are blocked, cannot use editing tests', 4;
+    if (defined($bot->{'error'}->{'code'}) and $bot->{'error'}->{'code'} == 3) {
+        skip 'You are blocked, cannot use editing tests', 5;
     }
     my $rand2 = rand();
     $bot->edit('User:ST47/unicode3', "$rand2\n$load\n", 'PWP test (éółŽć)');
