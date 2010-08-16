@@ -2331,6 +2331,92 @@ sub email {
     return $res;
 }
 
+=head2 top_edits($user[,$options])
+
+Returns an array of the page titles where the user is the latest editor.
+
+    my @pages = $bot->top_edits("Mike.lifeguard", {max => 5});
+    foreach my $page (@pages) {
+        $bot->rollback($page, "Mike.lifeguard");
+    }
+
+Note that accessing the data with a callback happens B<before> filtering
+the top edits is done. For that reason, you should use C<contributions()>
+if you need to use a callback. If you use a callback with C<top_edits()>,
+you B<will not> get top edits returned. It is safe to use a callback if
+you I<check> that it is a top edit:
+
+    $bot->top_edits("Mike.lifeguard", { hook => \&rv });
+    sub rv {
+        my $data = shift;
+        foreach my $page (@$data) {
+            if (exists($page->{'top'})) {
+                $bot->rollback($page->{'title'}, "Mike.lifeguard");
+            }
+        }
+    }
+
+=cut
+
+sub top_edits {
+    my $self    = shift;
+    my $user    = shift;
+    my $options = shift;
+
+    $user =~ s/^User://;
+
+    $options->{'max'} = 1 unless defined($options->{'max'});
+    delete($options->{'max'}) if $options->{'max'} == 0;
+
+    my $res = $self->{'api'}->list({
+        action  => 'query',
+        list    => 'usercontribs',
+        ucuser  => $user,
+        ucprop  => 'title|flags',
+    }, $options);
+    return _handle_api_error() unless $res;
+    return 1 if (!ref $res);    # Not a ref when using callback
+
+    my @titles;
+    foreach my $page (@$res) {
+        push @titles, $page->{'title'} if exists($page->{'top'});
+    }
+
+    return @titles;
+}
+
+=head2 contributions($user, $ns, $options)
+
+Returns an array of hashrefs of data for the user's contributions. $ns can be an
+arrayref of namespace numbers.
+
+=cut
+
+sub contributions {
+    my $self = shift;
+    my $user = shift;
+    my $ns   = shift;
+    my $opts = shift;
+
+    $user =~ s/^User://;
+
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
+
+    $opts->{'max'} = 1 unless defined($opts->{'max'});
+    delete($opts->{'max'}) if $opts->{'max'} == 0;
+
+    my $res = $self->{'api'}->list({
+        action      => 'query',
+        list        => 'usercontribs',
+        ucuser      => $user,
+        ucnamespace => $ns,
+        ucprop      => 'ids|title|timestamp|comment|patrolled|flags',
+    }, $opts);
+    return _handle_api_error() unless $res;
+    return 1 if (!ref $res);    # Not a ref when using callback
+
+    return $res; # Can we make this more useful?
+}
 
 ################
 # Internal use #
