@@ -1471,48 +1471,32 @@ Checks if an image exists at $page. 0 means no, 1 means yes, local, 2 means on c
 
 sub test_image_exists {
     my $self  = shift;
-    my @pages = @_;
+    my $image = shift;
 
-    my $titles = join('|', @pages);
-    my $return;
-    $titles =~ s/\|{2,}/\|/g;
-    $titles =~ s/\|$//;
-
-    my $hash = {
+    my $res = $self->{api}->api({
         action  => 'query',
-        titles  => $titles,
+        titles  => $image,
         iilimit => 1,
         prop    => 'imageinfo'
-    };
+    });
+    return $self->_handle_api_error() unless $res;
 
-    #use Data::Dumper; print Dumper($hash);
-    my $res = $self->{api}->api($hash);
-    if (!$res) {
-        return $self->_handle_api_error();
-    }
-
-    #use Data::Dumper; print Dumper($res);
     foreach my $id (keys %{ $res->{query}->{pages} }) {
         my $title = $res->{query}->{pages}->{$id}->{title};
         if ($res->{query}->{pages}->{$id}->{imagerepository} eq 'shared') {
-            $return->{$title} = 2;
+            return 2;
         }
         elsif (defined($res->{query}->{pages}->{$id}->{missing})) {
-            $return->{$title} = 0;
+            return 0;
         }
         elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq '') {
-            $return->{$title} = 3;
+            return 3;
         }
         elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq 'local') {
-            $return->{$title} = 1;
+            return 1;
         }
     }
-    if (scalar(@pages) == 1) {
-        return $return->{ $pages[0] };
-    }
-    else {
-        return $return;
-    }
+    return;
 }
 
 

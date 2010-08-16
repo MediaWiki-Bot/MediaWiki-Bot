@@ -7,6 +7,7 @@ Vers. Rel.Mgr. SVN  Date
     Changes made since 3.1.6
         * SUL no longer sets the bot's wiki to incubator.wikimedia.org
         * The test suite has been made more robust
+        * test_image_exists() now works as documented
 3.1.6 Mike.lif r409 25 July 2010
     Changes made since 3.1.5
         * Handling of null path to api.php was fixed
