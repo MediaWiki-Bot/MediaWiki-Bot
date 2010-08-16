@@ -3,6 +3,10 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
+3.1.7 Mike.lif Unreleased
+    Changes made since 3.1.6
+        * SUL no longer sets the bot's wiki to incubator.wikimedia.org
+        * The test suite has been made more robust
 3.1.6 Mike.lif r409 25 July 2010
     Changes made since 3.1.5
         * Handling of null path to api.php was fixed
