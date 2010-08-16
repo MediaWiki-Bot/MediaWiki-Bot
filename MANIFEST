@@ -42,6 +42,7 @@ t/28_diff.t
 t/29_prefixindex.t
 t/35_secure.t
 t/38_move.t
+t/41_test_image_exists.t
 t/42_get_users.t
 t/43_expandtemplates.t
 t/97_pod.t
