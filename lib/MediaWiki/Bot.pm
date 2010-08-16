@@ -80,7 +80,7 @@ path sets the path to api.php (with no leading or trailing slash).
 login_data is a hashref of credentials to pass to login(). See that section for a description.
 
 =item *
-debug is whether to provide debug output.
+debug is whether to provide debug output. 1 provides only error messages; 2 provides further detail on internal operations.
 
 =back
 
@@ -153,11 +153,10 @@ sub new {
         stack_depth => 1
     );
     $self->{mech}->agent($agent);
-    $self->{debug}    = 0;
     $self->{errstr}   = '';
     $self->{assert}   = $assert;
     $self->{operator} = $operator;
-    $self->{debug}    = $debug || 0;
+    $self->{'debug'}  = $debug || 0;
     $self->{api}      = MediaWiki::API->new();
     $self->{api}->{ua}->agent($agent);
 
@@ -252,7 +251,7 @@ sub set_wiki {
     $self->{api}->{config}->{api_url} = $path
         ? "$protocol://$host/$path/api.php"
         : "$protocol://$host/api.php"; # $path is '', so don't use http://domain.com//api.php
-    print "Wiki set to " . $self->{api}->{config}{api_url} . "\n" if $self->{debug};
+    warn "Wiki set to " . $self->{api}->{config}{api_url} . "\n" if $self->{'debug'} > 1;
 
     return 1;
 }
@@ -342,7 +341,7 @@ sub login {
 
     # Handle basic auth first, if needed
     if ($basic_auth) {
-        carp "Applying basic auth credentials" if $self->{debug};
+        warn "Applying basic auth credentials" if $self->{'debug'} > 1;
         $self->{api}->{ua}->credentials(
             $basic_auth->{'netloc'},
             $basic_auth->{'realm'},
@@ -377,7 +376,7 @@ sub login {
         );
 
         SUL: foreach my $project (@WMF_projects) {
-            print "Logging in on $project..." if $debug;
+            print STDERR "Logging in on $project..." if $debug > 1;
             $self->set_wiki({
                 host    => $project,
             });
@@ -388,7 +387,7 @@ sub login {
                 do_sul      => 0,
                 autoconfig  => 0,
             });
-            print ($success ? " OK\n" : " FAILED\n") if $debug;
+            warn ($success ? " OK\n" : " FAILED\n") if $debug > 1;
             push(@logins, $success);
         }
         $self->set_wiki({           # Switch back to original wiki
@@ -400,7 +399,7 @@ sub login {
         my $sum = 0;
         $sum += $_ for @logins;
         my $total = scalar @WMF_projects;
-        print "$sum/$total logins succeeded\n" if $debug;
+        warn "$sum/$total logins succeeded\n" if $debug > 1;
         $self->{'debug'} = $debug; # Reset debug to it's old value
 
         return $sum;
@@ -416,13 +415,13 @@ sub login {
         my $logged_in = $self->_is_loggedin();
         if ($logged_in) {
             $self->_do_autoconfig() if $autoconfig;
-            carp "Logged in successfully with cookies" if $self->{debug};
+            warn "Logged in successfully with cookies" if $self->{'debug'} > 1;
             return 1; # If we're already logged in, nothing more is needed
         }
     }
 
     unless ($password) {
-        carp "No login cookies available, and no password to continue with authentication" if $self->{debug};
+        carp "No login cookies available, and no password to continue with authentication" if $self->{'debug'};
         return 0;
     }
 
@@ -452,7 +451,7 @@ sub login {
     if ($res->{'login'}->{'result'} eq 'Success') {
         if ($res->{'login'}->{'lgusername'} eq $self->{'username'}) {
             $self->_do_autoconfig() if $autoconfig;
-            carp "Logged in successfully with password" if $self->{debug};
+            warn "Logged in successfully with password" if $self->{'debug'} > 1;
         }
     }
 
@@ -675,12 +674,6 @@ sub get_history {
     my @return;
     my @revisions;
 
-    if ($limit > 50) {
-        $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
-        carp $self->{errstr} if $self->{debug};
-        return 1;
-    }
-
     my $hash = {
         action  => 'query',
         prop    => 'revisions',
@@ -858,7 +851,7 @@ sub get_pages {
             if (@pieces > 1) {
                 $pieces[0] = ($expand->{ $pieces[0] } || $pieces[0]);
                 my $v = $self->get_text(join ':', @pieces);
-                print "Detected article name that needed expanding $title\n" if $self->{debug};
+                warn "Detected article name that needed expanding $title\n" if $self->{'debug'} > 1;
 
                 $return{$title} = $v;
                 if ($v =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {
@@ -1149,7 +1142,7 @@ sub get_pages_in_category {
     else {                                             # Definitely no namespace name, since there's no colon
         $category = "Category:$category";
     }
-    warn "Category to fetch is [[$category]]" if $self->{'debug'};
+    warn "Category to fetch is [[$category]]" if $self->{'debug'} > 1;
 
     my $hash = {
         action  => 'query',
@@ -1928,12 +1921,12 @@ sub prefixindex {
     }
 
     if (!$ns && $prefix =~ m/:/) {
-        print "Converted '$prefix' to..." if $self->{debug};
+        print STDERR "Converted '$prefix' to..." if $self->{'debug'} > 1;
         my ($name) = split(/:/, $prefix, 2);
         my $ns_data = $self->_get_ns_data();
         $ns = $ns_data->{$name};
         $prefix =~ s/^$name://;
-        print "'$prefix' with a namespace filter $ns" if $self->{debug};
+        warn "'$prefix' with a namespace filter $ns" if $self->{'debug'} > 1;
     }
 
     my $hash = {
@@ -2470,7 +2463,7 @@ sub _is_loggedin {
     return $self->_handle_api_error() unless $res;
     my $is    = $res->{'query'}->{'userinfo'}->{'name'};
     my $ought = $self->{username};
-    carp "Testing if logged in: we are $is, think we should be $ought" if $self->{debug};
+    warn "Testing if logged in: we are $is, and we should be $ought" if $self->{'debug'} > 1;
     return ($is eq $ought);
 }
 
@@ -2515,7 +2508,7 @@ sub _do_autoconfig {
     }
 
     unless ($has_bot && !$is_sysop) {
-        carp "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{debug};
+        warn "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{'debug'} > 1;
     }
     $self->set_highlimits($has_apihighlimits);
     $self->{'assert'} = $default_assert unless $self->{'assert'};

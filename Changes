@@ -27,6 +27,8 @@ Vers. Rel.Mgr. SVN  Date
         * test_image_exists() sometimes returned undef when it shouldn't have; this was fixed.
         * The test suite was made more robust
         * SUL on secure.wikimedia.org is useless, and is now disabled
+        * test_image_exists() now accepts an arrayref of images
+        * Two levels of debug output are now available. 1 is failure notification; 2 is internal operations.
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
