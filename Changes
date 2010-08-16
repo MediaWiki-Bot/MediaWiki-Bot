@@ -31,6 +31,8 @@ Vers. Rel.Mgr. SVN  Date
         * Two levels of debug output are now available. 1 is failure notification; 2 is internal operations.
         * top_edits() and contributions() offer two ways to get user contributions. See Pod for details.
         * Support for LDAP login was added thanks to a patch by philippe.cade
+        * Protocol, host, and path are now retained when a call to set_wiki() doesn't specify one of them.
+
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.

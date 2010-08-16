@@ -202,7 +202,7 @@ For backward compatibility, you can specify up to two parameters in this depreca
 
     $bot->set_wiki($host, $path);
 
-The default settings are 'en.wikipedia.org' with a path of 'w'.
+If you don't set any parameter, it's previous value is used. If it has never been set, the default settings are 'http', 'en.wikipedia.org' and 'w'.
 
 =cut
 
@@ -223,9 +223,9 @@ sub set_wiki {
     }
 
     # Set defaults
-    $protocol = 'http'             unless defined($protocol);
-    $host     = 'en.wikipedia.org' unless defined($host);
-    $path     = 'w'                unless defined($path);
+    $protocol = $self->{'protocol'} || 'http'             unless defined($protocol);
+    $host     = $self->{'host'}     || 'en.wikipedia.org' unless defined($host);
+    $path     = $self->{'path'}     || 'w'                unless defined($path);
 
     # Clean up the parts we will build a URL with
     $protocol =~ s,://$,,;

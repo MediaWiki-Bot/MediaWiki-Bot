@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 17;
+use Test::More tests => 18;
 
 #########################
 
@@ -60,11 +60,8 @@ is($secure->login({
         username => $username,
         password => $password,
         do_sul => 1, # Issue 128 - this login should return 1 not 11!
-    }),                                        1,   q{Secure login});
-ok($secure->_is_loggedin(),                         q{Double-check we're actually logged in});
-is($secure->set_wiki({
-        protocol=> 'https',
-        host    => 'secure.wikimedia.org',
-        path    => 'wikipedia/meta/w',
-    }),                                        1,   q{Switched wikis OK});
-ok($secure->_is_loggedin(),                         q{Double-check we're logged in on secure});
+    }),                                             1,  q{Secure login});
+ok($secure->_is_loggedin(),                             q{Double-check we're actually logged in});
+is($secure->set_wiki({path => 'wikipedia/meta/w'}), 1,  q{Switched wikis OK}); # Don't specify host or protocol - Issue 130
+is($secure->{api}->{config}->{api_url}, 'https://secure.wikimedia.org/wikipedia/meta/w/api.php', q{Protocol and host retained properly});
+ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure});
