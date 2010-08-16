@@ -1467,7 +1467,21 @@ sub test_blocked { # For backwards-compatibility
 
 =head2 test_image_exists($page)
 
-Checks if an image exists at $page. 0 means no, 1 means yes, local, 2 means on commons, 3 means doesn't exist but there is text on the page.
+Checks if an image exists at $page. 0 means no, 1 means yes, local, 2
+means on commons, 3 means doesn't exist but there is text on the page.
+If you pass in an arrayref of images, you'll get out an arrayref of
+results.
+
+    my $exists = $bot->test_image_exists('File:Albert Einstein Head.jpg');
+    if ($exists == 0) {
+        print "Doesn't exist\n";
+    }
+    elsif ($exists == 1) {
+        print "Exists locally\n";
+    }
+    elsif ($exists == 2) {
+        print "Exists on Commons\n";
+    }
 
 =cut
 
@@ -1475,11 +1489,11 @@ sub test_image_exists {
     my $self  = shift;
     my $image = shift;
 
-#    my $multi = 0;
-#    if (ref $image eq 'ARRAY') {
-#        $image = join('|', @$image);
-#        $multi = 1; # so we know whether to return a hash or a single scalar
-#    }
+    my $multi = 0;
+    if (ref $image eq 'ARRAY') {
+        $image = join('|', @$image);
+        $multi = 1; # so we know whether to return a hash or a single scalar
+    }
 
     my $res = $self->{api}->api({
         action  => 'query',
@@ -1489,30 +1503,46 @@ sub test_image_exists {
     });
     return $self->_handle_api_error() unless $res;
 
-#    my @return;
-#    use Data::Dumper; print STDERR Dumper($res) and die;
+    my @return;
+    # use Data::Dumper; print STDERR Dumper($res) and die;
     foreach my $id (keys %{ $res->{query}->{pages} }) {
         my $title = $res->{query}->{pages}->{$id}->{title};
         if ($res->{query}->{pages}->{$id}->{imagerepository} eq 'shared') {
-            return 2; #push @return, 2;
+            if ($multi) {
+                unshift @return, 2;
+            }
+            else {
+                return 2;
+            }
         }
         elsif (exists($res->{query}->{pages}->{$id}->{missing})) {
-            return 0; #push @return, 0;
+            if ($multi) {
+                unshift @return, 0;
+            }
+            else {
+                return 0;
+            }
         }
         elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq '') {
-            return 3; #push @return, 3;
+            if ($multi) {
+                unshift @return, 3;
+            }
+            else {
+                return 3;
+            }
         }
         elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq 'local') {
-            return 1; #push @return, 1;
+            if ($multi) {
+                unshift @return, 1;
+            }
+            else {
+                return 1;
+            }
         }
     }
-    return;
-#    if ($multi) {
-#        return @return;
-#    }
-#    else {
-#        return shift(@return);
-#    }
+
+    # use Data::Dumper; print STDERR Dumper(\@return) and die;
+    return \@return;
 }
 
 =head2 get_pages_in_namespace($namespace_id, $page_limit)
