@@ -320,6 +320,7 @@ sub login {
     my $self = shift;
     my $username;
     my $password;
+    my $lgdomain;
     my $autoconfig;
     my $basic_auth;
     my $do_sul;
@@ -329,6 +330,7 @@ sub login {
         $autoconfig = defined($_[0]->{'autoconfig'}) ? $_[0]->{'autoconfig'} : 1;
         $basic_auth = $_[0]->{'basic_auth'};
         $do_sul     = $_[0]->{'do_sul'} || 0;
+        $lgdomain   = $_[0]->{'lgdomain'};
     }
     else {
         $username   = shift;
@@ -379,6 +381,7 @@ sub login {
             my $success = $self->login({
                 username    => $username,
                 password    => $password,
+                lgdomain	=> $lgdomain,
                 do_sul      => 0,
                 autoconfig  => 0,
             });
@@ -424,6 +427,7 @@ sub login {
         action      => 'login',
         lgname      => $username,
         lgpassword  => $password,
+        lgdomain	=> $lgdomain
     }) or return $self->_handle_api_error();
     $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
     $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
@@ -434,6 +438,7 @@ sub login {
             action      => 'login',
             lgname      => $username,
             lgpassword  => $password,
+            lgdomain	=> $lgdomain,
             lgtoken     => $token,
         }) or return $self->_handle_api_error();
 
