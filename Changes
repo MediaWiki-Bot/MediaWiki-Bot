@@ -26,6 +26,7 @@ Vers. Rel.Mgr. SVN  Date
         * login() can now do SUL; see POD for details
         * test_image_exists() sometimes returned undef when it shouldn't have; this was fixed.
         * The test suite was made more robust
+        * SUL on secure.wikimedia.org is useless, and is now disabled
 3.1.0 Mike.lif r302 05 June 2010
     Changes made since 3.0.0
         * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.

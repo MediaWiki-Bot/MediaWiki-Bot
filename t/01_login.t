@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 13;
+use Test::More tests => 17;
 
 #########################
 
@@ -21,7 +21,11 @@ my $bot = MediaWiki::Bot->new({
 });
 
 isa_ok($bot, 'MediaWiki::Bot'); # Make sure we have a bot object to work with
-is($bot->login({ username => $username, password => $password, do_sul => 1 }), 11, q{SUL login});
+is($bot->login({
+        username => $username,
+        password => $password,
+        do_sul => 1
+    }),                                         11,             q{SUL login});
 ok($bot->_is_loggedin(),                                        q{Double-check we're logged in});
 is($bot->{'host'}, 'en.wikipedia.org',                          q{We're still on the wiki we started on});
 is($bot->set_wiki({host=>'meta.wikimedia.org'}), 1,             q{Switched wikis OK});
@@ -45,3 +49,22 @@ ok(!$bot->_is_loggedin(),                           q{Double-check we're actuall
 is($bot->set_wiki({host=>'en.wikipedia.org'}), 1,   q{Switched wikis OK});
 ok(!$bot->_is_loggedin(),                           q{Double-check we're logged out for SUL});
 
+my $secure = MediaWiki::Bot->new({
+    agent       => $useragent,
+    protocol    => 'https',
+    host        => 'secure.wikimedia.org',
+    path        => 'wikipedia/en/w',
+});
+
+is($secure->login({
+        username => $username,
+        password => $password,
+        do_sul => 1, # Issue 128 - this login should return 1 not 11!
+    }),                                        1,   q{Secure login});
+ok($secure->_is_loggedin(),                         q{Double-check we're actually logged in});
+is($secure->set_wiki({
+        protocol=> 'https',
+        host    => 'secure.wikimedia.org',
+        path    => 'wikipedia/meta/w',
+    }),                                        1,   q{Switched wikis OK});
+ok($secure->_is_loggedin(),                         q{Double-check we're logged in on secure});

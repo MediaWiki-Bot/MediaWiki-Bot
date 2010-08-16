@@ -350,6 +350,9 @@ sub login {
             $basic_auth->{'pass'}
         );
     }
+    $do_sul = 0 if (
+        ($self->{'protocol'} eq 'https') and
+        ($self->{'host'} eq 'secure.wikimedia.org') );
 
     if ($do_sul) {
         my $debug    = $self->{'debug'};   # Remember this for later
