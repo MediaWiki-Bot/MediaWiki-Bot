@@ -1,4 +1,5 @@
 package MediaWiki::Bot;
+# ABSTRACT: a MediaWiki bot framework written in Perl
 
 use strict;
 use warnings;
@@ -19,11 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.1.6';
-
-=head1 NAME
-
-MediaWiki::Bot - a MediaWiki bot framework written in Perl
+our $VERSION = '3.2.0';
 
 =head1 SYNOPSIS
 
@@ -383,7 +380,7 @@ sub login {
             my $success = $self->login({
                 username    => $username,
                 password    => $password,
-                lgdomain	=> $lgdomain,
+                lgdomain    => $lgdomain,
                 do_sul      => 0,
                 autoconfig  => 0,
             });
@@ -429,7 +426,7 @@ sub login {
         action      => 'login',
         lgname      => $username,
         lgpassword  => $password,
-        lgdomain	=> $lgdomain
+        lgdomain    => $lgdomain
     }) or return $self->_handle_api_error();
     $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
     $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
@@ -440,7 +437,7 @@ sub login {
             action      => 'login',
             lgname      => $username,
             lgpassword  => $password,
-            lgdomain	=> $lgdomain,
+            lgdomain    => $lgdomain,
             lgtoken     => $token,
         }) or return $self->_handle_api_error();
 
@@ -2631,34 +2628,13 @@ sub _get_ns_data {
     return $self->{'ns_data'};
 }
 
-1;
-
-=head1 AUTHOR
-
-The MediaWiki::Bot team (Alex Rowe, Jmax, Oleg Alexandrov, Dan Collins, Mike.lifeguard) and others.
-
-=head1 COPYING
-
-Copyright (C) 2006, 2007, 2010 by the MediaWiki::Bot team
-
-This library is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 =head1 ERROR HANDLING
 
 All functions will return undef in any handled error situation. Further error
-data is stored in $bot->{error}->{code} and $bot->{error}->{details}.
+data is stored in $bot->{'error'}->{'code'} and $bot->{'error'}->{'details'}.
 
 =cut
+
+1;
 
 __END__
