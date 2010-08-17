@@ -27,7 +27,6 @@ our $VERSION = '3.2.0';
     use MediaWiki::Bot;
 
     my $bot = MediaWiki::Bot->new({
-        useragent   => 'MediaWiki::Bot/3.1.6 (User:Mike.lifeguard)',
         assert      => 'bot',
         protocol    => 'https',
         host        => 'secure.wikimedia.org',
@@ -84,7 +83,6 @@ debug is whether to provide debug output. 1 provides only error messages; 2 prov
 For example:
 
     my $bot = MediaWiki::Bot->new({
-        useragent   => 'MediaWiki::Bot/3.1.6 (User:Mike.lifeguard)',
         assert      => 'bot',
         protocol    => 'https',
         host        => 'secure.wikimedia.org',
