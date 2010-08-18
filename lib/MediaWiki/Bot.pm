@@ -3,15 +3,16 @@ package MediaWiki::Bot;
 
 use strict;
 use warnings;
-use WWW::Mechanize;
-use HTML::Entities;
-use URI::Escape;
-use XML::Simple;
+
+use WWW::Mechanize 1.30;
+use HTML::Entities 3.28;
+use URI::Escape 1.35;
+use XML::Simple 2.16;
 use Carp;
 use URI::Escape qw(uri_escape_utf8);
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
-use MediaWiki::API;
+use MediaWiki::API 0.20;
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
