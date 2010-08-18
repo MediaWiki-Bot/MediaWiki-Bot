@@ -8,7 +8,6 @@ SYNOPSIS
         use MediaWiki::Bot;
 
         my $bot = MediaWiki::Bot->new({
-            useragent   => 'MediaWiki::Bot/3.1.6 (User:Mike.lifeguard)',
             assert      => 'bot',
             protocol    => 'https',
             host        => 'secure.wikimedia.org',
@@ -60,7 +59,6 @@ METHODS
     For example:
 
         my $bot = MediaWiki::Bot->new({
-            useragent   => 'MediaWiki::Bot/3.1.6 (User:Mike.lifeguard)',
             assert      => 'bot',
             protocol    => 'https',
             host        => 'secure.wikimedia.org',

@@ -11,11 +11,19 @@ use Test::More tests => 1;
 
 use MediaWiki::Bot;
 
+my $username = $ENV{'PWPUsername'};
+my $password = $ENV{'PWPPassword'};
+my $login_data;
+if (defined($username) and defined($password)) {
+    $login_data = { username => $username, password => $password };
+}
+
 my $bot = MediaWiki::Bot->new({
-    agent   => 'MediaWiki::Bot tests (35_secure.t)',
-    host    => 'secure.wikimedia.org',
-    path    => 'wikipedia/en/w',
-    protocol=> 'https',
+    agent       => 'MediaWiki::Bot tests (35_secure.t)',
+    host        => 'secure.wikimedia.org',
+    path        => 'wikipedia/en/w',
+    protocol    => 'https',
+    login_data  => $login_data,
 });
 
 my $rand = rand();
