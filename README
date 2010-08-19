@@ -2,7 +2,7 @@ NAME
     MediaWiki::Bot - a MediaWiki bot framework written in Perl
 
 VERSION
-    version 3.2.0
+    version 3.2.1
 
 SYNOPSIS
         use MediaWiki::Bot;
