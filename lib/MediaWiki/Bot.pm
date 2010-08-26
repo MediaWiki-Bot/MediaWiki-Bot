@@ -4,7 +4,6 @@ package MediaWiki::Bot;
 use strict;
 use warnings;
 
-use WWW::Mechanize 1.30;
 use HTML::Entities 3.28;
 use URI::Escape 1.35;
 use XML::Simple 2.16;
@@ -21,7 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.2.2';
+our $VERSION = '3.2.3';
 
 =head1 SYNOPSIS
 
@@ -143,12 +142,6 @@ sub new {
     }
 
     my $self = bless({}, $package);
-    $self->{mech} = WWW::Mechanize->new(
-        cookie_jar  => {},
-        onerror     => \&Carp::carp,
-        stack_depth => 1
-    );
-    $self->{mech}->agent($agent);
     $self->{errstr}   = '';
     $self->{assert}   = $assert;
     $self->{operator} = $operator;
@@ -403,8 +396,6 @@ sub login {
 
     my $cookies = ".mediawiki-bot-$username-cookies";
     if (-r $cookies) {
-        $self->{mech}->{cookie_jar}->load($cookies);
-        $self->{mech}->{cookie_jar}->{ignore_discard} = 1;
         $self->{api}->{ua}->{cookie_jar}->load($cookies);
         $self->{api}->{ua}->{cookie_jar}->{ignore_discard} = 1;
 
@@ -554,7 +545,8 @@ sub edit {
 
     my ($edittoken, $lastedit, $tokentime) = $self->_get_edittoken($page);
     return $self->_handle_api_error() unless $edittoken;
-    my $hash = {
+
+    my $res = $self->{'api'}->api({
         action         => 'edit',
         title          => $page,
         token          => $edittoken,
@@ -567,36 +559,41 @@ sub edit {
         bot            => $markasbot,
         assert         => $assert,
         minor          => $is_minor,
-    };
-    $hash->{'section'} = $section if defined($section);
-
-    my $res = $self->{api}->api($hash); # Check if MediaWiki::API::edit() is good enough
+        section        => $section,
+    });
     return $self->_handle_api_error() unless $res;
-    if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
-        if ($self->{mech}->{agent}) {
-            carp 'Assertion failed as ' . $self->{mech}->{agent} if $self->{'debug'};
-            if ($self->{operator}) {
-                my $optalk = $self->get_text('User talk:' . $self->{operator});
-                if (defined($optalk)) {
-                    print "Sending warning!\n";
+    if ($res->{'edit'}->{'result'} && $res->{'edit'}->{'result'} eq 'Failure') {
+        if ($self->{'operator'}) {
+            my $optalk = $self->get_text('User talk:' . $self->{'operator'});
+            if (defined($optalk)) {
+                carp "Sending warning!" if $self->{'debug'};
+                if ($self->{'username'}) {
                     $self->edit(
-                        page => "User talk:$self->{operator}",
-                        text => $optalk
-                            . "\n\n==Error with "
-                            . $self->{mech}->{agent} . "==\n"
-                            . $self->{mech}->{agent}
-                            . ' needs to be logged in! ~~~~',
+                        page     => "User talk:$self->{'operator'}",
+                        text     => $optalk
+                                    . "\n\n==Error with $self->{'username'}==\n"
+                                    . "$self->{'username'} needs to be logged in! ~~~~",
                         summary  => 'bot issue',
                         is_minor => 0,
-                        assert   => ''
+                        assert   => '',
                     );
+                    croak "$self->{'username'} got logged out" if $self->{'debug'};
+                }
+                else { # The bot wasn't ever supposed to be logged in
+                    $self->edit(
+                        page     => "User talk:$self->{'operator'}",
+                        text     => $optalk
+                                    . "\n\n==Error with your bot==\n"
+                                    . "Your bot encountered an error. ~~~~",
+                        summary  => 'bot issue',
+                        is_minor => 0,
+                        assert   => '',
+                    );
+                    croak "Bot encountered an error while editing" if $self->{'debug'};
                 }
             }
-            return;
         }
-        else {
-            carp 'Assertion failed' if $self->{'debug'};
-        }
+        return;
     }
     return $res;
 }
