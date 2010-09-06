@@ -3,7 +3,11 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
-3.2.0 Mike.lif HEAD Unreleased
+3.2.4 Mike.lif HEAD Unreleased
+    Changes made since 3.2.0
+        * Removed dependency on WWW::Mechanize
+        * revert() was broken by refactoring; this error has been fixed
+3.2.0 Mike.lif r436 17 Aug 2010
     Changes made since 3.1.0
         * BREAKING CHANGE: The constructor now returns false when auto-login fails
         * Some cached data is now invalidated when set_wiki() is called
