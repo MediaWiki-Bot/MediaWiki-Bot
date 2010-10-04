@@ -265,6 +265,9 @@ METHODS
         }
 
   update_rc($limit[,$options_hashref])
+    Note: "update_rc()" is deprecated in favour of "recentchanges()", which
+    returns all available data, including rcid.
+
     Returns an array containing the Recent Changes to the wiki Main
     namespace. The array structure contains 'title', 'revid', 'old_revid',
     and 'timestamp'. The $options_hashref is the same as described in the
@@ -279,6 +282,40 @@ METHODS
         # Or, use a callback for incremental processing:
         my $options = { hook => \&mysub, };
         $bot->update_rc($options);
+        sub mysub {
+            my ($res) = @_;
+            foreach my $hashref (@$res) {
+                my $page = $hashref->{'title'};
+                print "$page\n";
+            }
+        }
+
+  recentchanges($ns, $limit, $options_hashref)
+    Returns an array of hashrefs containing recentchanges data. That hashref
+    might contain the following keys:
+
+    ns - the namespace number
+    revid
+    old_revid
+    timestamp
+    rcid - can be used with "patrol()"
+    pageid
+    type - one of edit, new, log, and maybe more
+    title
+
+    By default, the main namespace is used, and limit is set to 50. Pass an
+    arrayref of namespace numbers to get results from several namespaces.
+
+    The $options_hashref is the same as described in the section on
+    linksearch().
+
+        my @rc = $bot->update_rc(4, 10);
+        foreach my $hashref (@rc) {
+            print $hashref->{'title'} . "\n";
+        }
+
+        # Or, use a callback for incremental processing:
+        $bot->update_rc(0, 500, { hook => \&mysub });
         sub mysub {
             my ($res) = @_;
             foreach my $hashref (@$res) {

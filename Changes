@@ -3,7 +3,10 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
-3.2.4 Mike.lif HEAD Unreleased
+3.2.5 Mike.lif HEAD Unreleased
+    Changes made since 3.2.4
+        * recentchanges() now filters by namespace and returns all available data, including rcid; see Pod for details.
+3.2.4 Mike.lif 449 06 Sep 2010
     Changes made since 3.2.0
         * Removed dependency on WWW::Mechanize
         * revert() was broken by refactoring; this error has been fixed

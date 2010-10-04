@@ -953,7 +953,13 @@ sub get_last {
 
 =head2 update_rc($limit[,$options_hashref])
 
-Returns an array containing the Recent Changes to the wiki Main namespace. The array structure contains 'title', 'revid', 'old_revid', and 'timestamp'. The $options_hashref is the same as described in the section on linksearch().
+B<Note:> C<update_rc()> is deprecated in favour of C<recentchanges()>, which
+returns all available data, including rcid.
+
+Returns an array containing the Recent Changes to the wiki Main
+namespace. The array structure contains 'title', 'revid', 'old_revid',
+and 'timestamp'. The $options_hashref is the same as described in the
+section on linksearch().
 
     my @rc = $bot->update_rc(5);
     foreach my $hashref (@rc) {
@@ -1002,6 +1008,74 @@ sub update_rc {
             });
     }
     return @rc_table;
+}
+
+=head2 recentchanges($ns, $limit, $options_hashref)
+
+Returns an array of hashrefs containing recentchanges data. That hashref
+might contain the following keys:
+
+=over 4
+
+=item ns - the namespace number
+
+=item revid
+
+=item old_revid
+
+=item timestamp
+
+=item rcid - can be used with C<patrol()>
+
+=item pageid
+
+=item type - one of edit, new, log, and maybe more
+
+=item title
+
+=back
+
+By default, the main namespace is used, and limit is set to 50. Pass an
+arrayref of namespace numbers to get results from several namespaces.
+
+The $options_hashref is the same as described in the section on linksearch().
+
+    my @rc = $bot->update_rc(4, 10);
+    foreach my $hashref (@rc) {
+        print $hashref->{'title'} . "\n";
+    }
+
+    # Or, use a callback for incremental processing:
+    $bot->update_rc(0, 500, { hook => \&mysub });
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $page = $hashref->{'title'};
+            print "$page\n";
+        }
+    }
+
+=cut
+
+sub recentchanges {
+    my $self    = shift;
+    my $ns      = shift || 0;
+    my $limit   = defined($_[0]) ? shift : 50;
+    my $options = shift;
+    $ns = join('|', @$ns) if ref $ns eq 'ARRAY';
+
+    my $hash = {
+        action      => 'query',
+        list        => 'recentchanges',
+        rcnamespace => $ns,
+        rclimit     => $limit,
+    };
+    $options->{'max'} = 1 unless $options->{'max'};
+
+    my $res = $self->{api}->list($hash, $options);
+    return $self->_handle_api_error() unless $res;
+    return 1 unless ref $res;    # Not a ref when using callback
+    return @$res;
 }
 
 =head2 what_links_here($page[,$filter[,$ns[,$options]]])
