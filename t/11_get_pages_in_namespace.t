@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 4;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -33,4 +26,3 @@ $namespace_id = 'non-existent';
 
 is($pages[0], undef, 'Error code received');
 is($bot->{error}->{code}, 3, 'Error code in MediaWiki::Bot object');
-

@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 2;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -21,4 +14,3 @@ is($bot->expandtemplates(undef, '{{tlx|tlx}}'), $text, '[[Template:Tlx]] expande
 my $main_page = $bot->get_text('Main Page');
 my $expanded  = $bot->expandtemplates('Main Page');
 isnt($main_page, $expanded, 'Wikitext != expanded text');
-

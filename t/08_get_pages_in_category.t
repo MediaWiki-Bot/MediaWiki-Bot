@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 9;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -40,4 +33,3 @@ like(   $ns,                qr/\d/,         'Namespace is a number');
 
 ok(     defined($pageid),                   'Pageid returned via callback');
 like(   $pageid,            qr/\d/,         'Pageid is a number');
-

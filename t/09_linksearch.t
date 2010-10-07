@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 10;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -41,4 +34,3 @@ ok(     defined($url),                                      'A URL was returned 
 like(   $url,                           qr/example\.com/,   'The URL is right');
 ok(     defined($title),                                    'A title was returned via callback');
 like(   $title,                         qr/\w+/,            'The title looks valid');
-

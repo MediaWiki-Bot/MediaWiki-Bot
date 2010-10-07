@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 1;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -31,4 +24,3 @@ SKIP: {
     my $res = $bot->email('Email testing account', "MediaWiki::Bot test $rand", $rand);
     ok($res,    'Sending an email succeeded');
 }
-

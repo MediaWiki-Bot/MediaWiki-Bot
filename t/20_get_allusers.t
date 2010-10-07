@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 1;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -21,4 +14,3 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 
 my @array = $bot->get_allusers(10);
 is(scalar(@array), 10, 'Got 10 users');
-

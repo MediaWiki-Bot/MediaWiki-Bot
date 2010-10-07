@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 3;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -23,4 +16,3 @@ my $date = $history[0]->{'timestamp_date'};
 my $timestamp = $bot->recent_edit_to_page('User:Shadow1/perlwikipedia/Check');
 is($timestamp, "${date}T${time}Z", 'Timestamp found OK');
 like($timestamp, qr/^\d{4}-\d{1,2}-\d{1,2}T\d\d:\d\d:\d\dZ$/, 'Timestamp formed properly');
-

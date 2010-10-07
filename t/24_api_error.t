@@ -1,13 +1,6 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
 use Test::More tests => 5;
-
-#########################
 
 use MediaWiki::Bot;
 
@@ -26,4 +19,3 @@ is(ref $bot->{'error'}, 'HASH',                             'The error data is a
 is($bot->{'error'}->{'code'}, 3,                            'The right error code is there');
 like($bot->{'error'}->{'stacktrace'}, qr/MediaWiki::Bot/,   'The stacktrace includes "MediaWiki::Bot"');
 is($bot->{'error'}->{'details'}, 'rvbaduser_rvexcludeuser: Invalid value for user parameter rvexcludeuser', 'The API error text was returned');
-
