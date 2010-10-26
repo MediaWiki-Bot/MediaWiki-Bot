@@ -656,15 +656,15 @@ sub move {
 
 =head2 get_history($pagename[,$limit])
 
-Returns an array containing the history of the specified page, with $limit number of revisions. The array structure contains 'revid', 'user', 'comment', 'timestamp_date', and 'timestamp_time'.
+Returns an array containing the history of the specified page, with $limit number of revisions (default is as many as possible). The array structure contains 'revid', 'user', 'comment', 'timestamp_date', and 'timestamp_time'.
 
 =cut
 
 sub get_history {
     my $self      = shift;
     my $pagename  = shift;
-    my $limit     = shift || 5;
-    my $rvstartid = shift || '';
+    my $limit     = shift || 'max';
+    my $rvstartid = shift;
     my $direction = shift;
 
     my @return;
@@ -982,7 +982,7 @@ section on linksearch().
 
 sub update_rc {
     my $self    = shift;
-    my $limit   = shift;
+    my $limit   = shift || 'max';
     my $options = shift;
 
     my $hash = {
@@ -1117,6 +1117,7 @@ sub what_links_here {
         list        => 'backlinks',
         bltitle     => $page,
         blnamespace => $ns,
+        bllimit     => 'max',
     };
     $hash->{'blfilterredir'} = $filter if $filter;
     $options->{'max'} = 1 unless $options->{'max'};
@@ -1171,6 +1172,7 @@ sub list_transclusions {
         list        => 'embeddedin',
         eititle     => $page,
         einamespace => $ns,
+        eilimit     => 'max',
     };
     $hash->{'eifilterredir'} = $filter if $filter;
     $options->{'max'} = 1 unless $options->{'max'};
@@ -1330,6 +1332,7 @@ sub linksearch {
         euquery     => $link,
         eunamespace => $ns,
         euprotocol  => $prot,
+        eulimit     => 'max',
     };
     $options->{'max'} = 1 unless $options->{'max'};
 
@@ -1471,6 +1474,7 @@ sub image_usage {
         list            => 'imageusage',
         iutitle         => $image,
         iunamespace     => $ns,
+        iulimit         => 'max',
     };
     if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {
         $hash->{'iufilterredir'} = $1;
@@ -1630,9 +1634,8 @@ Returns an array containing the names of all pages in the specified namespace. T
 sub get_pages_in_namespace {
     my $self      = shift;
     my $namespace = shift;
-    my $limit     = shift || 500;
+    my $limit     = shift || 'max';
     my $options   = shift;
-    $limit = 5000 if $self->{'highlimits'};
 
     my $hash = {
         action      => 'query',
@@ -1732,7 +1735,7 @@ Gets the most recent editors to $page, up to $limit, starting from $revision and
 sub get_users {
     my $self      = shift;
     my $pagename  = shift;
-    my $limit     = shift || 5;
+    my $limit     = shift || 'max';
     my $rvstartid = shift;
     my $direction = shift;
 
@@ -1749,7 +1752,7 @@ sub get_users {
         prop    => 'revisions',
         titles  => $pagename,
         rvprop  => 'ids|timestamp|user|comment',
-        rvlimit => $limit
+        rvlimit => $limit,
     };
     $hash->{rvstartid} = $rvstartid if ($rvstartid);
     $hash->{rvdir}     = $direction if ($direction);
@@ -1847,10 +1850,8 @@ Returns an array of all users. Default limit is 500.
 
 sub get_allusers {
     my $self   = shift;
-    my $limit  = shift;
-    my @return = ();
-
-    $limit = 500 unless $limit;
+    my $limit  = shift || 'max';
+    my @return;
 
     my $res = $self->{api}->api({
             action  => 'query',
@@ -2039,6 +2040,7 @@ sub prefixindex {
         action   => 'query',
         list     => 'allpages',
         apprefix => $prefix,
+        aplimit  => 'max',
     };
     $hash->{'apnamespace'}   = $ns     if $ns;
     $hash->{'apfilterredir'} = $filter if $filter;
@@ -2093,6 +2095,7 @@ sub search {
         list     => 'search',
         srsearch => $term,
         srwhat   => 'text',
+        srlimit  => 'max',
 
         #srinfo      => 'totalhits',
         srprop      => 'size',
@@ -2168,8 +2171,9 @@ sub get_log {
     $user =~ s/^$user_ns_name://;
 
     my $hash = {
-        action => 'query',
-        list   => 'logevents',
+        action  => 'query',
+        list    => 'logevents',
+        lelimit => 'max',
     };
     $hash->{'letype'}  = $log_type if $log_type;
     $hash->{'leuser'}  = $user     if $user;
@@ -2480,6 +2484,7 @@ sub top_edits {
         list    => 'usercontribs',
         ucuser  => $user,
         ucprop  => 'title|flags',
+        uclimit => 'max',
     }, $options);
     return _handle_api_error() unless $res;
     return 1 if (!ref $res);    # Not a ref when using callback
@@ -2518,6 +2523,7 @@ sub contributions {
         ucuser      => $user,
         ucnamespace => $ns,
         ucprop      => 'ids|title|timestamp|comment|patrolled|flags',
+        uclimit     => 'max',
     }, $opts);
     return _handle_api_error() unless $res;
     return 1 if (!ref $res);    # Not a ref when using callback
