@@ -2,7 +2,7 @@ NAME
     MediaWiki::Bot - a MediaWiki bot framework written in Perl
 
 VERSION
-    version 3.2.4
+    version 3.2.5
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -205,8 +205,9 @@ METHODS
 
   get_history($pagename[,$limit])
     Returns an array containing the history of the specified page, with
-    $limit number of revisions. The array structure contains 'revid',
-    'user', 'comment', 'timestamp_date', and 'timestamp_time'.
+    $limit number of revisions (default is as many as possible). The array
+    structure contains 'revid', 'user', 'comment', 'timestamp_date', and
+    'timestamp_time'.
 
   get_text($pagename,[$revid,$section_number])
     Returns an the wikitext of the specified page. If $revid is defined, it
