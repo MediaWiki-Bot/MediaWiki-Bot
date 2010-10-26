@@ -1223,6 +1223,7 @@ sub get_pages_in_category {
         action  => 'query',
         list    => 'categorymembers',
         cmtitle => $category,
+        cmlimit => 'max',
     };
     $options->{'max'} = 1 unless defined($options->{'max'});
     delete($options->{'max'}) if $options->{'max'} == 0;

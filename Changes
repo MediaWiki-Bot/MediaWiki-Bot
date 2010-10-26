@@ -6,10 +6,13 @@ Vers. Rel.Mgr. SVN  Date
 3.2.5 Mike.lif HEAD Unreleased
     Changes made since 3.2.4
         * recentchanges() now filters by namespace and returns all available data, including rcid; see Pod for details.
+        * get_pages_in_category() now requests the maximum number of results; this resolves a major performance issue when getting the contents of large categories.
+
 3.2.4 Mike.lif 449 06 Sep 2010
     Changes made since 3.2.0
         * Removed dependency on WWW::Mechanize
         * revert() was broken by refactoring; this error has been fixed
+
 3.2.0 Mike.lif r436 17 Aug 2010
     Changes made since 3.1.0
         * BREAKING CHANGE: The constructor now returns false when auto-login fails
