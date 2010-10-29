@@ -3,7 +3,7 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
-3.2.5 Mike.lif HEAD Unreleased
+3.2.5 Mike.lif r460 28 Oct 2010
     Changes made since 3.2.4
         * recentchanges() now filters by namespace and returns all available data, including rcid; see Pod for details.
         * get_pages_in_category() now requests the maximum number of results; this resolves a major performance issue when getting the contents of large categories.

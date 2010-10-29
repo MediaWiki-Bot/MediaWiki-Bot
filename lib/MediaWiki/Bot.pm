@@ -20,7 +20,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
     $plugin->import();
 }
 
-our $VERSION = '3.2.5';
+our $VERSION = '3.2.6';
 
 =head1 SYNOPSIS
 
