@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 use MediaWiki::Bot;
 
@@ -12,5 +12,12 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-my @array = $bot->get_allusers(10);
-is(scalar(@array), 10, 'Got 10 users');
+{
+    my @array = $bot->get_allusers(10);
+    is(scalar(@array), 10, 'Got 10 users');
+}
+
+{
+    my @array = $bot->get_allusers(10, 'sysop');
+    is(scalar(@array), 10, 'Got 10 sysops');
+}

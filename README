@@ -537,8 +537,10 @@ METHODS
     Expands templates on $page, using $text if provided, otherwise loading
     the page text automatically.
 
-  get_allusers($limit)
-    Returns an array of all users. Default limit is 500.
+  get_allusers($limit, $group, $opts)
+    Returns an array of all users. Default limit is 500. Optionally specify
+    a group to list that group only. The last optional parameter is an
+    options hashref, as detailed elsewhere.
 
   db_to_domain($wiki)
     Converts a wiki/database name (enwiki) to the domain name

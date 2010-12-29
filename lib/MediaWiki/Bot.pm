@@ -1842,24 +1842,32 @@ sub expandtemplates {
     return $expanded;
 }
 
-=head2 get_allusers($limit)
+=head2 get_allusers($limit, $group, $opts)
 
-Returns an array of all users. Default limit is 500.
+Returns an array of all users. Default limit is 500. Optionally specify a group to list that group only. The last optional parameter is an options hashref, as detailed elsewhere.
 
 =cut
 
 sub get_allusers {
     my $self   = shift;
     my $limit  = shift || 'max';
-    my @return;
+    my $group  = shift;
+    my $opts   = shift;
 
-    my $res = $self->{api}->api({
+    my $hash = {
             action  => 'query',
             list    => 'allusers',
-            aulimit => $limit
-    });
+            aulimit => $limit,
+    };
+    $hash->{augroup} = $group if defined $group;
+    $opts->{max} = 1 unless exists $opts->{max};
+    delete $opts->{max} if exists $opts->{max} and $opts->{max} == 0;
+    my $res = $self->{api}->list($hash, $opts);
+    return $self->_handle_api_error() unless $res;
+    return 1 if (!ref $res);    # Not a ref when using callback
 
-    for my $ref (@{ $res->{query}->{allusers} }) {
+    my @return;
+    for my $ref (@{ $res }) {
         push @return, $ref->{name};
     }
     return @return;
