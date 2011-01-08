@@ -27,9 +27,10 @@ SKIP: {
 
         my $text = $bot->get_text($title, $revid);
         my $res = $bot->revert($title, $revid, $agent);
-        if (defined($bot->{'error'}->{'code'}) and $bot->{'error'}->{'code'} == 3) {
-            skip 'You are blocked, cannot proceed with editing tests', 2;
-        }
+
+        skip 'You are blocked, cannot proceed with editing tests', 2 if
+            defined $bot->{'error'}->{'code'} and $bot->{'error'}->{'code'} == 3;
+
         my $newtext = $bot->get_text($title);
 
         is($text, $newtext, 'Reverted successfully');

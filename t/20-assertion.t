@@ -22,8 +22,8 @@ my $status = $bot->edit({
 });
 
 SKIP: {
-    if (defined($bot->{'error'}->{'code'}) and $bot->{'error'}->{'code'} == 3) {
-        skip q{You're blocked; cannot use this test}, 1;
-    }
+    skip q{You're blocked; cannot use this test}, 1 if
+        defined $bot->{'error'}->{'code'}  and $bot->{'error'}->{'code'} == 3;
+
     is($status->{'edit'}->{'result'}, undef,        'Intentionally bad assertion');
 }

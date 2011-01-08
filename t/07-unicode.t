@@ -48,9 +48,8 @@ subtest 'write' => sub {
     my $rand = rand();
     $bot->edit("$base/2", "$rand\n$string\n", $agent);
     SKIP: {
-        if (defined $bot->{error}->{code} and $bot->{error}->{code} == 3) {
-            skip 'You are blocked, cannot use editing tests', 5;
-        }
+        skip 'You are blocked, cannot use editing tests', 5 if
+            defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
         my $rand2 = rand();
         $bot->edit("$base/3", "$rand2\n$string\n", "$agent ($string)");

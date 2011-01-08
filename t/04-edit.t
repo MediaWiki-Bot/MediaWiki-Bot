@@ -25,9 +25,8 @@ my $rand   = rand();
 my $status = $bot->edit($title, $rand, $agent);
 
 SKIP: {
-    if ((defined($bot->{'error'}->{'code'})) and ($bot->{'error'}->{'code'} == 3)) {
-        skip 'You are blocked, cannot use editing tests', 2;
-    }
+    skip 'You are blocked, cannot use editing tests', 2 if
+        defined $bot->{'error'}->{'code'} and $bot->{'error'}->{'code'} == 3;
 
     sleep(1);
     my $is = $bot->get_text($title);

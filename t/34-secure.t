@@ -29,9 +29,8 @@ my $status = $bot->edit({
     summary => $agent,
 });
 SKIP: {
-    if (defined($bot->{error}->{code}) and $bot->{error}->{code} == 3) {
-        skip 'You are blocked, cannot use editing tests', 1;
-    }
+    skip 'You are blocked, cannot use editing tests', 1 if
+        defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
     my $is = $bot->get_text($page);
     is($is, $rand, 'Edited via secure server successfully');

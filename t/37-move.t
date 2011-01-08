@@ -9,9 +9,8 @@ my $username = $ENV{'PWPUsername'};
 my $password = $ENV{'PWPPassword'};
 
 SKIP: {
-    if (!defined($username) or !defined($password)) {
-        skip('No account credentials provided in %ENV', 3);
-    }
+    skip('No account credentials provided in %ENV', 3) unless defined $username and defined $password;
+
     my $agent = "MediaWiki::Bot tests ($t)";
     my $bot = MediaWiki::Bot->new({
         agent   => $agent,
