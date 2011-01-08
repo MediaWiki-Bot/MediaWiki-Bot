@@ -1674,14 +1674,7 @@ sub count_contributions {
         },
         { max => 1 });
     return $self->_handle_api_error() unless $res;
-    my $return = ${$res}[0]->{'editcount'};
-
-    if ($return or $_[0] > 1) {
-        return $return;
-    }
-    else {
-        return $self->count_contributions($username, $_[0] + 1);
-    }
+    return ${$res}[0]->{'editcount'};
 }
 
 =head2 last_active($user)
