@@ -111,15 +111,15 @@ sub new {
     my $debug;
 
     if (ref $_[0] eq 'HASH') {
-        $agent      = $_[0]->{'agent'};
-        $assert     = $_[0]->{'assert'};
-        $operator   = $_[0]->{'operator'};
-        $maxlag     = $_[0]->{'maxlag'};
-        $protocol   = $_[0]->{'protocol'};
-        $host       = $_[0]->{'host'};
-        $path       = $_[0]->{'path'};
-        $login_data = $_[0]->{'login_data'};
-        $debug      = $_[0]->{'debug'};
+        $agent      = $_[0]->{agent};
+        $assert     = $_[0]->{assert};
+        $operator   = $_[0]->{operator};
+        $maxlag     = $_[0]->{maxlag};
+        $protocol   = $_[0]->{protocol};
+        $host       = $_[0]->{host};
+        $path       = $_[0]->{path};
+        $login_data = $_[0]->{login_data};
+        $debug      = $_[0]->{debug};
     }
     else {
         $agent    = shift;
@@ -145,9 +145,15 @@ sub new {
     $self->{errstr}   = '';
     $self->{assert}   = $assert;
     $self->{operator} = $operator;
-    $self->{'debug'}  = $debug || 0;
-    $self->{api}      = MediaWiki::API->new();
-    $self->{api}->{ua}->agent($agent);
+    $self->{debug}    = $debug || 0;
+    $self->{api}      = MediaWiki::API->new({
+        max_lag         => (defined $maxlag ? $maxlag : 5),
+        max_lag_delay   => 5,
+        max_lag_retries => 5,
+        retries         => 5,
+        retry_delay     => 10, # no infinite loops
+    });
+    $self->{api}->{ua}->agent($agent) if defined $agent;
 
     # Set wiki (handles setting $self->{host} etc)
     $self->set_wiki({
@@ -156,12 +162,6 @@ sub new {
             path     => $path,
     });
 
-    $self->{api}->{config}->{max_lag}         = $maxlag || 5;
-    $self->{api}->{config}->{max_lag_delay}   = 1;
-    $self->{api}->{config}->{retries}         = 5;
-    $self->{api}->{config}->{max_lag_retries} = -1;
-    $self->{api}->{config}->{retry_delay}     = 30;
-
     # Log-in, and maybe autoconfigure
     if ($login_data) {
         my $success = $self->login($login_data);
@@ -169,7 +169,7 @@ sub new {
             return $self;
         }
         else {
-            carp "Couldn't log in with supplied settings" if $self->{'debug'};
+            carp "Couldn't log in with supplied settings" if $self->{debug};
             return;
         }
     }
