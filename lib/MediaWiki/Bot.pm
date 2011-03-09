@@ -1,6 +1,6 @@
 package MediaWiki::Bot;
 # ABSTRACT: a MediaWiki bot framework written in Perl
-
+# VERSION
 use strict;
 use warnings;
 
@@ -15,12 +15,9 @@ use MediaWiki::API 0.20;
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
-
     #print "Found plugin $plugin\n";
     $plugin->import();
 }
-
-our $VERSION = '3.2.7';
 
 =head1 SYNOPSIS
 
@@ -137,7 +134,7 @@ sub new {
 
     # Set defaults
     unless ($agent) {
-        $agent  = "MediaWiki::Bot/$VERSION";
+        $agent  = 'MediaWiki::Bot/' . (defined __PACKAGE__->VERSION ? __PACKAGE__->VERSION : 'dev');
         $agent .= " (User:$operator)" if $operator;
     }
 
@@ -668,7 +665,6 @@ sub get_history {
     my $direction = shift;
 
     my @return;
-    my @revisions;
 
     my $hash = {
         action  => 'query',
@@ -761,7 +757,7 @@ sub get_id {
 
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
-    my ($id, $data) = %{ $res->{query}->{pages} };
+    my ($id) = %{ $res->{query}->{pages} };
     if ($id == -1) {
         return;
     }
@@ -935,8 +931,6 @@ sub get_last {
     my $page = shift;
     my $user = shift;
 
-    my $revertto = 0;
-
     my $res = $self->{api}->api({
             action        => 'query',
             titles        => $page,
@@ -946,7 +940,8 @@ sub get_last {
             rvexcludeuser => $user,
     });
     return $self->_handle_api_error() unless $res;
-    my ($id, $data) = %{ $res->{query}->{pages} };
+
+    my (undef, $data) = %{ $res->{query}->{pages} };
     my $revid = $data->{'revisions'}[0]->{'revid'};
     return $revid;
 }
@@ -1207,7 +1202,7 @@ sub get_pages_in_category {
     my $options  = shift;
 
     if ($category =~ m/:/) {    # It might have a namespace name
-        my ($cat, $title) = split(/:/, $category, 2);
+        my ($cat) = split(/:/, $category, 2);
         if ($cat ne 'Category') {    # 'Category' is a canonical name for ns14
             my $ns_data     = $self->_get_ns_data();
             my $cat_ns_name = $ns_data->{'14'};        # ns14 gives us the localized name for 'Category'
@@ -1586,7 +1581,6 @@ sub test_image_exists {
     my @return;
     # use Data::Dumper; print STDERR Dumper($res) and die;
     foreach my $id (keys %{ $res->{query}->{pages} }) {
-        my $title = $res->{query}->{pages}->{$id}->{title};
         if ($res->{query}->{pages}->{$id}->{imagerepository} eq 'shared') {
             if ($multi) {
                 unshift @return, 2;
@@ -1715,7 +1709,7 @@ sub recent_edit_to_page {
         },
         { max => 1 });
     return $self->_handle_api_error() unless $res;
-    my ($id, $data) = %{ $res->{query}->{pages} };
+    my $data = ( %{ $res->{query}->{pages} } )[1];
     return $data->{revisions}[0]->{timestamp};
 }
 
@@ -1733,7 +1727,6 @@ sub get_users {
     my $direction = shift;
 
     my @return;
-    my @revisions;
 
     if ($limit > 50) {
         $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
@@ -2548,7 +2541,7 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
         intoken => $type,
     }) or return $self->_handle_api_error();
 
-    my ($id, $data) = %{ $res->{'query'}->{'pages'} };
+    my $data           = ( %{ $res->{'query'}->{'pages'} })[1];
     my $edittoken      = $data->{'edittoken'};
     my $tokentimestamp = $data->{'starttimestamp'};
     my $basetimestamp  = $data->{'revisions'}[0]->{'timestamp'};
