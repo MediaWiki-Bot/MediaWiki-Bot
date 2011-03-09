@@ -327,7 +327,7 @@ sub login {
 
     # Handle basic auth first, if needed
     if ($basic_auth) {
-        warn "Applying basic auth credentials" if $self->{'debug'} > 1;
+        warn 'Applying basic auth credentials' if $self->{'debug'} > 1;
         $self->{api}->{ua}->credentials(
             $basic_auth->{'netloc'},
             $basic_auth->{'realm'},
@@ -361,7 +361,7 @@ sub login {
             incubator.wikimedia.org
         );
 
-        SUL: foreach my $project (@WMF_projects) {
+        SUL: foreach my $project (@WMF_projects) { # Could maybe be parallelized
             print STDERR "Logging in on $project..." if $debug > 1;
             $self->set_wiki({
                 host    => $project,
@@ -369,11 +369,13 @@ sub login {
             my $success = $self->login({
                 username    => $username,
                 password    => $password,
-                lgdomain    => $lgdomain,
+                lgdomain    => $project,
                 do_sul      => 0,
                 autoconfig  => 0,
             });
-            warn ($success ? " OK\n" : " FAILED\n") if $debug > 1;
+            warn ($success ? " OK\n" : " FAILED:\n") if $debug > 1;
+            warn $self->{api}->{error}->{code} . ': ' . $self->{api}->{error}->{details}
+                if !$success and $debug > 1;
             push(@logins, $success);
         }
         $self->set_wiki({           # Switch back to original wiki
@@ -383,9 +385,10 @@ sub login {
         });
 
         my $sum = 0;
+        no warnings qw(uninitialized);
         $sum += $_ for @logins;
         my $total = scalar @WMF_projects;
-        warn "$sum/$total logins succeeded\n" if $debug > 1;
+        warn "$sum/$total logins succeeded" if $debug > 1;
         $self->{'debug'} = $debug; # Reset debug to it's old value
 
         return $sum;
