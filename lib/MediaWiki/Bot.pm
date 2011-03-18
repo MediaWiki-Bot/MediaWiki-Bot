@@ -271,21 +271,22 @@ Setting an appropriate default assert.
 
 You can skip this autoconfiguration by passing C<autoconfig =E<gt> 0>
 
-=head3 Single User Login
-
-On WMF wikis, C<do_sul> specifies whether to log in on all projects. The default is false. But even when false, you still get a CentralAuth cookie for, and are thus logged in on, all languages of a given domain (*.wikipedia.org, for example). When set, a login is done on each WMF domain so you are logged in on all ~800 content wikis. Since C<*.wikimedia.org> is not possible, we explicitly include meta, commons, incubator, and wikispecies. When C<do_sul> is set, the return is the number of domains that login was successful for. This allows callers to do the following:
-
-    $bot->login({
-        username    => $username,
-        password    => $password,
-        do_sul      => 1,
-    }) or die "SUL failed";
-
 For backward compatibility, you can call this as
 
     $bot->login($username, $password);
 
 This deprecated form will never do autoconfiguration or SUL login.
+
+=head3 Single User Login
+
+On WMF wikis, C<do_sul> specifies whether to log in on all projects. The default
+is false. But even when false, you still get a CentralAuth cookie for, and are
+thus logged in on, all languages of a given domain (*.wikipedia.org, for example).
+When set, a login is done on each WMF domain so you are logged in on all ~800
+content wikis. Since C<*.wikimedia.org> is not possible, we explicitly include
+meta, commons, incubator, and wikispecies.
+
+=head3 Basic authentication
 
 If you need to supply basic auth credentials, pass a hashref of data as described by L<LWP::UserAgent>:
 
@@ -310,12 +311,12 @@ sub login {
     my $basic_auth;
     my $do_sul;
     if (ref $_[0] eq 'HASH') {
-        $username   = $_[0]->{'username'};
-        $password   = $_[0]->{'password'};
-        $autoconfig = defined($_[0]->{'autoconfig'}) ? $_[0]->{'autoconfig'} : 1;
-        $basic_auth = $_[0]->{'basic_auth'};
-        $do_sul     = $_[0]->{'do_sul'} || 0;
-        $lgdomain   = $_[0]->{'lgdomain'};
+        $username   = $_[0]->{username};
+        $password   = $_[0]->{password};
+        $autoconfig = defined($_[0]->{autoconfig}) ? $_[0]->{autoconfig} : 1;
+        $basic_auth = $_[0]->{basic_auth};
+        $do_sul     = $_[0]->{do_sul} || 0;
+        $lgdomain   = $_[0]->{lgdomain};
     }
     else {
         $username   = shift;
@@ -323,93 +324,43 @@ sub login {
         $autoconfig = 0;
         $do_sul     = 0;
     }
-    $self->{'username'} = $username;    # Remember who we are
+    $self->{username} = $username;    # Remember who we are
 
     # Handle basic auth first, if needed
     if ($basic_auth) {
-        warn 'Applying basic auth credentials' if $self->{'debug'} > 1;
+        warn 'Applying basic auth credentials' if $self->{debug} > 1;
         $self->{api}->{ua}->credentials(
-            $basic_auth->{'netloc'},
-            $basic_auth->{'realm'},
-            $basic_auth->{'uname'},
-            $basic_auth->{'pass'}
+            $basic_auth->{netloc},
+            $basic_auth->{realm},
+            $basic_auth->{uname},
+            $basic_auth->{pass}
         );
     }
     $do_sul = 0 if (
-        ($self->{'protocol'} eq 'https') and
-        ($self->{'host'} eq 'secure.wikimedia.org') );
+        ($self->{protocol} eq 'https') and
+        ($self->{host} eq 'secure.wikimedia.org') );
 
-    if ($do_sul) {
-        my $debug    = $self->{'debug'};   # Remember this for later
-        my $host     = $self->{'host'};
-        my $path     = $self->{'path'};
-        my $protocol = $self->{'protocol'};
-
-        $self->{'debug'} = 0;           # Turn off debugging for these internal calls
-        my @logins;                     # Keep track of our successes
-        my @WMF_projects = qw(
-            en.wikipedia.org
-            en.wiktionary.org
-            en.wikibooks.org
-            en.wikinews.org
-            en.wikiquote.org
-            en.wikisource.org
-            en.wikiversity.org
-            meta.wikimedia.org
-            commons.wikimedia.org
-            species.wikimedia.org
-            incubator.wikimedia.org
-        );
-
-        SUL: foreach my $project (@WMF_projects) { # Could maybe be parallelized
-            print STDERR "Logging in on $project..." if $debug > 1;
-            $self->set_wiki({
-                host    => $project,
-            });
-            my $success = $self->login({
-                username    => $username,
-                password    => $password,
-                lgdomain    => $project,
-                do_sul      => 0,
-                autoconfig  => 0,
-            });
-            warn ($success ? " OK\n" : " FAILED:\n") if $debug > 1;
-            warn $self->{api}->{error}->{code} . ': ' . $self->{api}->{error}->{details}
-                if !$success and $debug > 1;
-            push(@logins, $success);
-        }
-        $self->set_wiki({           # Switch back to original wiki
-            protocol => $protocol,
-            host     => $host,
-            path     => $path,
-        });
-
-        my $sum = 0;
-        no warnings qw(uninitialized);
-        $sum += $_ for @logins;
-        my $total = scalar @WMF_projects;
-        warn "$sum/$total logins succeeded" if $debug > 1;
-        $self->{'debug'} = $debug; # Reset debug to it's old value
-
-        return $sum;
+    if($do_sul) {
+        my $sul_success = $self->_do_sul($password);
+        warn 'Some or all SUL logins failed' if $self->{debug} > 1 and !$sul_success;
     }
 
     my $cookies = ".mediawiki-bot-$username-cookies";
     if (-r $cookies) {
         $self->{api}->{ua}->{cookie_jar}->load($cookies);
         $self->{api}->{ua}->{cookie_jar}->{ignore_discard} = 1;
+        # $self->{api}->{ua}->add_handler("request_send", sub { shift->dump; return });
 
-        my $logged_in = $self->_is_loggedin();
-        if ($logged_in) {
+        if ($self->_is_loggedin()) {
             $self->_do_autoconfig() if $autoconfig;
-            warn "Logged in successfully with cookies" if $self->{'debug'} > 1;
+            warn 'Logged in successfully with cookies' if $self->{debug} > 1;
             return 1; # If we're already logged in, nothing more is needed
         }
     }
 
     unless ($password) {
-        carp "No login cookies available, and no password to continue with authentication" if $self->{'debug'};
-        return 0;
+        carp q{Cookies didn't get us logged in, and no password to continue with authentication} if $self->{debug};
+        return;
     }
 
     my $res = $self->{api}->api({
@@ -421,8 +372,8 @@ sub login {
     $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
     $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
 
-    if ($res->{'login'}->{'result'} eq 'NeedToken') {
-        my $token = $res->{'login'}->{'token'};
+    if ($res->{login}->{result} eq 'NeedToken') {
+        my $token = $res->{login}->{token};
         $res = $self->{api}->api({
             action      => 'login',
             lgname      => $username,
@@ -435,19 +386,76 @@ sub login {
         $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
     }
 
-    if ($res->{'login'}->{'result'} eq 'Success') {
-        if ($res->{'login'}->{'lgusername'} eq $self->{'username'}) {
+    if ($res->{login}->{result} eq 'Success') {
+        if ($res->{login}->{lgusername} eq $self->{username}) {
             $self->_do_autoconfig() if $autoconfig;
-            warn "Logged in successfully with password" if $self->{'debug'} > 1;
+            warn 'Logged in successfully with password' if $self->{debug} > 1;
         }
     }
 
     return (
-        (defined($res->{'login'}->{'lgusername'})) and
-        (defined($res->{'login'}->{'result'})) and
-        ($res->{'login'}->{'lgusername'} eq $self->{'username'}) and
-        ($res->{'login'}->{'result'} eq 'Success')
+        (defined($res->{login}->{lgusername})) and
+        (defined($res->{login}->{result})) and
+        ($res->{login}->{lgusername} eq $self->{username}) and
+        ($res->{login}->{result} eq 'Success')
     );
+}
+
+sub _do_sul {
+    my $self     = shift;
+    my $password = shift;
+    my $debug    = $self->{debug};  # Remember these for later
+    my $host     = $self->{host};
+    my $path     = $self->{path};
+    my $protocol = $self->{protocol};
+    my $username = $self->{username};
+
+    $self->{debug} = 0;             # Turn off debugging for these internal calls
+    my @logins;                     # Keep track of our successes
+    my @WMF_projects = qw(
+        en.wikipedia.org
+        en.wiktionary.org
+        en.wikibooks.org
+        en.wikinews.org
+        en.wikiquote.org
+        en.wikisource.org
+        en.wikiversity.org
+        meta.wikimedia.org
+        commons.wikimedia.org
+        species.wikimedia.org
+        incubator.wikimedia.org
+    );
+
+    SUL: foreach my $project (@WMF_projects) { # Could maybe be parallelized
+        print STDERR "Logging in on $project..." if $debug > 1;
+        $self->set_wiki({
+            host    => $project,
+        });
+        my $success = $self->login({
+            username    => $username,
+            password    => $password,
+            do_sul      => 0,
+            autoconfig  => 0,
+        });
+        warn ($success ? " OK\n" : " FAILED:\n") if $debug > 1;
+        warn $self->{api}->{error}->{code} . ': ' . $self->{api}->{error}->{details}
+            if $debug > 1 and !$success;
+        push(@logins, $success);
+    }
+    $self->set_wiki({           # Switch back to original wiki
+        protocol => $protocol,
+        host     => $host,
+        path     => $path,
+    });
+
+    my $sum = 0;
+    no warnings qw(uninitialized);
+    $sum += $_ for @logins;
+    my $total = scalar @WMF_projects;
+    warn "$sum/$total logins succeeded" if $debug > 1;
+    $self->{debug} = $debug; # Reset debug to it's old value
+
+    return $sum == $total;
 }
 
 =head2 set_highlimits($flag)
@@ -580,7 +588,7 @@ sub edit {
                         is_minor => 0,
                         assert   => '',
                     );
-                    croak "$self->{'username'} got logged out" if $self->{'debug'};
+                    croak "$self->{'username'} got logged out" if $self->{debug};
                 }
                 else { # The bot wasn't ever supposed to be logged in
                     $self->edit(

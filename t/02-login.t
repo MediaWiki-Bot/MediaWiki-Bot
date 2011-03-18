@@ -1,61 +1,103 @@
 use strict;
 use warnings;
-use Test::More tests => 18;
+use Test::More 0.96 tests => 5;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
 
 my $username = defined($ENV{'PWPUsername'}) ? $ENV{'PWPUsername'} : 'Perlwikibot testing';
 my $password = defined($ENV{'PWPPassword'}) ? $ENV{'PWPPassword'} : 'test';
+unlink ".mediawiki-bot-$username-cookies" if -e ".mediawiki-bot-$username-cookies";
 
 my $useragent = "MediaWiki::Bot tests ($t)";
+my $host = 'test.wikipedia.org';
 
-my $bot = MediaWiki::Bot->new({
-    agent   => $useragent,
-});
+subtest 'one wiki' => sub {
+    plan tests => 2;
 
-isa_ok($bot, 'MediaWiki::Bot'); # Make sure we have a bot object to work with
-is($bot->login({
-        username => $username,
-        password => $password,
-        do_sul => 1
-    }),                                         11,             q{SUL login});
-ok($bot->_is_loggedin(),                                        q{Double-check we're logged in});
-is($bot->{'host'}, 'en.wikipedia.org',                          q{We're still on the wiki we started on});
-is($bot->set_wiki({host=>'meta.wikimedia.org'}), 1,             q{Switched wikis OK});
-ok($bot->_is_loggedin(),                                        q{Double-check we're logged in via SUL});
+    my $bot = MediaWiki::Bot->new({
+        agent   => $useragent,
+        host    => $host,
+        # debug   => 2,
+    });
 
-my $cookiemonster = MediaWiki::Bot->new({
-    agent   => $useragent,
-});
+    is($bot->login($username, $password), 1, 'Login OK');
+    ok($bot->_is_loggedin(), q{Double-check we're logged in});
+};
 
-is($cookiemonster->login($username), 1, 'Cookie log in');
-ok($bot->_is_loggedin(), q{Double-check we're cookie logged in});
+subtest 'cookies' => sub {
+    plan tests => 3;
 
-my $failbot = MediaWiki::Bot->new({
-    agent   => $useragent,
-    login_data => { username => q{Mike's test account}, password => q{} },
-});
-is($failbot, undef, 'Auto-login failed');
+    my $cookiemonster = MediaWiki::Bot->new({
+        agent   => $useragent,
+        host    => $host,
+        # debug   => 2,
+    });
 
-is($bot->logout(), 1,                               q{logout returned true});
-ok(!$bot->_is_loggedin(),                           q{Double-check we're actually logged out});
-is($bot->set_wiki({host=>'en.wikipedia.org'}), 1,   q{Switched wikis OK});
-ok(!$bot->_is_loggedin(),                           q{Double-check we're logged out for SUL});
+    is($cookiemonster->login($username), 1, 'Cookie log in');
+    ok($cookiemonster->_is_loggedin(), q{Double-check we're logged in with only cookies});
+    ok($cookiemonster->logout(), 'Logged out');
+};
 
-my $secure = MediaWiki::Bot->new({
-    agent       => $useragent,
-    protocol    => 'https',
-    host        => 'secure.wikimedia.org',
-    path        => 'wikipedia/en/w',
-});
+subtest 'SUL' => sub {
+    plan tests => 9;
 
-is($secure->login({
-        username => $username,
-        password => $password,
-        do_sul => 1, # Issue 128 - this login should return 1 not 11!
-    }),                                             1,  q{Secure login});
-ok($secure->_is_loggedin(),                             q{Double-check we're actually logged in});
-is($secure->set_wiki({path => 'wikipedia/meta/w'}), 1,  q{Switched wikis OK}); # Don't specify host or protocol - Issue 130
-is($secure->{api}->{config}->{api_url}, 'https://secure.wikimedia.org/wikipedia/meta/w/api.php', q{Protocol and host retained properly});
-ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure});
+    my $bot = MediaWiki::Bot->new({
+        agent   => $useragent,
+        host    => $host,
+        # debug => 2,
+    });
+
+    is($bot->login({
+            username => $username,
+            password => $password,
+            do_sul => 1
+        }), 1,                                              q{SUL login});
+
+    is($bot->{host}, $host,                                 q{We're still on the wiki we started on});
+    ok($bot->_is_loggedin(),                                q{Double-check we're logged in});
+
+    is($bot->set_wiki({host=>'meta.wikimedia.org'}), 1,     q{Switched wikis OK});
+    ok($bot->_is_loggedin(),                                q{Double-check we're logged in via SUL});
+
+    is($bot->logout(), 1,                                   q{logout returned true});
+    ok(!$bot->_is_loggedin(),                               q{Double-check we're actually logged out});
+
+    is($bot->set_wiki({host=>'en.wikipedia.org'}), 1,       q{Switched wikis OK});
+    ok(!$bot->_is_loggedin(),                               q{Double-check we're logged out for SUL});
+};
+
+subtest 'fail' => sub {
+    plan tests => 1;
+
+    my $failbot = MediaWiki::Bot->new({
+        agent   => $useragent,
+        login_data => { username => q{Mike's test account}, password => q{} },
+    });
+    is($failbot, undef, 'Auto-login failed');
+};
+
+subtest 'secure' => sub {
+    plan tests => 5;
+
+    my $secure = MediaWiki::Bot->new({
+        agent       => $useragent,
+        protocol    => 'https',
+        host        => 'secure.wikimedia.org',
+        path        => 'wikipedia/en/w',
+    });
+
+    is($secure->login({
+            username => $username,
+            password => $password,
+            do_sul => 1,
+        }), 1,                                              q{Secure login});
+    ok($secure->_is_loggedin(),                             q{Double-check we're actually logged in});
+    is($secure->set_wiki({path => 'wikipedia/meta/w'}), 1,  q{Switched wikis OK}); # Don't specify host or protocol - Issue 130
+    is($secure->{api}->{config}->{api_url}, 'https://secure.wikimedia.org/wikipedia/meta/w/api.php', q{Protocol and host retained properly});
+    ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure});
+};
+
+END {
+    unlink ".mediawiki-bot-$username-cookies" if -e ".mediawiki-bot-$username-cookies";
+}
