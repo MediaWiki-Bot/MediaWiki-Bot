@@ -65,7 +65,7 @@ is($test_one->{assert},                     $assert,                        'Spe
 is($test_one->{operator},                   $operator,                      'Specified operator set correctly');
 is($test_one->{api}->{config}->{api_url},   "http://$host/api.php",         'api.php with null path is OK'); # Issue 111: Null $path value returns "w"
 
-like($bot->{api}->{ua}->agent(),            qr{^MediaWiki::Bot/\d\.\d\.\d{1,2}$}, 'Useragent built correctly');
+like($bot->{api}->{ua}->agent(),            qr{^MediaWiki::Bot/(?:\d\.\d\.\d{1,2}|dev)$}, 'Useragent built correctly');
 
 my $test_two = MediaWiki::Bot->new({
     host        => $host,
