@@ -237,21 +237,25 @@ sub set_wiki {
     $self->{api}->{config}->{api_url} = $path
         ? "$protocol://$host/$path/api.php"
         : "$protocol://$host/api.php"; # $path is '', so don't use http://domain.com//api.php
-    warn "Wiki set to " . $self->{api}->{config}{api_url} . "\n" if $self->{'debug'} > 1;
+    warn "Wiki set to " . $self->{api}->{config}{api_url} . "\n" if $self->{debug} > 1;
 
     return 1;
 }
 
 =head2 login($login_hashref)
 
-Logs the use $username in, optionally using $password. First, an attempt will be made to use cookies to log in. If this fails, an attempt will be made to use the password provided to log in, if any. If the login was successful, returns true; false otherwise.
+Logs the use $username in, optionally using $password. First, an attempt will be
+made to use cookies to log in. If this fails, an attempt will be made to use the
+password provided to log in, if any. If the login was successful, returns true;
+false otherwise.
 
     $bot->login({
         username => $username,
         password => $password,
     }) or die "Login failed";
 
-Once logged in, attempt to do some simple auto-configuration. At present, this consists of:
+Once logged in, attempt to do some simple auto-configuration. At present, this
+consists of:
 
 =over 4
 
@@ -577,7 +581,7 @@ sub edit {
         if ($self->{'operator'}) {
             my $optalk = $self->get_text('User talk:' . $self->{'operator'});
             if (defined($optalk)) {
-                carp "Sending warning!" if $self->{'debug'};
+                carp "Sending warning!" if $self->{debug};
                 if ($self->{'username'}) {
                     $self->edit(
                         page     => "User talk:$self->{'operator'}",
@@ -600,7 +604,7 @@ sub edit {
                         is_minor => 0,
                         assert   => '',
                     );
-                    croak "Bot encountered an error while editing" if $self->{'debug'};
+                    croak "Bot encountered an error while editing" if $self->{debug};
                 }
             }
         }
@@ -854,7 +858,7 @@ sub get_pages {
             if (@pieces > 1) {
                 $pieces[0] = ($expand->{ $pieces[0] } || $pieces[0]);
                 my $v = $self->get_text(join ':', @pieces);
-                warn "Detected article name that needed expanding $title\n" if $self->{'debug'} > 1;
+                warn "Detected article name that needed expanding $title\n" if $self->{debug} > 1;
 
                 $return{$title} = $v;
                 if ($v =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {
@@ -1225,7 +1229,7 @@ sub get_pages_in_category {
     else {                                             # Definitely no namespace name, since there's no colon
         $category = "Category:$category";
     }
-    warn "Category to fetch is [[$category]]" if $self->{'debug'} > 1;
+    warn "Category to fetch is [[$category]]" if $self->{debug} > 1;
 
     my $hash = {
         action  => 'query',
@@ -2033,12 +2037,12 @@ sub prefixindex {
     }
 
     if (!$ns && $prefix =~ m/:/) {
-        print STDERR "Converted '$prefix' to..." if $self->{'debug'} > 1;
+        print STDERR "Converted '$prefix' to..." if $self->{debug} > 1;
         my ($name) = split(/:/, $prefix, 2);
         my $ns_data = $self->_get_ns_data();
         $ns = $ns_data->{$name};
         $prefix =~ s/^$name://;
-        warn "'$prefix' with a namespace filter $ns" if $self->{'debug'} > 1;
+        warn "'$prefix' with a namespace filter $ns" if $self->{debug} > 1;
     }
 
     my $hash = {
@@ -2235,7 +2239,7 @@ sub was_g_blocked {
             https://secure.wikimedia.org/wikipedia/meta/w/api.php
         ,x # /x flag is pretty awesome :)
         ) {
-        carp "GlobalBlocking queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{'debug'};
+        carp "GlobalBlocking queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{debug};
     }
 
     # http://meta.wikimedia.org/w/api.php?action=query&list=logevents&letype=gblblock&letitle=User:127.0.0.1&lelimit=1&leprop=ids
@@ -2282,7 +2286,7 @@ sub was_locked {
         ,x    # /x flag is pretty awesome :)
         )
     {
-        carp "CentralAuth queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{'debug'};
+        carp "CentralAuth queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{debug};
     }
 
     $user =~ s/^User://i;
@@ -2563,8 +2567,8 @@ sub _handle_api_error {
     my $self = shift;
     carp 'Error code '
         . $self->{api}->{error}->{code}
-        . ": "
-        . $self->{api}->{error}->{details} if $self->{'debug'};
+        . ': '
+        . $self->{api}->{error}->{details} if $self->{debug};
     $self->{error} = $self->{api}->{error};
     return;
 }
@@ -2578,9 +2582,9 @@ sub _is_loggedin {
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
-    my $is    = $res->{'query'}->{'userinfo'}->{'name'};
+    my $is    = $res->{query}->{userinfo}->{name};
     my $ought = $self->{username};
-    warn "Testing if logged in: we are $is, and we should be $ought" if $self->{'debug'} > 1;
+    warn "Testing if logged in: we are $is, and we should be $ought" if $self->{debug} > 1;
     return ($is eq $ought);
 }
 
@@ -2625,7 +2629,7 @@ sub _do_autoconfig {
     }
 
     unless ($has_bot && !$is_sysop) {
-        warn "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{'debug'} > 1;
+        warn "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{debug} > 1;
     }
     $self->set_highlimits($has_apihighlimits);
     $self->{'assert'} = $default_assert unless $self->{'assert'};
