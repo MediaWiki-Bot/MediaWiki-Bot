@@ -1915,11 +1915,20 @@ sub test_image_exists {
 
 =head2 get_pages_in_namespace
 
+    $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
+
 Returns an array containing the names of all pages in the specified namespace.
 The $namespace_id must be a number, not a namespace name.
 
-Setting $page_limit is optional. If $page_limit is over 500, it will be rounded
-up to the next multiple of 500.
+Setting $page_limit is optional, and specifies how many items to retrieve at
+once. Setting this to 'max' is recommended, and this is the default if omitted.
+If $page_limit is over 500, it will be rounded up to the next multiple of 500.
+If $page_limit is set higher than you are allowed to use, it will silently be
+reduced. Consider setting key 'max' in the L<options hashref|/linksearch> to
+retrieve multiple sets of results:
+
+    # Gotta get 'em all!
+    my @pages = $bot->get_pages_in_namespace(6, 'max', { max => 0 });
 
 =cut
 
@@ -1935,11 +1944,12 @@ sub get_pages_in_namespace {
         apnamespace => $namespace,
         aplimit     => $limit,
     };
-    $options->{max} = 1 unless $options->{max};
+    $options->{max} = 1 unless defined $options->{max};
+    delete $options->{max} if exists $options->{max} and $options->{max} == 0;
 
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
-    return 1 if (!ref $res);    # Not a ref when using callback
+    return 1 if (!ref $res); # Not a ref when using callback
     my @return;
     foreach (@{$res}) {
         push @return, $_->{title};

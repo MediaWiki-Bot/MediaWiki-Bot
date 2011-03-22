@@ -8,6 +8,7 @@ Vers. Rel.Mgr. SVN  Date
         * Added deprecation warnings to PWP/perlwikipedia aliases, as well as methods/call styles retained
           only for backwards compatibility, and which might be removed in future releases.
         * General cleanup of documentation
+        * get_pages_in_namespace() can now properly retrieve all results
 
 3.2.7 Mike.lif r466 24 Jan 2011
     Changes made since 3.2.6

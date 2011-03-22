@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -28,3 +28,7 @@ $namespace_id = 'non-existent';
 
 is($pages[0], undef, 'Error code received');
 is($bot->{error}->{code}, 3, 'Error code in MediaWiki::Bot object');
+
+$namespace_id = 6;
+@pages = $bot->get_pages_in_namespace($namespace_id, 'max', { max => 0 });
+cmp_ok(scalar @pages, '>', 500, 'Got more than 500 pages'); # RT 66790
