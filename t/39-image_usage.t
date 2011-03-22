@@ -1,6 +1,7 @@
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More tests => 7;
+use Test::Warn;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -13,7 +14,12 @@ my $bot = MediaWiki::Bot->new({
 my $file = 'File:Wiki.png';
 
 my @pages = $bot->image_usage($file, undef, undef, { max => 1 });
-my @pages_bc = $bot->links_to_image($file, undef, undef, { max => 1 });
+my @pages_bc;
+warning_is(
+    sub { @pages_bc = $bot->links_to_image($file, undef, undef, { max => 1 }); },
+    'links_to_image is an alias of image_usage; please use the new name',
+    'links_to_image is deprecated'
+);
 
 ok(     @pages,                                             'No error');
 cmp_ok( scalar @pages,                  '>', 1,             'More than one result');

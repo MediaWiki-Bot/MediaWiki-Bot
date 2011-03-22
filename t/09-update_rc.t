@@ -1,6 +1,7 @@
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More tests => 5;
+use Test::Warn;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -14,7 +15,12 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 my $num = 2;
-my @rc = $bot->update_rc($num);
+my @rc;
+warning_is(
+    sub { @rc = $bot->update_rc($num); },
+    'update_rc is deprecated, and may be removed in a future release. Please use recentchanges(), which provides more data, including rcid',
+    'update_rc is deprecated'
+);
 
 is(scalar(@rc), $num,                   'Right number of results returned');
 isa_ok($rc[0], 'HASH',                  'Right kind of data structure');

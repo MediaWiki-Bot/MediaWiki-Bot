@@ -91,7 +91,8 @@ For backward compatibility, you can specify up to three parameters:
 
     my $bot = MediaWiki::Bot->new('MediaWiki::Bot 2.3.1 (User:Mike.lifeguard)', $assert, $operator);
 
-This deprecated form will never do auto-login or autoconfiguration.
+B<This form is deprecated> will never do auto-login or autoconfiguration, and emits
+deprecation L<warnings>.
 
 =cut
 
@@ -119,6 +120,9 @@ sub new {
         $debug      = $_[0]->{debug};
     }
     else {
+        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+            . 'the constructor is deprecated and will be removed in a future release')
+            if @_;
         $agent    = shift;
         $assert   = shift;
         $operator = shift;
@@ -184,11 +188,11 @@ Set what wiki to use. Host is the domain name; path is the path before api.php (
         path        => 'wikipedia/meta/w',
     );
 
-For backward compatibility, you can specify up to two parameters in this deprecated form:
+For backward compatibility, you can specify up to two parameters:
 
     $bot->set_wiki($host, $path);
 
-If you don't set any parameter, it's previous value is used. If it has never been set, the default settings are 'http', 'en.wikipedia.org' and 'w'.
+B<This form is deprecated>, and will emit deprecation L<warnings>.
 
 =cut
 
@@ -204,6 +208,8 @@ sub set_wiki {
         $protocol = $_[0]->{'protocol'};
     }
     else {
+        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+            . 'set_wiki is deprecated, and will be removed in a future release');
         $host = shift;
         $path = shift;
     }
@@ -279,7 +285,8 @@ For backward compatibility, you can call this as
 
     $bot->login($username, $password);
 
-This deprecated form will never do autoconfiguration or SUL login.
+B<This form is deprecated>, and will emit deprecation L<warnings>. It will
+never do autoconfiguration or SUL login.
 
 =head3 Single User Login
 
@@ -323,6 +330,8 @@ sub login {
         $lgdomain   = $_[0]->{lgdomain};
     }
     else {
+        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+            . 'login is deprecated and will be removed in a future release');
         $username   = shift;
         $password   = shift;
         $autoconfig = 0;
@@ -509,9 +518,11 @@ Puts text on a page. If provided, use a specified edit summary, mark the edit as
         section => 'new',
     });
 
-You can also call this using the deprecated form:
+You can also call this as:
 
     $bot->edit($page, $text, $summary, $is_minor, $assert, $markasbot);
+
+B<This form is deprecated>, and will emit deprecation L<warnings>.
 
 =cut
 
@@ -535,6 +546,8 @@ sub edit {
         $section   = $_[0]->{'section'};
     }
     else {
+        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+            . 'edit is deprecated, and will be removed in a future release.');
         $page      = shift;
         $text      = shift;
         $summary   = shift;
@@ -957,19 +970,20 @@ sub get_last {
     return $self->_handle_api_error() unless $res;
 
     my (undef, $data) = %{ $res->{query}->{pages} };
-    my $revid = $data->{'revisions'}[0]->{'revid'};
+    my $revid = $data->{revisions}[0]->{revid};
     return $revid;
 }
 
-=head2 update_rc($limit[,$options_hashref])
+=head2 update_rc
 
-B<Note:> C<update_rc()> is deprecated in favour of C<recentchanges()>, which
+B<This method is deprecated>, and will emit deprecation L<warnings>.
+Replace calls to C<update_rc()> with calls to the newer C<recentchanges()>, which
 returns all available data, including rcid.
 
-Returns an array containing the Recent Changes to the wiki Main
-namespace. The array structure contains 'title', 'revid', 'old_revid',
-and 'timestamp'. The $options_hashref is the same as described in the
-section on linksearch().
+Returns an array containing the $limit most recent changes to the wiki's I<main
+namespace>. The array contains hashrefs with keys title, revid, old_revid,
+and timestamp. The $options_hashref is the same as described in the
+section on L</linksearch>.
 
     my @rc = $bot->update_rc(5);
     foreach my $hashref (@rc) {
@@ -991,6 +1005,9 @@ section on linksearch().
 =cut
 
 sub update_rc {
+    warnings::warn('deprecated', 'update_rc is deprecated, and may be removed '
+        . 'in a future release. Please use recentchanges(), which provides more '
+        . 'data, including rcid');
     my $self    = shift;
     my $limit   = shift || 'max';
     my $options = shift;
@@ -1440,13 +1457,34 @@ sub get_namespace_names {
     }
 }
 
-=head2 image_usage($image[,$ns[,$filter,[$options]]])
+=head2 image_usage
 
-Gets a list of pages which include a certain image. Additional parameters are the namespace number to fetch results from (or an arrayref of multiple namespace numbers); $filter is 'all', 'redirect' (to return only redirects), or 'nonredirects' (to return no redirects). $options is a hashref as described in the section for linksearch().
+Gets a list of pages which include a certain $image. Include the C<File:>
+namespace prefix to avoid incurring an extra round-trip (which will also emit
+a deprecation L<warnings|warnings>).
+
+Additional parameters are:
+
+=over 4
+
+=item *
+
+A namespace number to fetch results from (or an arrayref of multiple namespace
+numbers)
+
+=item *
+
+One of all, redirect, or nonredirects.
+
+=item *
+
+$options is a hashref as described in the section for L</linksearch>.
+
+=back
 
     my @pages = $bot->image_usage("File:Albert Einstein Head.jpg");
 
-or, make use of the options hashref to do incremental processing:
+Or, make use of the options hashref to do incremental processing:
 
     $bot->image_usage("File:Albert Einstein Head.jpg", undef, undef, {hook=>\&mysub, max=>5});
     sub mysub {
@@ -1467,6 +1505,9 @@ sub image_usage {
     my $options = shift;
 
     if ($image !~ m/^File:|Image:/) {
+        warnings::warn('deprecated', q{Please include the canonical File: }
+            . q{namespace in the image name. If you don't, MediaWiki::Bot might }
+            . q{incur a network round-trip to get the localized namespace name});
         my $ns_data = $self->_get_ns_data();
         my $image_ns_name = $ns_data->{'6'};
         if ($image !~ m/^\Q$image_ns_name\E:/) {
@@ -1501,13 +1542,18 @@ sub image_usage {
     return @pages;
 }
 
-=head2 links_to_image($image)
+=head2 links_to_image
 
-A backward-compatible call to image_usage(). You can provide only the image name.
+A backward-compatible call to L</image_usage>. You can provide only the image
+title.
+
+B<This method is deprecated>, and will emit deprecation L<warnings>.
 
 =cut
 
 sub links_to_image {
+    warnings::warn('deprecated', 'links_to_image is an alias of image_usage; '
+        . 'please use the new name');
     my $self = shift;
     return $self->image_usage($_[0]);
 }
@@ -1806,13 +1852,17 @@ sub was_blocked {
     }
 }
 
-=head2 test_block_hist($user)
+=head2 test_block_hist
 
-Retained for backwards compatibility. Use was_blocked($user) for clarity.
+Retained for backwards compatibility. Use L</was_blocked> for clarity.
+
+B<This method is deprecated>, and will emit deprecation L<warnings>.
 
 =cut
 
 sub test_block_hist { # Backwards compatibility
+    warnings::warn('deprecated', 'test_block_hist is an alias of was_blocked; '
+        . 'please use the new method name. This alias might be removed in a future release');
     return (was_blocked(@_));
 }
 

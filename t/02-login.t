@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Test::More 0.96 tests => 5;
+use Test::Warn;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -13,7 +14,7 @@ my $useragent = "MediaWiki::Bot tests ($t)";
 my $host = 'test.wikipedia.org';
 
 subtest 'one wiki' => sub {
-    plan tests => 2;
+    plan tests => 3;
 
     my $bot = MediaWiki::Bot->new({
         agent   => $useragent,
@@ -21,7 +22,11 @@ subtest 'one wiki' => sub {
         # debug   => 2,
     });
 
-    is($bot->login($username, $password), 1, 'Login OK');
+    warning_is(
+        sub {is($bot->login($username, $password), 1, 'Login OK'); },
+        'Please pass a hashref; this method of calling login is deprecated and will be removed in a future release',
+        'old login call style warns'
+    );
     ok($bot->_is_loggedin(), q{Double-check we're logged in});
 };
 
@@ -34,7 +39,7 @@ subtest 'cookies' => sub {
         # debug   => 2,
     });
 
-    is($cookiemonster->login($username), 1, 'Cookie log in');
+    is($cookiemonster->login({username => $username}), 1, 'Cookie log in');
     ok($cookiemonster->_is_loggedin(), q{Double-check we're logged in with only cookies});
     ok($cookiemonster->logout(), 'Logged out');
 };

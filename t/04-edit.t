@@ -22,11 +22,15 @@ my $bot = MediaWiki::Bot->new({
 
 my $title  = 'User:Mike.lifeguard/04-edit.t';
 my $rand   = rand();
-my $status = $bot->edit($title, $rand, $agent);
+my $status = $bot->edit({
+    page => $title,
+    text => $rand,
+    summary => $agent,
+});
 
 SKIP: {
     skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2 if
-        defined $bot->{'error'}->{'code'} and $bot->{'error'}->{'code'} == 3;
+        defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
     sleep(1);
     my $is = $bot->get_text($title);

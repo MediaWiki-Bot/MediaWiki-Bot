@@ -1,11 +1,7 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl MediaWiki::Bot.t'
-
-#########################
-
 use strict;
 use warnings;
-use Test::More tests => 13;
+use Test::More tests => 16;
+use Test::Warn;
 BEGIN {
     my $bail_diagnostic = <<'END';
 There was a problem loading the module. Typically,
@@ -17,9 +13,21 @@ members of perlwikibot@googlegroups.com.
 The test suite will bail out now; doing more testing is
 pointless since everything will fail.
 END
-    use_ok('MediaWiki::Bot') or BAIL_OUT($bail_diagnostic);
-    use_ok('PWP')            or BAIL_OUT($bail_diagnostic);
-    use_ok('perlwikipedia')  or BAIL_OUT($bail_diagnostic);
+    warning_is(
+        sub { use_ok('MediaWiki::Bot') or BAIL_OUT($bail_diagnostic); },
+        '',
+        'No warnings loading MediaWiki::Bot'
+    );
+    warning_is(
+        sub {use_ok('PWP')            or BAIL_OUT($bail_diagnostic); },
+        'PWP is a deprecated alias for MediaWiki::Bot. Please use the modern name; this one will be removed in a future release',
+        'PWP is deprecated'
+    );
+    warning_is(
+        sub {use_ok('perlwikipedia')  or BAIL_OUT($bail_diagnostic); },
+        'perlwikipedia is a deprecated alias for MediaWiki::Bot. Please use the modern name; this one will be removed in a future release',
+        'perlwikipedia is deprecated'
+    );
 };
 
 #################################
@@ -42,9 +50,9 @@ sleep(2); # should we wait for a response unless AUTOMATED_TESTING=1?
 
 #######################
 # Simple initialization
-my $bot   = new_ok('MediaWiki::Bot');
-my $bot_2 = new_ok('PWP');
-my $bot_3 = new_ok('perlwikipedia');
+my $bot   = new_ok('MediaWiki::Bot' => [{}]);
+my $bot_2 = new_ok('PWP' => [{}]);
+my $bot_3 = new_ok('perlwikipedia' => [{}]);
 
 #########################
 # Some deeper diagnostics

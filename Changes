@@ -3,7 +3,13 @@ Revision history for MediaWiki::Bot
 
 Vers. Rel.Mgr. SVN  Date
 ------------------------
+3.2.8 Mike.lif Unreleased
+    Changes made since 3.2.7
+        * Added deprecation warnings to PWP/perlwikipedia aliases, as well as methods/call styles retained
+          only for backwards compatibility, and which might be removed in future releases.
+
 3.2.7 Mike.lif r466 24 Jan 2011
+    Changes made since 3.2.6
         * get_allusers() can now filter by usergroup, and accepts an options hashref for greater versatility.
         * Test suite now uses test.wikipedia.org
         * Don't wait forever if the wiki doesn't respond

@@ -14,7 +14,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
 }
 
-$bot->login('Perlwikibot testing', 'test');
+$bot->login({username => 'Perlwikibot testing', password => 'test'});
 
 my $result = $bot->purge_page('Main Page');
 is($result, 1, 'Purge a single page');

@@ -3,6 +3,8 @@ use warnings;
 
 use MediaWiki::Bot;
 BEGIN {
+    warnings::warn('deprecated', 'PWP is a deprecated alias for MediaWiki::Bot. '
+        . 'Please use the modern name; this one will be removed in a future release');
     *PWP:: = \%MediaWiki::Bot::
 }
 our $VERSION = $PWP::VERSION;

@@ -3,6 +3,8 @@ use warnings;
 
 use MediaWiki::Bot;
 BEGIN {
+    warnings::warn('deprecated', 'perlwikipedia is a deprecated alias for MediaWiki::Bot. '
+        . 'Please use the modern name; this one will be removed in a future release');
     *perlwikipedia:: = \%MediaWiki::Bot::
 }
 our $VERSION = $perlwikipedia::VERSION;

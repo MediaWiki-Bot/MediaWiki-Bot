@@ -1,6 +1,7 @@
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More tests => 6;
+use Test::Warn;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -20,7 +21,12 @@ my $bot = MediaWiki::Bot->new({
 
 {   # [[User talk:Mike.lifeguard]] is probably not protected
     my $result = $bot->get_protection('User talk:Mike.lifeguard');
-    my $bc     = $bot->is_protected('User talk:Mike.lifeguard');
+    my $bc;
+    warning_is(
+        sub { $bc = $bot->is_protected('User talk:Mike.lifeguard'); },
+        'is_protected is deprecated, and might be removed in a future release; please use get_protection instead',
+        'is_protected is deprecated'
+    );
     is($result,             undef,      '[[User talk:Mike.lifeguard]] protection');
     is($result,             $bc,        'Agreement between new and old methods');
 }

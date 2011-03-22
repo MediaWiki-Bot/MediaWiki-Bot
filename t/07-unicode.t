@@ -5,9 +5,9 @@ use Test::More 0.94 tests => 2;
 
 # Fix "Wide character in print" warning on failure
 my $builder = Test::More->builder;
-binmode $builder->output,         ':utf8';
-binmode $builder->failure_output, ':utf8';
-binmode $builder->todo_output,    ':utf8';
+binmode $builder->output,         ':encoding(UTF-8)';
+binmode $builder->failure_output, ':encoding(UTF-8)';
+binmode $builder->todo_output,    ':encoding(UTF-8)';
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -46,18 +46,23 @@ subtest 'write' => sub {
 
     my $old  = $bot->get_text("$base/2");
     my $rand = rand();
-    $bot->edit("$base/2", "$rand\n$string\n", $agent);
+    $bot->edit({
+        page    => "$base/2",
+        text    => "$rand\n$string\n",
+        summary => $agent
+    });
+
     SKIP: {
         skip 'You are blocked, cannot use editing tests', 5 if
             defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
         my $rand2 = rand();
-        $bot->edit("$base/3", "$rand2\n$string\n", "$agent ($string)");
+        $bot->edit({page => "$base/3", text => "$rand2\n$string\n", summary => "$agent ($string)"});
         my @history = $bot->get_history("$base/3", 1);
         is($history[0]->{comment}, "$agent ($string)", 'Use unicode in an edit summary correctly');
 
         my $rand3 = rand();
-        $bot->edit("$base/$string", "$rand3\n$string\n", $agent);
+        $bot->edit({page => "$base/$string", text => "$rand3\n$string\n", summary => $agent});
         {
             my $new = $bot->get_text("$base/2");
             isnt($new, $old,                  'Successfully saved test string');
