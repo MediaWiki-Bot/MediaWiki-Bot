@@ -44,6 +44,10 @@ with the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
 
 =head2 new
 
+    my $bot = MediaWiki::Bot({
+        host    => 'en.wikipedia.org',
+    });
+
 Calling C<<MediaWiki::Bot->new()>> will create a new MediaWiki::Bot object. The
 only parameter is a hashref with keys:
 
@@ -539,10 +543,10 @@ sub set_highlimits {
 
 =head2 logout
 
+    $bot->logout();
+
 The logout method logs the bot out of the wiki. This invalidates all login
 cookies.
-
-    $bot->logout();
 
 =cut
 
@@ -557,6 +561,15 @@ sub logout {
 }
 
 =head2 edit
+
+    my $text = $bot->get_text('My page');
+    $text .= "\n\n* More text\n";
+    $bot->edit({
+        page    => 'My page',
+        text    => $text,
+        summary => 'Adding new content',
+        section => 'new',
+    });
 
 This method edits a wiki page, and takes a hashref of data with keys:
 
@@ -585,15 +598,6 @@ I<section> - edit a single section instead of the whole page
 =back
 
 An MD5 hash is sent to guard against data corruption while in transit.
-
-    my $text = $bot->get_text('My page');
-    $text .= "\n\n* More text\n";
-    $bot->edit({
-        page    => 'My page',
-        text    => $text,
-        summary => 'Adding new content',
-        section => 'new',
-    });
 
 You can also call this as:
 
@@ -705,8 +709,9 @@ sub edit {
 
 =head2 move
 
-This moves a wiki page. Parameters are, in order:
-S<($from_title, $to_title, $reason, $options_hashref)>.
+    $bot->move($from_title, $to_title, $reason, $options_hashref);
+
+This moves a wiki page.
 
 If you wish to specify more options (like whether to suppress creation of a
 redirect), use $options_hashref, which has keys:
@@ -766,6 +771,8 @@ sub move {
 }
 
 =head2 get_history
+
+    my @hist = $bot->get_history($title, $limit, $revid, $direction);
 
 Returns an array containing the history of the specified $page_title, with
 $limit number of revisions (default is as many as possible).
@@ -1012,6 +1019,8 @@ sub revert {
 
 =head2 undo
 
+    $bot->undo($title, $revid, $summary, $after);
+
 Reverts the specified $revid, with an edit summary of $summary, using the undo
 function. To undo all revisions from $revid up to but not including this one,
 set $after to another revid. If not set, just undo the one revision ($revid).
@@ -1050,7 +1059,7 @@ sub undo {
 Returns the revid of the last revision to $page not made by $user. undef is
 returned if no result was found, as would be the case if the page is deleted.
 
-    my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+    my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
     if defined($revid) {
         print "Reverting to $revid\n";
         $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
@@ -1397,7 +1406,7 @@ sub list_transclusions {
 Returns an array containing the names of all pages in the specified category
 (include the Category: prefix). Does not recurse into sub-categories.
 
-    my @pages = $bot->get_pages_in_category("Category:People on stamps of Gabon");
+    my @pages = $bot->get_pages_in_category('Category:People on stamps of Gabon');
     print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
 
 The options hashref is as described in the section on L</linksearch>.
@@ -1446,6 +1455,8 @@ sub get_pages_in_category {
 }
 
 =head2 get_all_pages_in_category
+
+    my @pages = $bot->get_all_pages_in_category($category, $options_hashref);
 
 Returns an array containing the names of B<all> pages in the specified category
 (include the Category: prefix), including sub-categories. The $options_hashref
@@ -1638,6 +1649,8 @@ sub purge_page {
 
 =head2 get_namespace_names
 
+    my %namespace_names = $bot->get_namespace_names();
+
 Returns a hash linking the namespace id, such as 1, to its named equivalent,
 such as "Talk".
 
@@ -1765,6 +1778,8 @@ sub links_to_image {
 }
 
 =head2 is_blocked
+
+    my $blocked = $bot->is_blocked('User:Mike.lifeguard');
 
 Checks if a user is currently blocked.
 
@@ -1959,6 +1974,8 @@ sub get_pages_in_namespace {
 
 =head2 count_contributions
 
+    my $count = $bot->count_contributions($user);
+
 Uses the API to count $user's contributions.
 
 =cut
@@ -1980,6 +1997,8 @@ sub count_contributions {
 }
 
 =head2 last_active
+
+    my $latest_timestamp = $bot->last_active($user);
 
 Returns the last active time of $user in C<YYYY-MM-DDTHH:MM:SSZ>.
 
@@ -2026,6 +2045,8 @@ sub recent_edit_to_page {
 
 =head2 get_users
 
+    my @recent_editors = $bot->get_users($title, $limit, $revid, $direction);
+
 Gets the most recent editors to $page, up to $limit, starting from $revision
 and going in $direction.
 
@@ -2068,6 +2089,10 @@ sub get_users {
 }
 
 =head2 was_blocked
+
+    for ("Mike.lifeguard", "Jimbo Wales") {
+        print "$_ was blocked\n" if $bot->was_blocked($_);
+    }
 
 Returns whether $user has ever been blocked.
 
@@ -2119,6 +2144,8 @@ sub test_block_hist { # Backwards compatibility
 
 =head2 expandtemplates
 
+    my $expanded = $bot->expandtemplates($title, $wikitext);
+
 Expands templates on $page, using $text if provided, otherwise loading the page
 text automatically.
 
@@ -2146,6 +2173,8 @@ sub expandtemplates {
 }
 
 =head2 get_allusers
+
+    my @users = $bot->get_allusers($limit, $user_group, $options_hashref);
 
 Returns an array of all users. Default $limit is 500. Optionally specify a
 $group (like 'sysop') to list that group only. The last optional parameter
@@ -2226,6 +2255,8 @@ sub db_to_domain {
 
 =head2 domain_to_db
 
+    my $db = $bot->domain_to_db($domain_name);
+
 As you might expect, does the opposite of L</domain_to_db>: Converts a domain
 name (meta.wikimedia.org) into a database/wiki name (metawiki).
 
@@ -2254,6 +2285,12 @@ sub domain_to_db {
 }
 
 =head2 diff
+
+    my $diff_html = $bot->diff({
+        title => $title,
+        revid => $revid,
+        oldid => $oldid,
+    });
 
 This allows retrieval of a diff from the API. The return is a scalar containing
 the I<HTML table> of the diff. Options are passed as a hashref with keys:
@@ -2556,6 +2593,8 @@ sub get_log {
 
 =head2 is_g_blocked
 
+    my $is_globally_blocked = $bot->is_g_blocked('127.0.0.1');
+
 Returns what IP/range block I<currently in place> affects the IP/range. The
 return is a scalar of an IP/range if found (evaluates to true in boolean
 context); undef otherwise (evaluates false in boolean context). Pass in a
@@ -2582,6 +2621,8 @@ sub is_g_blocked {
 }
 
 =head2 was_g_blocked
+
+    print "127.0.0.1 was globally blocked\n" if $bot->was_g_blocked('127.0.0.1');
 
 Returns whether an IP/range was ever globally blocked. You should probably
 call this method only when your bot is operating on Meta.
@@ -2630,6 +2671,8 @@ sub was_g_blocked {
 }
 
 =head2 was_locked
+
+    my $was_locked = $bot->was_locked('Mike.lifeguard');
 
 Returns whether a user was ever locked.
 
@@ -2681,7 +2724,7 @@ has a type, level, and expiry. Levels are 'sysop' and 'autoconfirmed'; types are
 'move' and 'edit'; expiry is a timestamp. Additionally, the key 'cascade' will
 exist if cascading protection is used.
 
-    my $page = "Main Page";
+    my $page = 'Main Page';
     $bot->edit({
         page    => $page,
         text    => rand(),
@@ -2690,7 +2733,7 @@ exist if cascading protection is used.
 
 You can also pass an arrayref of page titles to do bulk queries:
 
-    my @pages = ("Main Page", "User:Mike.lifeguard", "Project:Sandbox");
+    my @pages = ('Main Page', 'User:Mike.lifeguard', 'Project:Sandbox');
     my $answer = $bot->get_protection(\@pages);
     foreach my $title (keys %$answer) {
         my $protected = $answer->{$title};
@@ -2753,6 +2796,8 @@ sub is_protected {
 
 =head2 patrol
 
+    $bot->patrol($rcid);
+
 Marks a page or revision identified by the $rcid as patrolled. To mark several
 rcids as patrolled, you may pass an arrayref of rcids.
 
@@ -2783,6 +2828,8 @@ sub patrol {
 }
 
 =head2 email
+
+    $bot->email($user, $subject, $body);
 
 This allows you to send emails through the wiki. All 3 of $user (without the
 User: prefix), $subject and $body are required. If $user is an arrayref, this
@@ -2880,6 +2927,8 @@ sub top_edits {
 }
 
 =head2 contributions
+
+    my @contribs = $bot->contributions($user, $namespace);
 
 Returns an array of hashrefs of data for the user's contributions. $ns can be an
 arrayref of namespace numbers. $options can be specified as in L</linksearch>.
