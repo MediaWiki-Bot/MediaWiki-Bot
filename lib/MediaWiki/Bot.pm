@@ -11,7 +11,7 @@ use Carp;
 use URI::Escape qw(uri_escape_utf8);
 use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
-use MediaWiki::API 0.20;
+use MediaWiki::API 0.35;
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {

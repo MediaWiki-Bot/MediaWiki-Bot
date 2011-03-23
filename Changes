@@ -10,6 +10,7 @@ Vers. Rel.Mgr. SVN  Date
         * General cleanup of documentation
         * get_pages_in_namespace() can now properly retrieve all results
         * recent_edit_to_page() now returns what it was documented to return (both timestamp and username)
+        * Require a more recent version of MediaWiki::API
 
 3.2.7 Mike.lif r466 24 Jan 2011
     Changes made since 3.2.6
