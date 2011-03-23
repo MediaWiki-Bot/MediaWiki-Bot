@@ -2998,16 +2998,21 @@ sub _handle_api_error {
 sub _is_loggedin {
     my $self = shift;
 
-    my $hash = {
-        action => 'query',
-        meta   => 'userinfo',
-    };
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    my $is    = $res->{query}->{userinfo}->{name};
+    my $is    = $self->_whoami();
     my $ought = $self->{username};
     warn "Testing if logged in: we are $is, and we should be $ought" if $self->{debug} > 1;
     return ($is eq $ought);
+}
+
+sub _whoami {
+    my $self = shift;
+
+    my $res = $self->{api}->api({
+        action => 'query',
+        meta   => 'userinfo',
+    }) or return $self->_handle_api_error();
+
+    return $res->{query}->{userinfo}->{name};
 }
 
 sub _do_autoconfig {
