@@ -15,8 +15,8 @@ PWP - Alias for MediaWiki::Bot, previously known as perlwikipedia or PWP
 
 =head1 SYNOPSIS
 
-    use PWP;
-    my $bot = PWP->new();
+    use MediaWiki::Bot;
+    my $bot = MediaWiki::Bot->new();
 
 =head1 DESCRIPTION
 

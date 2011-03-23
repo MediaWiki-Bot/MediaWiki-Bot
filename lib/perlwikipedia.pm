@@ -15,8 +15,8 @@ perlwikipedia - Alias for MediaWiki::Bot, previously known as perlwikipedia or P
 
 =head1 SYNOPSIS
 
-    use perlwikipedia;
-    my $bot = perlwikipedia->new();
+    use MediaWiki::Bot;
+    my $bot = MediaWiki::Bot->new();
 
 =head1 DESCRIPTION
 
