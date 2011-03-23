@@ -20,7 +20,8 @@ perlwikipedia - Alias for MediaWiki::Bot, previously known as perlwikipedia or P
 
 =head1 DESCRIPTION
 
-See L<MediaWiki::Bot>
+This is a B<deprecated> alias for L<MediaWiki::Bot>, and will be removed in
+a future release. Please use the module's modern name.
 
 =cut
 

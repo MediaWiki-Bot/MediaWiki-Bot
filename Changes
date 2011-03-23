@@ -5,6 +5,7 @@ Vers. Rel.Mgr. SVN  Date
 ------------------------
 3.2.8 Mike.lif Unreleased
     Changes made since 3.2.7
+        * NOTE: PWP and perlwikipedia are officially deprecated, and *will* be removed in a future release
         * Added deprecation warnings to PWP/perlwikipedia aliases, as well as methods/call styles retained
           only for backwards compatibility, and which might be removed in future releases.
         * General cleanup of documentation
