@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -24,7 +24,8 @@ is_deeply(\@history, [
 
 my $time = $history[0]->{'timestamp_time'};
 my $date = $history[0]->{'timestamp_date'};
-my $timestamp = $bot->recent_edit_to_page($title);
+my ($timestamp, $user) = $bot->recent_edit_to_page($title);
 
 like($timestamp, qr/^\d{4}-\d{1,2}-\d{1,2}T\d\d:\d\d:\d\dZ$/, 'Timestamp formed properly');
 is($timestamp, "${date}T${time}Z", 'Timestamp found OK');
+is($user, 'Mike.lifeguard', 'User returned!'); # Unreported bug

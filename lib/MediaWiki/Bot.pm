@@ -2002,6 +2002,8 @@ sub last_active {
 
 =head2 recent_edit_to_page
 
+     my ($timestamp, $user) = $bot->recent_edit_to_page($title);
+
 Returns timestamp and username for most recent (top) edit to $page.
 
 =cut
@@ -2018,7 +2020,8 @@ sub recent_edit_to_page {
         { max => 1 });
     return $self->_handle_api_error() unless $res;
     my $data = ( %{ $res->{query}->{pages} } )[1];
-    return $data->{revisions}[0]->{timestamp};
+    return ($data->{revisions}[0]->{timestamp},
+        $data->{revisions}[0]->{user});
 }
 
 =head2 get_users
