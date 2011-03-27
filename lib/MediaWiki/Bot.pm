@@ -322,10 +322,6 @@ Warning if the account doesn't have the bot flag, and isn't a sysop account.
 
 =item *
 
-Setting the use of apihighlimits if the account has that userright.
-
-=item *
-
 Setting an appropriate default assert.
 
 =back
@@ -525,20 +521,15 @@ sub _do_sul {
 
 =head2 set_highlimits
 
-Tells MediaWiki::Bot to start/stop using
-L<apihighlimits|http://www.mediawiki.org/wiki/API:Query_-_Lists#Limits>
-for certain queries.
-
-    $bot->set_highlimits(1);
+B<This method is deprecated> and has no effect, other than to emit
+deprecation L<warnings>.
 
 =cut
 
 sub set_highlimits {
     my $self       = shift;
-    my $highlimits = defined($_[0]) ? shift : 1;
-
-    $self->{highlimits} = $highlimits;
-    return 1;
+    warnings::warn('deprecated', 'Use of set_highlimits() is deprecated, and has no effect');
+    return;
 }
 
 =head2 logout
@@ -3035,15 +3026,11 @@ sub _do_autoconfig {
 
     my @rights            = @{ $res->{query}->{userinfo}->{rights} };
     my $has_bot           = 0;
-    my $has_apihighlimits = 0;
     my $default_assert    = 'user';                                           # At a *minimum*, the bot should be logged in.
     foreach my $right (@rights) {
         if ($right eq 'bot') {
             $has_bot        = 1;
             $default_assert = 'bot';
-        }
-        elsif ($right eq 'apihighlimits') {
-            $has_apihighlimits = 1;
         }
     }
 
@@ -3058,7 +3045,6 @@ sub _do_autoconfig {
     unless ($has_bot && !$is_sysop) {
         warn "$is doesn't have a bot flag; edits will be visible in RecentChanges" if $self->{debug} > 1;
     }
-    $self->set_highlimits($has_apihighlimits);
     $self->{assert} = $default_assert unless $self->{assert};
 
     return 1;
