@@ -8,6 +8,8 @@ Changelog for {{$dist->name}}
     * get_pages_in_namespace() can now properly retrieve all results
     * recent_edit_to_page() now returns what it was documented to return (both timestamp and username)
     * Require a more recent version of MediaWiki::API
+    * Resolve permissions error in contributions()
+    * Make contributions() return data as documented
 
 3.2.7 2011-01-24
     * get_allusers() can now filter by usergroup, and accepts an options hashref for greater versatility.
