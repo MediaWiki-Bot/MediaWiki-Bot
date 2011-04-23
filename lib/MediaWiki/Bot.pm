@@ -1644,22 +1644,17 @@ such as "Talk".
 
 sub get_namespace_names {
     my $self = shift;
-    my %return;
     my $res = $self->{api}->api({
             action => 'query',
             meta   => 'siteinfo',
-            siprop => 'namespaces'
+            siprop => 'namespaces',
     });
     return $self->_handle_api_error() unless $res;
+    my %return;
     foreach my $id (keys %{ $res->{query}->{namespaces} }) {
         $return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
     }
-    if ($return{1} or $_[0] > 1) {
-        return %return;
-    }
-    else {
-        return $self->get_namespace_names($_[0] + 1);
-    }
+    return %return;
 }
 
 =head2 image_usage
