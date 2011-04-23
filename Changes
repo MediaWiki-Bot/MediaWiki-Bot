@@ -1,6 +1,9 @@
 Changelog for {{$dist->name}}
 
-{{NEXT}}
+{{$NEXT}}
+    * Deprecation warnings now respect whether deprecation warnings are turned on
+
+3.3.0 2011-04-22
     * NOTE: PWP and perlwikipedia are officially deprecated, and *will* be removed in a future release
     * Added deprecation warnings to PWP/perlwikipedia aliases, as well as methods/call styles retained
       only for backwards compatibility, and which might be removed in future releases.

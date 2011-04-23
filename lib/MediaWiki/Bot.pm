@@ -143,7 +143,7 @@ sub new {
         $debug      = $_[0]->{debug};
     }
     else {
-        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+        warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
             . 'the constructor is deprecated and will be removed in a future release')
             if @_;
         $agent    = shift;
@@ -254,7 +254,7 @@ sub set_wiki {
         $protocol = $_[0]->{protocol};
     }
     else {
-        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+        warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
             . 'set_wiki is deprecated, and will be removed in a future release');
         $host = shift;
         $path = shift;
@@ -376,7 +376,7 @@ sub login {
         $lgdomain   = $_[0]->{lgdomain};
     }
     else {
-        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+        warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
             . 'login is deprecated and will be removed in a future release');
         $username   = shift;
         $password   = shift;
@@ -526,7 +526,7 @@ deprecation warnings.
 
 sub set_highlimits {
     my $self       = shift;
-    warnings::warn('deprecated', 'Use of set_highlimits() is deprecated, and has no effect');
+    warnings::warnif('deprecated', 'Use of set_highlimits() is deprecated, and has no effect');
     return;
 }
 
@@ -616,7 +616,7 @@ sub edit {
         $section   = $_[0]->{section};
     }
     else {
-        warnings::warn('deprecated', 'Please pass a hashref; this method of calling '
+        warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
             . 'edit is deprecated, and will be removed in a future release.');
         $page      = shift;
         $text      = shift;
@@ -1107,7 +1107,7 @@ The L</"Options hashref"> is also available:
 =cut
 
 sub update_rc {
-    warnings::warn('deprecated', 'update_rc is deprecated, and may be removed '
+    warnings::warnif('deprecated', 'update_rc is deprecated, and may be removed '
         . 'in a future release. Please use recentchanges(), which provides more '
         . 'data, including rcid');
     my $self    = shift;
@@ -1708,7 +1708,7 @@ sub image_usage {
     my $options = shift;
 
     if ($image !~ m/^File:|Image:/) {
-        warnings::warn('deprecated', q{Please include the canonical File: }
+        warnings::warnif('deprecated', q{Please include the canonical File: }
             . q{namespace in the image name. If you don't, MediaWiki::Bot might }
             . q{incur a network round-trip to get the localized namespace name});
         my $ns_data = $self->_get_ns_data();
@@ -1755,7 +1755,7 @@ B<This method is deprecated>, and will emit deprecation warnings.
 =cut
 
 sub links_to_image {
-    warnings::warn('deprecated', 'links_to_image is an alias of image_usage; '
+    warnings::warnif('deprecated', 'links_to_image is an alias of image_usage; '
         . 'please use the new name');
     my $self = shift;
     return $self->image_usage($_[0]);
@@ -1805,7 +1805,7 @@ B<This method is deprecated>, and will emit deprecation warnings.
 =cut
 
 sub test_blocked { # For backwards-compatibility
-    warnings::warn('deprecated', 'test_blocked is an alias of is_blocked; '
+    warnings::warnif('deprecated', 'test_blocked is an alias of is_blocked; '
         . 'please use the new name. This alias might be removed in a future release');
     return (is_blocked(@_));
 }
@@ -2121,7 +2121,7 @@ B<This method is deprecated>, and will emit deprecation warnings.
 =cut
 
 sub test_block_hist { # Backwards compatibility
-    warnings::warn('deprecated', 'test_block_hist is an alias of was_blocked; '
+    warnings::warnif('deprecated', 'test_block_hist is an alias of was_blocked; '
         . 'please use the new method name. This alias might be removed in a future release');
     return (was_blocked(@_));
 }
@@ -2766,7 +2766,7 @@ B<This method is deprecated>, and will emit deprecation warnings.
 =cut
 
 sub is_protected {
-    warnings::warn('deprecated', 'is_protected is deprecated, and might be '
+    warnings::warnif('deprecated', 'is_protected is deprecated, and might be '
         . 'removed in a future release; please use get_protection instead');
     my $self = shift;
     return $self->get_protection(@_);
