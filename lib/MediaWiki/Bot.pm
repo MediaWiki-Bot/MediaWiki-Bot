@@ -25,9 +25,7 @@ foreach my $plugin (__PACKAGE__->plugins) {
 
     my $bot = MediaWiki::Bot->new({
         assert      => 'bot',
-        protocol    => 'https',
-        host        => 'secure.wikimedia.org',
-        path        => 'wikipedia/meta/w',
+        host        => 'de.wikimedia.org',
         login_data  => { username => "Mike's bot account", password => "password" },
     });
 
