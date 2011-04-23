@@ -1,7 +1,7 @@
 package MediaWiki::Bot;
 use strict;
 use warnings;
-# ABSTRACT: a MediaWiki bot framework written in Perl
+# ABSTRACT: a high-level bot framework for interacting with MediaWiki wikis
 # VERSION
 
 use HTML::Entities 3.28;
