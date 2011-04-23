@@ -780,8 +780,6 @@ sub get_history {
     my $rvstartid = shift;
     my $direction = shift;
 
-    my @return;
-
     my $hash = {
         action  => 'query',
         prop    => 'revisions',
@@ -798,6 +796,7 @@ sub get_history {
     my ($id) = keys %{ $res->{query}->{pages} };
     my $array = $res->{query}->{pages}->{$id}->{revisions};
 
+    my @return;
     foreach my $hash (@{$array}) {
         my $revid = $hash->{revid};
         my $user  = $hash->{user};
