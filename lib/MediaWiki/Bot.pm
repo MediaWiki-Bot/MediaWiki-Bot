@@ -112,10 +112,10 @@ For example:
 
 For backward compatibility, you can specify up to three parameters:
 
-    my $bot = MediaWiki::Bot->new('MediaWiki::Bot 2.3.1 (User:Mike.lifeguard)', $assert, $operator);
+    my $bot = MediaWiki::Bot->new('My custom useragent string', $assert, $operator);
 
 B<This form is deprecated> will never do auto-login or autoconfiguration, and emits
-deprecation L<warnings>.
+deprecation warnings.
 
 =cut
 
@@ -238,7 +238,7 @@ For backward compatibility, you can specify up to two parameters:
 
     $bot->set_wiki($host, $path);
 
-B<This form is deprecated>, and will emit deprecation L<warnings>.
+B<This form is deprecated>, and will emit deprecation warnings.
 
 =cut
 
@@ -330,7 +330,7 @@ For backward compatibility, you can call this as
 
     $bot->login($username, $password);
 
-B<This form is deprecated>, and will emit deprecation L<warnings>. It will
+B<This form is deprecated>, and will emit deprecation warnings. It will
 never do autoconfiguration or SUL login.
 
 =head3 Single User Login
@@ -520,7 +520,7 @@ sub _do_sul {
 =head2 set_highlimits
 
 B<This method is deprecated> and has no effect, other than to emit
-deprecation L<warnings>.
+deprecation warnings.
 
 =cut
 
@@ -592,7 +592,7 @@ You can also call this as:
 
     $bot->edit($page, $text, $summary, $is_minor, $assert, $markasbot);
 
-B<This form is deprecated>, and will emit deprecation L<warnings>.
+B<This form is deprecated>, and will emit deprecation warnings.
 
 =cut
 
@@ -823,7 +823,7 @@ $section_number - if defined, returns the text of that section.
 A blank page will return wikitext of "" (which evaluates to false in Perl,
 but is defined); a nonexistent page will return undef (which also evaluates
 to false in Perl, but is obviously undefined). You can distinguish between
-blank and nonexistent pages by using L<defined>:
+blank and nonexistent pages by using L<defined|perlfunc/defined>:
 
     my $wikitext = $bot->get_text('Page title');
     print "Wikitext: $wikitext\n" if defined $wikitext;
@@ -1077,14 +1077,13 @@ sub get_last {
 
 =head2 update_rc
 
-B<This method is deprecated>, and will emit deprecation L<warnings>.
+B<This method is deprecated>, and will emit deprecation warnings.
 Replace calls to C<update_rc()> with calls to the newer C<recentchanges()>, which
 returns all available data, including rcid.
 
 Returns an array containing the $limit most recent changes to the wiki's I<main
 namespace>. The array contains hashrefs with keys title, revid, old_revid,
-and timestamp. The $options_hashref is the same as described in the
-section on L</linksearch>.
+and timestamp.
 
     my @rc = $bot->update_rc(5);
     foreach my $hashref (@rc) {
@@ -1092,7 +1091,9 @@ section on L</linksearch>.
         print "$title\n";
     }
 
-    # Or, use a callback for incremental processing:
+The L</"Options hashref"> is also available:
+
+    # Use a callback for incremental processing:
     my $options = { hook => \&mysub, };
     $bot->update_rc($options);
     sub mysub {
@@ -1186,7 +1187,7 @@ I<title>
 By default, the main namespace is used, and limit is set to 50. Pass an
 arrayref of namespace numbers to get results from several namespaces.
 
-The $options_hashref is the same as described in the section on L</linksearch>.
+The L</"Options hashref">:
 
     my @rc = $bot->update_rc(4, 10);
     foreach my $hashref (@rc) {
@@ -1244,20 +1245,16 @@ A namespace number to search (pass an arrayref to search in multiple namespaces)
 
 =item *
 
-$options_hashref, as described by L<MediaWiki::API>:
-
-Set max to limit the number of queries performed.
-
-Set hook to a subroutine reference to use a callback hook for incremental
-processing.
-
-Refer to the section on L</linksearch> for examples.
+An L</"Options hashref">.
 
 =back
 
 A typical query:
 
-    my @links = $bot->what_links_here("Meta:Sandbox", undef, 1, {hook=>\&mysub});
+    my @links = $bot->what_links_here("Meta:Sandbox",
+        undef, 1,
+        { hook=>\&mysub }
+    );
     sub mysub{
         my ($res) = @_;
         foreach my $hash (@$res) {
@@ -1397,8 +1394,8 @@ Returns an array containing the names of all pages in the specified category
     my @pages = $bot->get_pages_in_category('Category:People on stamps of Gabon');
     print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
 
-The options hashref is as described in the section on L</linksearch>.
-Use C<<{ max => 0 }>> to get all results.
+The options hashref is as described in L</"Options hashref">.
+Use C<< { max => 0 } >> to get all results.
 
 =cut
 
@@ -1448,7 +1445,7 @@ sub get_pages_in_category {
 
 Returns an array containing the names of B<all> pages in the specified category
 (include the Category: prefix), including sub-categories. The $options_hashref
-is the same as described for L</get_pages_in_category>.
+is described fully in L</"Options hashref">.
 
 =cut
 
@@ -1512,7 +1509,7 @@ You can search by $protocol (http is default).
 
 =item *
 
-$options_hashref is fully documented in L<MediaWiki::API>:
+$options_hashref is fully documented in L</"Options hashref">:
 
 Set I<max> in $options to get more than one query's worth of results:
 
@@ -1524,7 +1521,8 @@ Set I<max> in $options to get more than one query's worth of results:
         print "$page: $url\n";
     }
 
-Set I<hook> to a subroutine reference to use a callback hook for incremental processing:
+Set I<hook> to a subroutine reference to use a callback hook for incremental
+processing:
 
     my $options = { hook => \&mysub, }; # I want to do incremental processing
     $bot->linksearch("slashdot.org", 1, undef, $options);
@@ -1668,7 +1666,7 @@ sub get_namespace_names {
 
 Gets a list of pages which include a certain $image. Include the C<File:>
 namespace prefix to avoid incurring an extra round-trip (which will also emit
-a deprecation L<warnings|warnings>).
+a deprecation warnings).
 
 Additional parameters are:
 
@@ -1691,9 +1689,12 @@ $options is a hashref as described in the section for L</linksearch>.
 
     my @pages = $bot->image_usage("File:Albert Einstein Head.jpg");
 
-Or, make use of the options hashref to do incremental processing:
+Or, make use of the L</"Options hashref"> to do incremental processing:
 
-    $bot->image_usage("File:Albert Einstein Head.jpg", undef, undef, {hook=>\&mysub, max=>5});
+    $bot->image_usage("File:Albert Einstein Head.jpg",
+        undef, undef,
+        { hook=>\&mysub, max=>5 }
+    );
     sub mysub {
         my $res = shift;
         foreach my $page (@$res) {
@@ -1754,7 +1755,7 @@ sub image_usage {
 A backward-compatible call to L</image_usage>. You can provide only the image
 title.
 
-B<This method is deprecated>, and will emit deprecation L<warnings>.
+B<This method is deprecated>, and will emit deprecation warnings.
 
 =cut
 
@@ -1804,7 +1805,7 @@ sub is_blocked {
 
 Retained for backwards compatibility. Use L</is_blocked> for clarity.
 
-B<This method is deprecated>, and will emit deprecation L<warnings>.
+B<This method is deprecated>, and will emit deprecation warnings.
 
 =cut
 
@@ -1927,7 +1928,7 @@ Setting $page_limit is optional, and specifies how many items to retrieve at
 once. Setting this to 'max' is recommended, and this is the default if omitted.
 If $page_limit is over 500, it will be rounded up to the next multiple of 500.
 If $page_limit is set higher than you are allowed to use, it will silently be
-reduced. Consider setting key 'max' in the L<options hashref|/linksearch> to
+reduced. Consider setting key 'max' in the L</"Options hashref"> to
 retrieve multiple sets of results:
 
     # Gotta get 'em all!
@@ -2120,7 +2121,7 @@ sub was_blocked {
 
 Retained for backwards compatibility. Use L</was_blocked> for clarity.
 
-B<This method is deprecated>, and will emit deprecation L<warnings>.
+B<This method is deprecated>, and will emit deprecation warnings.
 
 =cut
 
@@ -2166,7 +2167,7 @@ sub expandtemplates {
 
 Returns an array of all users. Default $limit is 500. Optionally specify a
 $group (like 'sysop') to list that group only. The last optional parameter
-is an options hashref, as detailed in the section on L</linksearch>.
+is an L</"Options hashref">.
 
 =cut
 
@@ -2274,12 +2275,6 @@ sub domain_to_db {
 
 =head2 diff
 
-    my $diff_html = $bot->diff({
-        title => $title,
-        revid => $revid,
-        oldid => $oldid,
-    });
-
 This allows retrieval of a diff from the API. The return is a scalar containing
 the I<HTML table> of the diff. Options are passed as a hashref with keys:
 
@@ -2344,7 +2339,8 @@ sub diff {
 =head2 prefixindex
 
 This returns an array of hashrefs containing page titles that start with the
-given $prefix.
+given $prefix. The hashref has keys 'title' and 'redirect' (present if the
+page is a redirect, not present otherwise).
 
 Additional parameters are:
 
@@ -2361,9 +2357,7 @@ of numbers).
 
 =item *
 
-$options_hashref as described in the section on L</linksearch> or in
-L<MediaWiki::API>. The hashref has keys 'title' and 'redirect' (present if
-the page is a redirect, not present otherwise).
+$options_hashref as described in L</"Options hashref">.
 
 =back
 
@@ -2443,8 +2437,7 @@ main namespace)
 
 =item *
 
-$options_hashref is a hashref as described in L<MediaWiki::API> or the section
-on L</linksearch>.
+$options_hashref is a hashref as described in L</"Options hashref">:
 
 =back
 
@@ -2522,7 +2515,7 @@ User:$username.
 
 =back
 
-The second is the familiar L<$options_hashref|/linksearch>.
+The second is the familiar L</"Options hashref">.
 
     my $log = $bot->get_log({
             type => 'block',
@@ -2613,7 +2606,8 @@ sub is_g_blocked {
     print "127.0.0.1 was globally blocked\n" if $bot->was_g_blocked('127.0.0.1');
 
 Returns whether an IP/range was ever globally blocked. You should probably
-call this method only when your bot is operating on Meta.
+call this method only when your bot is operating on Meta - this method will
+warn if not.
 
 =cut
 
@@ -2662,7 +2656,8 @@ sub was_g_blocked {
 
     my $was_locked = $bot->was_locked('Mike.lifeguard');
 
-Returns whether a user was ever locked.
+Returns whether a user was ever locked. You should probably call this method
+only when your bot is operating on Meta - this method will warn if not.
 
 =cut
 
@@ -2787,7 +2782,7 @@ sub is_protected {
     $bot->patrol($rcid);
 
 Marks a page or revision identified by the $rcid as patrolled. To mark several
-rcids as patrolled, you may pass an arrayref of rcids.
+RCIDs as patrolled, you may pass an arrayref of them.
 
 =cut
 
@@ -2869,7 +2864,7 @@ second parameter is the familiar L<$options_hashref|/linksearch>.
     }
 
 Note that accessing the data with a callback happens B<before> filtering
-the top edits is done. For that reason, you should use L<contributions>
+the top edits is done. For that reason, you should use L</contributions>
 if you need to use a callback. If you use a callback with top_edits(),
 you B<will not> necessarily get top edits returned. It is only safe to use a
 callback if you I<check> that it is a top edit:
@@ -3131,6 +3126,54 @@ sub _get_ns_data {
 
     return $self->{ns_data};
 }
+
+=head2 Options hashref
+
+This is passed through to the lower-level interface L<MediaWiki::API>, and is
+fully documented there.
+
+The hashref can have 3 keys:
+
+=over 4
+
+=item max
+
+Specifies the maximum number of queries to retrieve data from the wiki. This is
+independent of the I<size> of each query (how many items each query returns).
+Set to 0 to retrieve all the results.
+
+=item hook
+
+Specifies a coderef to a hook function that can be used to process large lists
+as they come in. When this is used, your subroutine will get the raw data. This
+is noted in cases where it is known to be significant. For example, when
+using a hook with C<top_edits()>, you need to check whether the edit is the top
+edit yourself - your subroutine gets results as they come in, and before they're
+filtered.
+
+=item skip_encoding
+
+MediaWiki's API uses UTF-8 and any 8 bit character string parameters are encoded
+automatically by the API call. If your parameters are already in UTF-8 this will
+be detected and the encoding will be skipped. If your parameters for some reason
+contain UTF-8 data but no UTF-8 flag is set (i.e. you did not use the
+C<< use L<utf8>; >> pragma) you should prevent re-encoding by passing an option
+C<< skip_encoding => 1 >>. For example:
+
+    $category ="Cat\x{e9}gorie:moyen_fran\x{e7}ais"; # latin1 string
+    $bot->get_all_pages_in_category($category); # OK
+
+    $category = "Cat". pack("U", 0xe9)."gorie:moyen_fran".pack("U",0xe7)."ais"; # unicode string
+    $bot->get_all_pages_in_category($category); # OK
+
+    $category ="Cat\x{c3}\x{a9}gorie:moyen_fran\x{c3}\x{a7}ais"; # unicode data without utf-8 flag
+    # $bot->get_all_pages_in_category($category); # NOT OK
+    $bot->get_all_pages_in_category($category, { skip_encoding => 1 }); # OK
+
+If you need this, it probably means you're doing something wrong. Feel free to
+ask for help.
+
+=back
 
 =head1 ERROR HANDLING
 
