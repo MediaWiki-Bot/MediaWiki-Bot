@@ -1,8 +1,8 @@
 package MediaWiki::Bot;
-# ABSTRACT: a MediaWiki bot framework written in Perl
-# VERSION
 use strict;
 use warnings;
+# ABSTRACT: a MediaWiki bot framework written in Perl
+# VERSION
 
 use HTML::Entities 3.28;
 use URI::Escape 1.35;
