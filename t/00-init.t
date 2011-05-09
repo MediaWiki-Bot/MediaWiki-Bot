@@ -76,7 +76,7 @@ subtest 'diag-one' => sub {
     is($test_one->{assert},                     $assert,                'Specified assert set orrectly');
     is($test_one->{operator},                   $operator,              'Specified operator set correctly');
     is($test_one->{api}->{config}->{api_url},   "http://$host/api.php", 'api.php with null path is OK'); # Issue 111: Null $path value returns "w"
-    like($bot->{api}->{ua}->agent(),            qr{^MediaWiki::Bot/(?:\d\.\d\.\d{1,2}|dev)$}, 'Useragent built correctly');
+    like($bot->{api}->{ua}->agent(),            qr{^MediaWiki::Bot/(v?\d\.\d\.\d(_\d)?|dev)$}, 'Useragent built correctly');
 };
 
 subtest 'diag-two' => sub {
