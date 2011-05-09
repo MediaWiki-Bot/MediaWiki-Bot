@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+3.3.1_1   2011-05-08
     * Dependencies for HTTPS fixed
     * Old, unnecessary dependencies removed
     * Calling test_image_exists() with an arrayref of images now returns results

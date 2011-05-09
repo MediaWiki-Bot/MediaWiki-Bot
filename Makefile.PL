@@ -4,7 +4,7 @@ use warnings;
 
 BEGIN { require 5.008; }
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
@@ -17,7 +17,7 @@ my %WriteMakefileArgs = (
     'utf8' => '0'
   },
   'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+    'ExtUtils::MakeMaker' => '6.30'
   },
   'DISTNAME' => 'MediaWiki-Bot',
   'EXE_FILES' => [],
@@ -25,16 +25,14 @@ my %WriteMakefileArgs = (
   'NAME' => 'MediaWiki::Bot',
   'PREREQ_PM' => {
     'Carp' => '0',
-    'Crypt::SSLeay' => '0.57',
     'Digest::MD5' => '2.39',
     'Encode' => '0',
     'HTML::Entities' => '3.28',
+    'LWP::Protocol::https' => '0.57',
     'MediaWiki::API' => '0.35',
-    'Module::Pluggable' => '0',
-    'URI::Escape' => '1.35',
-    'XML::Simple' => '2.16'
+    'Module::Pluggable' => '0'
   },
-  'VERSION' => '3.3.1',
+  'VERSION' => '3.3.1_1',
   'test' => {
     'TESTS' => 't/*.t'
   }
