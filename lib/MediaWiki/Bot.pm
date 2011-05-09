@@ -1854,10 +1854,10 @@ sub test_image_exists {
     my $self  = shift;
     my $image = shift;
 
-    my $multi = 0;
+    my $multi;
     if (ref $image eq 'ARRAY') {
+        $multi = $image; # so we know to return a hash/scalar & keep track of order
         $image = join('|', @$image);
-        $multi = 1; # so we know whether to return a hash or a single scalar
     }
 
     my $res = $self->{api}->api({
@@ -1868,9 +1868,20 @@ sub test_image_exists {
     });
     return $self->_handle_api_error() unless $res;
 
+    my @sorted_ids;
+    if ($multi) {
+        my %mapped;
+        $mapped{ $res->{query}->{pages}->{$_}->{title} } = $_
+            for (keys %{ $res->{query}->{pages} });
+        foreach my $file ( @$multi ) {
+            unshift @sorted_ids, $mapped{$file};
+        }
+    }
+    else {
+        push @sorted_ids, keys %{ $res->{query}->{pages} };
+    }
     my @return;
-    # use Data::Dumper; print STDERR Dumper($res) and die;
-    foreach my $id (keys %{ $res->{query}->{pages} }) {
+    foreach my $id (@sorted_ids) {
         if ($res->{query}->{pages}->{$id}->{imagerepository} eq 'shared') {
             if ($multi) {
                 unshift @return, 2;
