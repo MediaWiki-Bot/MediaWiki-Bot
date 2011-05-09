@@ -5,10 +5,7 @@ use warnings;
 # VERSION
 
 use HTML::Entities 3.28;
-use URI::Escape 1.35;
-use XML::Simple 2.16;
 use Carp;
-use URI::Escape qw(uri_escape_utf8);
 use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
 use MediaWiki::API 0.35;
