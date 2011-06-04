@@ -514,19 +514,6 @@ sub _do_sul {
     return $sum == $total;
 }
 
-=head2 set_highlimits
-
-B<This method is deprecated> and has no effect, other than to emit
-deprecation warnings.
-
-=cut
-
-sub set_highlimits {
-    my $self       = shift;
-    warnings::warnif('deprecated', 'Use of set_highlimits() is deprecated, and has no effect');
-    return;
-}
-
 =head2 logout
 
     $bot->logout();

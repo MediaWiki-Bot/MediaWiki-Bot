@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * set_highlimits, which had no effect and was deprecated, has been removed.
     * Deprecated aliases for MediaWiki::Bot were removed.
     * global_image_usage() now supports queries of http://www.mediawiki.org/wiki/GlobalUsage
 
