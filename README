@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 3.3.1_1
+    version 3.3.1_2
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -164,10 +164,6 @@ METHODS
                                 pass    => "password",
                             }
         }) or die "Couldn't log in";
-
-  set_highlimits
-    This method is deprecated and has no effect, other than to emit
-    deprecation warnings.
 
   logout
         $bot->logout();
@@ -559,6 +555,18 @@ METHODS
                 print "$title\n";
             }
         }
+
+  global_image_usage($image, $results, $filterlocal)
+    Returns an array of hashrefs of data about pages which use the given
+    image.
+
+        my @data = $bot->global_image_usage('File:Albert Einstein Head.jpg');
+
+    The keys in each hashref are title, url, and wiki. $results is the
+    maximum number of results that will be returned (not the maximum number
+    of requests that will be sent, like "max" in the "Options hashref"); the
+    default is to attempt to fetch 500 (set to 0 to get all results).
+    $filterlocal will filter out local uses of the image.
 
   links_to_image
     A backward-compatible call to "image_usage". You can provide only the
