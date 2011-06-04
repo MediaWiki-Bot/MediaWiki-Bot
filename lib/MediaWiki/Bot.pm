@@ -1742,6 +1742,62 @@ sub image_usage {
     return @pages;
 }
 
+=head2 global_image_usage($image, $results, $filterlocal)
+
+Returns an array of hashrefs of data about pages which use the given image.
+
+    my @data = $bot->global_image_usage('File:Albert Einstein Head.jpg');
+
+The keys in each hashref are title, url, and wiki. C<$results> is the maximum
+number of results that will be returned (not the maximum number of requests that
+will be sent, like C<max> in the L</"Options hashref">); the default is to
+attempt to fetch 500 (set to 0 to get all results). C<$filterlocal> will filter
+out local uses of the image.
+
+=cut
+
+sub global_image_usage {
+    my $self    = shift;
+    my $image   = shift;
+    my $limit   = shift;
+    my $filterlocal = shift;
+    $limit = defined $limit ? $limit : 500;
+
+    if ($image !~ m/^File:|Image:/) {
+        my $ns_data = $self->_get_ns_data();
+        my $image_ns_name = $ns_data->{6};
+        if ($image !~ m/^\Q$image_ns_name\E:/) {
+            $image = "$image_ns_name:$image";
+        }
+    }
+
+    my @data;
+    my $cont;
+    while ($limit ? scalar @data < $limit : 1) {
+        my $hash = {
+            action          => 'query',
+            prop            => 'globalusage',
+            titles          => $image,
+            gufilterlocal   => $filterlocal,
+            gulimit         => 'max',
+        };
+        $hash->{gucontinue} = $cont if $cont;
+        my $res = $self->{api}->api($hash);
+        return $self->_handle_api_error() and last unless $res;
+
+        $cont = $res->{'query-continue'}->{globalusage}->{gucontinue};
+        warn "gucontinue: $cont\n" if $cont and $self->{debug} > 1;
+        my $page_id = (keys %{ $res->{query}->{pages} })[0];
+        my $results = $res->{query}->{pages}->{$page_id}->{globalusage};
+        push @data, @$results;
+        last unless $cont;
+    }
+
+    return @data > $limit
+        ? @data[0 .. $limit-1]
+        : @data;
+}
+
 =head2 links_to_image
 
 A backward-compatible call to L</image_usage>. You can provide only the image

@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * global_image_usage() now supports queries of http://www.mediawiki.org/wiki/GlobalUsage
 
 3.3.1_1   2011-05-08
     * Dependencies for HTTPS fixed
