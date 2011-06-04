@@ -7,7 +7,7 @@ my $t = __FILE__;
 
 my $bot = MediaWiki::Bot->new({
     agent   => "MediaWiki::Bot tests ($t)",
-    host    => 'test.wikipedia.org',
+    host    => 'en.wikipedia.org',
 });
 
 if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
