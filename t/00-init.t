@@ -1,7 +1,6 @@
 use strict;
 use warnings;
-use Test::More 0.96 tests => 10;
-use Test::Warn;
+use Test::More 0.96 tests => 4;
 BEGIN {
     my $bail_diagnostic = <<'END';
 There was a problem loading the module. Typically,
@@ -13,21 +12,7 @@ members of perlwikibot@googlegroups.com.
 The test suite will bail out now; doing more testing is
 pointless since everything will fail.
 END
-    warning_is(
-        sub { use_ok('MediaWiki::Bot') or BAIL_OUT($bail_diagnostic); },
-        '',
-        'No warnings loading MediaWiki::Bot'
-    );
-    warning_is(
-        sub {use_ok('PWP')            or BAIL_OUT($bail_diagnostic); },
-        'PWP is a deprecated alias for MediaWiki::Bot. Please use the modern name; this one will be removed in a future release',
-        'PWP is deprecated'
-    );
-    warning_is(
-        sub {use_ok('perlwikipedia')  or BAIL_OUT($bail_diagnostic); },
-        'perlwikipedia is a deprecated alias for MediaWiki::Bot. Please use the modern name; this one will be removed in a future release',
-        'perlwikipedia is deprecated'
-    );
+    use_ok('MediaWiki::Bot') or BAIL_OUT($bail_diagnostic);
 };
 
 # Provide some info to the tester
@@ -51,11 +36,6 @@ END
 }
 
 my $bot   = new_ok('MediaWiki::Bot'); # outside subtest b/c reused later
-subtest 'init' => sub { # Simple initialization
-    plan tests => 2;
-    my $bot_2 = new_ok('PWP');
-    my $bot_3 = new_ok('perlwikipedia');
-};
 
 # Some deeper diagnostics
 my $useragent   = 'MediaWiki::Bot tests (00-init.t)';
