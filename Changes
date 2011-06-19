@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * Packaging updates & changes from last 2 alphas
 
 3.3.1_2   2011-06-04
     * set_highlimits, which had no effect and was deprecated, has been removed.
