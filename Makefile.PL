@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-BEGIN { require 5.008; }
+use 5.008;
 
 use ExtUtils::MakeMaker 6.30;
 
@@ -12,7 +12,6 @@ my %WriteMakefileArgs = (
   'ABSTRACT' => 'a high-level bot framework for interacting with MediaWiki wikis',
   'AUTHOR' => 'Dan Collins <dcollins@cpan.org>, Mike.lifeguard <lifeguard@cpan.org>, Alex Rowe <alex.d.rowe@gmail.com>, Oleg Alexandrov <oleg.alexandrov@gmail.com>, jmax.code <jmax.code@gmail.com>, Stefan Petrea <stefan.petrea@gmail.com>, kc2aei <kc2aei@gmail.com>, bosborne@alum.mit.edu, Brian Obio <brianobio@gmail.com>, patch and bug report contributors',
   'BUILD_REQUIRES' => {
-    'PWP' => '0',
     'Test::More' => '0.96',
     'Test::Warn' => '0',
     'utf8' => '0'
@@ -33,7 +32,7 @@ my %WriteMakefileArgs = (
     'MediaWiki::API' => '0.35',
     'Module::Pluggable' => '0'
   },
-  'VERSION' => '3.3.1_2',
+  'VERSION' => '3.4.0',
   'test' => {
     'TESTS' => 't/*.t'
   }

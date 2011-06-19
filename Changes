@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+3.4.0     2011-06-19
     * Packaging updates & changes from last 2 alphas
 
 3.3.1_2   2011-06-04
