@@ -175,6 +175,7 @@ sub new {
         max_lag_retries => 5,
         retries         => 5,
         retry_delay     => 10, # no infinite loops
+        use_http_get    => 1,  # use HTTP GET to make certain requests cacheable
     });
     $self->{api}->{ua}->agent($agent) if defined $agent;
 
