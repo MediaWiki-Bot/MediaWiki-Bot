@@ -8,7 +8,7 @@ use HTML::Entities 3.28;
 use Carp;
 use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
-use MediaWiki::API 0.35;
+use MediaWiki::API 0.36;
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
@@ -2991,6 +2991,45 @@ sub contributions {
 
     return $res->[0]; # Can we make this more useful?
 }
+
+=head2 upload
+
+    $bot->upload({ data => $file_contents, summary => 'uploading file' });
+    $bot->upload({ file => $file_name,     title   => 'Target filename.png' });
+
+Upload a file to the wiki. Specify the file by either giving the filename, which
+will be read in, or by giving the data directly.
+=cut
+
+sub upload {
+    my $self = shift;
+    my $args = shift;
+
+    my $data = delete $args->{data};
+    if (!defined $data and defined $args->{file}) {
+            $data = do { local $/; open my $in, '<:raw', $args->{file} or die $!; <$in> };
+    }
+    unless (defined $data) {
+        $self->{error}->{code} = 6;
+        $self->{error}->{details} = q{You must provide either file contents or a filename.};
+    }
+    unless (defined $args->{file} or defined $args->{title}) {
+        $self->{error}->{code} = 6;
+        $self->{error}->{details} = q{You must specify a title to upload to.};
+        return undef;
+    }
+
+    my $filename = $args->{title} || do { require File::Basename; File::Basename::basename($args->{file}) };
+    my $success = $self->{api}->edit({
+        action   => 'upload',
+        filename => $filename,
+        comment  => $args->{summary},
+        file     => [ undef, $filename, Content => $data ],
+    });
+    return $success;
+}
+
+
 
 ################
 # Internal use #
