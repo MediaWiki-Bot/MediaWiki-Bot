@@ -953,7 +953,7 @@ sub get_pages {
                 warn "Detected article name that needed expanding $title\n" if $self->{debug} > 1;
 
                 $return{$title} = $v;
-                if ($v =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {
+                if (defined $v and $v =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {
                     $v = $self->get_text($1);
                     $return{$title} = $v;
                 }

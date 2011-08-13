@@ -24,7 +24,7 @@ ok(     defined($result->{'Wikipedia:What Test Wiki is not'}),          'Check f
 ok(!    defined($result->{'Wikipedia:SAND'}),                           'Should not return expanded names where an alias was requested');
 ok(     defined($result->{'WP:SAND'}),                                  'Namespace aliases work as expected');
 like(   $result->{'Main Page'},                         qr/Main Page/,  'Got Main Page on multi-page get');
-like(   $result->{'Wikipedia:What Test Wiki is not'},                   qr/Wikipedia/,  '[[Wikipedia:What Test Wiki is not]] contains the string "Wikipedia"');
+like(   $result->{'Wikipedia:What Test Wiki is not'},   qr/Wikipedia/,  '[[Wikipedia:What Test Wiki is not]] contains the string "Wikipedia"');
 
 # Do tests again with array
 my $repeat = $bot->get_pages(@pages);
