@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 3.4.0
+    version 0.001
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -901,6 +901,13 @@ METHODS
     can be an arrayref of namespace numbers. $options can be specified as in
     "linksearch".
 
+  upload
+        $bot->upload({ data => $file_contents, summary => 'uploading file' });
+        $bot->upload({ file => $file_name,     title   => 'Target filename.png' });
+
+    Upload a file to the wiki. Specify the file by either giving the
+    filename, which will be read in, or by giving the data directly.
+
   Options hashref
     This is passed through to the lower-level interface MediaWiki::API, and
     is fully documented there.
@@ -946,6 +953,30 @@ ERROR HANDLING
     All functions will return undef in any handled error situation. Further
     error data is stored in "$bot->{error}->{code}" and
     "$bot->{error}->{details}".
+
+AVAILABILITY
+    The project homepage is <https://metacpan.org/module/MediaWiki::Bot>.
+
+    The latest version of this module is available from the Comprehensive
+    Perl Archive Network (CPAN). Visit <http://www.perl.com/CPAN/> to find a
+    CPAN site near you, or see <http://search.cpan.org/dist/MediaWiki-Bot/>.
+
+    The development version lives at
+    <http://github.com/mikelifeguard/MediaWiki-Bot> and may be cloned from
+    <git://github.com/mikelifeguard/MediaWiki-Bot.git>. Instead of sending
+    patches, please fork this project using the standard git and github
+    infrastructure.
+
+SOURCE
+    The development version is on github at
+    <http://github.com/mikelifeguard/MediaWiki-Bot> and may be cloned from
+    <git://github.com/mikelifeguard/MediaWiki-Bot.git>
+
+BUGS AND LIMITATIONS
+    No bugs have been reported.
+
+    Please report any bugs or feature requests through the web interface at
+    <https://github.com/mikelifeguard/MediaWiki-Bot/issues>.
 
 AUTHORS
     *   Dan Collins <dcollins@cpan.org>

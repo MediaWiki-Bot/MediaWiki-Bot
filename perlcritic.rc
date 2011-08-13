@@ -1,0 +1,2 @@
+# until we start using exceptions
+exclude = ProhibitExplicitReturnUndef
