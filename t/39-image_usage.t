@@ -15,9 +15,9 @@ my $file = 'File:Wiki.png';
 
 my @pages = $bot->image_usage($file, undef, undef, { max => 1 });
 my @pages_bc;
-warning_is(
+warning_like(
     sub { @pages_bc = $bot->links_to_image($file, undef, undef, { max => 1 }); },
-    'links_to_image is an alias of image_usage; please use the new name',
+    qr/links_to_image is an alias of image_usage; please use the new name/,
     'links_to_image is deprecated'
 );
 
