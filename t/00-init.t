@@ -23,16 +23,18 @@ Thanks for using MediaWiki::Bot. If any of these
 tests fail, or you need any other assistance with
 the module, please email our support mailing list
 at perlwikibot@googlegroups.com, or submit a bug
-to our tracker http://perlwikipedia.googlecode.com
+to our tracker http://goo.gl/kz7t9 on github.
 END
-    diag <<'END' if (!defined($ENV{'PWPUsername'}) and !defined($ENV{'PWPPassword'}));
+    if (!defined($ENV{'PWPUsername'}) and !defined($ENV{'PWPPassword'})) {
+        diag <<'END';
 
 If you want, you can log in for editing tests.
 To log in for those tests, stop the test suite now,
 set the environment variables PWPUsername and
 PWPPassword, and run the test suite.
 END
-    sleep(2);
+        sleep(2);
+    }
 }
 
 my $bot   = new_ok('MediaWiki::Bot'); # outside subtest b/c reused later
