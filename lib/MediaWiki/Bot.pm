@@ -2846,11 +2846,19 @@ sub patrol {
         return @return;
     }
     else {
-        my ($token) = $self->_get_edittoken();
+        my $token_res = $self->{api}->api({
+            action  => 'query',
+            list    => 'recentchanges',
+            rctoken => 'patrol',
+            rclimit => 1,
+        });
+        return $self->_handle_api_error() unless $token_res;
+        my $token = $token_res->{query}->{recentchanges}->[0]->{patroltoken};
+
         my $res = $self->{api}->api({
-                action => 'patrol',
-                rcid   => $rcid,
-                token  => $token,
+            action  => 'patrol',
+            rcid    => $rcid,
+            token   => $token,
         });
         return $self->_handle_api_error() unless $res;
         return $res;
@@ -3269,3 +3277,4 @@ data is stored in C<< $bot->{error}->{code} >> and C<< $bot->{error}->{details} 
 =cut
 
 1;
+

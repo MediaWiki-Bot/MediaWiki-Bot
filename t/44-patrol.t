@@ -21,19 +21,36 @@ my $bot = MediaWiki::Bot->new({
     host => $host,
 });
 
-my $tests_run = 0;
-my $rows      = 10;
-my @rc        = $bot->recentchanges(3, $rows, { hook => \&mysub });
+pass;
+my $tests_run = 1;
+{
+    my @rc = $bot->recentchanges(0, 1);
+    if ($rc[0]->{type} eq 'edit') {
+        my $success = $bot->patrol($rc[0]->{rcid});
 
-sub mysub {
-    my ($res) = @_;
-    foreach my $hashref (@$res) {
-        my $success = $bot->patrol($hashref->{rcid}) if defined $hashref->{rcid};
-        ok($success, "Patrolled the page OK");
-        $tests_run++;
+        if ($bot->{error}->{details} !~ m/^permissiondenied/) {
+            ok $success, 'Patrolled the page OK' or diag explain [$success, $bot->{error}];
+            $tests_run++;
+        }
     }
 }
-is($tests_run, $rows, 'Ran the right number of tests');
-$tests_run++;
+
+{
+    my $rows      = 10;
+    my @rc        = $bot->recentchanges(0, $rows, { hook => \&mysub });
+
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            next unless defined $hashref->{rcid} and $hashref->{type} eq 'edit';
+            my $success = $bot->patrol($hashref->{rcid});
+
+            if ($bot->{error}->{details} !~ m/^permissiondenied/) {
+                ok $success, 'Patrolled the page OK' or diag explain [$success, $bot->{error}];
+                $tests_run++;
+            }
+        }
+    }
+}
 
 done_testing($tests_run);

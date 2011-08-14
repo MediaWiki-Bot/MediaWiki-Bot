@@ -24,14 +24,14 @@ else {
         my $status = $bot->upload({
             data => do { local $/; open my $in, '<:raw', 't/tiny.png' or die $!; <$in> },
         });
-        is $status, undef or diag "OHNO";
+        is $status, undef or diag explain $status;
         is_deeply $bot->{error}, { code => 6, details => q{You must specify a title to upload to.} } or diag explain $bot;
     }
     {
         my $status = $bot->upload({
             title => rand
         });
-        is $status, undef or diag "OHNO";
+        is $status, undef or diag explain $status;
         is_deeply $bot->{error}, { code => 6, details => q{You must provide either file contents or a filename.} } or diag explain $bot;
     }
     {
@@ -42,7 +42,7 @@ else {
         });
         ok $status and diag "Uploaded to $filename";
         like $status->{upload}->{result}, qr/Success|Warning/ or diag explain $status;
-        is $status->{upload}->{filename}, $filename;
+        is $status->{upload}->{filename}, $filename or diag explain $status if $status->{upload}->{result} eq 'Success';
     }
     {
         my $filename = rand . '.png';
@@ -52,7 +52,7 @@ else {
         });
         ok $status and diag "Uploaded to $filename";
         like $status->{upload}->{result}, qr/Success|Warning/ or diag explain $status;
-        is $status->{upload}->{filename}, $filename;
+        is $status->{upload}->{filename}, $filename or diag explain $status if $status->{upload}->{result} eq 'Success';
     }
 
     done_testing;    
