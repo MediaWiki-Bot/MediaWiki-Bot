@@ -23,7 +23,7 @@ Thanks for using MediaWiki::Bot. If any of these
 tests fail, or you need any other assistance with
 the module, please email our support mailing list
 at perlwikibot@googlegroups.com, or submit a bug
-to our tracker http://goo.gl/kz7t9 on github.
+to our tracker http://goo.gl/E1wMT on github.
 END
     if (!defined($ENV{'PWPUsername'}) and !defined($ENV{'PWPPassword'})) {
         diag <<'END';
