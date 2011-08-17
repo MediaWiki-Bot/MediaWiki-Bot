@@ -3037,6 +3037,35 @@ sub upload {
     return $success;
 }
 
+=head1 usergroups
+
+Returns a list of the usergroups a user is in:
+
+    my @usergroups = $bot->usergroups('Mike.lifeguard');
+
+=cut
+
+sub usergroups {
+    my $self = shift;
+    my $user = shift;
+
+    $user =~ s/^User://;
+
+    my $res = $self->{api}->api({
+        action  => 'query',
+        list    => 'users',
+        ususers => $user,
+        usprop  => 'groups',
+    });
+    return $self->_handle_api_error() unless $res;
+
+    foreach my $res_user (@{ $res->{query}->{users} }) {
+        next unless $res_user->{name} eq $user;
+        return @{ $res_user->{groups} }; # SUCCESS
+    }
+
+    return $self->_handle_api_error({ code => 3, details => qq{Results for $user weren't returned by the API} });
+}
 
 
 ################
@@ -3064,12 +3093,18 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
 
 sub _handle_api_error {
     my $self = shift;
+    my $error = shift;
+
     carp 'Error code '
         . $self->{api}->{error}->{code}
         . ': '
         . $self->{api}->{error}->{details} if $self->{debug};
-    $self->{error} = $self->{api}->{error};
-    return;
+     $self->{error} =
+        (defined $error and ref $error eq 'HASH' and exists $error->{code} and exists $error->{details})
+        ? $error
+        : $self->{api}->{error};
+
+    return undef;
 }
 
 sub _is_loggedin {
