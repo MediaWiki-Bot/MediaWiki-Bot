@@ -3056,11 +3056,20 @@ sub usergroups {
         list    => 'users',
         ususers => $user,
         usprop  => 'groups',
+        ustoken => 'userrights',
     });
     return $self->_handle_api_error() unless $res;
 
     foreach my $res_user (@{ $res->{query}->{users} }) {
         next unless $res_user->{name} eq $user;
+
+        # Cache the userrights token on the assumption that we'll use it shortly to change the rights
+        $self->{userrightscache} = {
+            user    => $user,
+            token   => $res_user->{userrightstoken},
+            groups  => $res_user->{groups},
+        };
+
         return @{ $res_user->{groups} }; # SUCCESS
     }
 
