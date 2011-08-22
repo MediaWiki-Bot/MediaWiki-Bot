@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 0.001
+    version v3.5.0
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -908,6 +908,11 @@ METHODS
     Upload a file to the wiki. Specify the file by either giving the
     filename, which will be read in, or by giving the data directly.
 
+  usergroups
+    Returns a list of the usergroups a user is in:
+
+        my @usergroups = $bot->usergroups('Mike.lifeguard');
+
   Options hashref
     This is passed through to the lower-level interface MediaWiki::API, and
     is fully documented there.
@@ -962,21 +967,21 @@ AVAILABILITY
     CPAN site near you, or see <http://search.cpan.org/dist/MediaWiki-Bot/>.
 
     The development version lives at
-    <http://github.com/mikelifeguard/MediaWiki-Bot> and may be cloned from
-    <git://github.com/mikelifeguard/MediaWiki-Bot.git>. Instead of sending
+    <http://github.com/MediaWiki-Bot/MediaWiki-Bot> and may be cloned from
+    <git://github.com/MediaWiki-Bot/MediaWiki-Bot.git>. Instead of sending
     patches, please fork this project using the standard git and github
     infrastructure.
 
 SOURCE
     The development version is on github at
-    <http://github.com/mikelifeguard/MediaWiki-Bot> and may be cloned from
-    <git://github.com/mikelifeguard/MediaWiki-Bot.git>
+    <http://github.com/MediaWiki-Bot/MediaWiki-Bot> and may be cloned from
+    <git://github.com/MediaWiki-Bot/MediaWiki-Bot.git>
 
 BUGS AND LIMITATIONS
     No bugs have been reported.
 
     Please report any bugs or feature requests through the web interface at
-    <https://github.com/mikelifeguard/MediaWiki-Bot/issues>.
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues>.
 
 AUTHORS
     *   Dan Collins <dcollins@cpan.org>

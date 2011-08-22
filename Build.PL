@@ -32,7 +32,7 @@ my %module_build_args = (
     'patch and bug report contributors'
   ],
   'dist_name' => 'MediaWiki-Bot',
-  'dist_version' => '0.001',
+  'dist_version' => 'v3.5.0',
   'license' => 'gpl',
   'module_name' => 'MediaWiki::Bot',
   'recommends' => {},
