@@ -278,6 +278,7 @@ sub set_wiki {
         or ((defined($self->{protocol})) and ($self->{protocol} ne $protocol))
     ) {
         delete $self->{ns_data} if $self->{ns_data};
+        delete $self->{ns_alias_data} if $self->{ns_alias_data};
     }
 
     $self->{protocol} = $protocol;
@@ -932,16 +933,7 @@ sub get_pages {
         }
     }
 
-    # Based on api.php?action=query&meta=siteinfo&siprop=namespaces|namespacealiases
-    # Should be done on an as-needed basis! This is only correct for enwiki (and
-    # it is probably incomplete anyways, or will be eventually).
-    my $expand = {
-        'WP'         => 'Wikipedia',
-        'WT'         => 'Wikipedia talk',
-        'Image'      => 'File',
-        'Image talk' => 'File talk',
-    };
-
+    my $expand = $self->_get_ns_alias_data();
     # Only for those article names that remained after the first part
     # If we're here we are dealing most likely with a WP:CSD type of article name
     for my $title (keys %$diff) {
@@ -3254,7 +3246,7 @@ sub _get_ns_data {
     my $self = shift;
 
     # If we have it already, return the cached data
-    return $self->{ns_data} if exists($self->{ns_data});
+    return $self->{ns_data} if exists $self->{ns_data};
 
     # If we haven't returned by now, we have to ask the API
     my %ns_data = $self->get_namespace_names();
@@ -3263,6 +3255,23 @@ sub _get_ns_data {
     $self->{ns_data} = \%ns_data;    # Save for later use
 
     return $self->{ns_data};
+}
+
+sub _get_ns_alias_data {
+    my $self = shift;
+
+    return $self->{ns_alias_data} if exists $self->{ns_alias_data};
+
+    my $ns_res = $self->{api}->api({
+        action  => 'query',
+        meta    => 'siteinfo',
+        siprop  => 'namespacealiases|namespaces',
+    });
+
+    foreach my $entry (@{ $ns_res->{query}->{namespacealiases} }) { # what a mess D:
+        $self->{ns_alias_data}->{ $entry->{'*'} } = $ns_res->{query}->{namespaces}->{ $entry->{id} }->{'*'};
+    }
+    return $self->{ns_alias_data};
 }
 
 =head2 Options hashref
@@ -3321,4 +3330,3 @@ data is stored in C<< $bot->{error}->{code} >> and C<< $bot->{error}->{details} 
 =cut
 
 1;
-
