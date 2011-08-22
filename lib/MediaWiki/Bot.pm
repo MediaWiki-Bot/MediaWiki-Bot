@@ -3037,7 +3037,7 @@ sub upload {
     return $success;
 }
 
-=head1 usergroups
+=head2 usergroups
 
 Returns a list of the usergroups a user is in:
 
