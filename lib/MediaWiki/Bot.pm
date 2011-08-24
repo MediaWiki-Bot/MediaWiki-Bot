@@ -1043,7 +1043,7 @@ sub get_last {
             prop          => 'revisions',
             rvlimit       => 1,
             rvprop        => 'ids|user',
-            rvexcludeuser => $user,
+            rvexcludeuser => $user || '',
     });
     return $self->_handle_api_error() unless $res;
 
@@ -1264,9 +1264,9 @@ sub what_links_here {
         action      => 'query',
         list        => 'backlinks',
         bltitle     => $page,
-        blnamespace => $ns,
         bllimit     => 'max',
     };
+    $hash->{blnamespace}   = $ns if $ns;
     $hash->{blfilterredir} = $filter if $filter;
     $options->{max} = 1 unless $options->{max};
 
@@ -1344,10 +1344,10 @@ sub list_transclusions {
         action      => 'query',
         list        => 'embeddedin',
         eititle     => $page,
-        einamespace => $ns,
         eilimit     => 'max',
     };
-    $hash->{'eifilterredir'} = $filter if $filter;
+    $hash->{eifilterredir} = $filter if $filter;
+    $hash->{einamespace}   = $ns if $ns;
     $options->{max} = 1 unless $options->{max};
 
     my $res = $self->{api}->list($hash, $options);
@@ -1530,10 +1530,10 @@ sub linksearch {
         list        => 'exturlusage',
         euprop      => 'url|title',
         euquery     => $link,
-        eunamespace => $ns,
-        euprotocol  => $prot,
         eulimit     => 'max',
     };
+    $hash->{eunamespace} = $ns if $ns;
+    $hash->{euprotocol}  = $prot if $prot;
     $options->{max} = 1 unless $options->{max};
 
     my $res = $self->{api}->list($hash, $options);
@@ -1704,9 +1704,9 @@ sub image_usage {
         action          => 'query',
         list            => 'imageusage',
         iutitle         => $image,
-        iunamespace     => $ns,
         iulimit         => 'max',
     };
+    $hash->{iunamespace} = $ns if $ns;
     if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {
         $hash->{'iufilterredir'} = $1;
     }
@@ -1758,10 +1758,12 @@ sub global_image_usage {
             action          => 'query',
             prop            => 'globalusage',
             titles          => $image,
-            gufilterlocal   => $filterlocal,
+            # gufilterlocal   => $filterlocal,
             gulimit         => 'max',
         };
-        $hash->{gucontinue} = $cont if $cont;
+        $hash->{gufilterlocal} = $filterlocal if $filterlocal;
+        $hash->{gucontinue}    = $cont if $cont;
+
         my $res = $self->{api}->api($hash);
         return $self->_handle_api_error() and last unless $res;
 
