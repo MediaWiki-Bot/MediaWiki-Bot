@@ -29,13 +29,13 @@ else {
     }
     {
         my $status = $bot->upload({
-            title => rand
+            title => rand()
         });
         is $status, undef or diag explain $status;
         is_deeply $bot->{error}, { code => 6, details => q{You must provide either file contents or a filename.} } or diag explain $bot;
     }
     {
-        my $filename = rand . '.png';
+        my $filename = rand() . '.png';
         my $status = $bot->upload({
             title => $filename,
             file => 't/tiny.png',
@@ -45,7 +45,7 @@ else {
         is $status->{upload}->{filename}, $filename or diag explain $status if $status->{upload}->{result} eq 'Success';
     }
     {
-        my $filename = rand . '.png';
+        my $filename = rand() . '.png';
         my $status = $bot->upload({
             title => $filename,
             data => do { local $/; open my $in, '<:raw', 't/tiny.png' or die $!; <$in> },
