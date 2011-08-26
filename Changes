@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+v3.4.2    2011-08-26
     * Silence spurious warnings in the test suite
     * Use HTTP GET so some requests are cacheable (Thanks to Jools Wills)
     * Add support for file uploads via API (Thanks to Jools Wills)

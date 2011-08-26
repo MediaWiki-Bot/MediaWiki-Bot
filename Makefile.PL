@@ -37,7 +37,7 @@ my %WriteMakefileArgs = (
     'MediaWiki::API' => '0.36',
     'Module::Pluggable' => '0'
   },
-  'VERSION' => 'v3.4.1',
+  'VERSION' => 'v3.4.2',
   'test' => {
     'TESTS' => 't/*.t'
   }

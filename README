@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version v3.4.1
+    version v3.4.2
 
 SYNOPSIS
         use MediaWiki::Bot;
