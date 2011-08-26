@@ -1,8 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
-
-v3.4.1    2011-08-24
+    * Silence spurious warnings in the test suite
     * Use HTTP GET so some requests are cacheable (Thanks to Jools Wills)
     * Add support for file uploads via API (Thanks to Jools Wills)
     * Patrolling edits now fetches the patrol token manually, and should work
