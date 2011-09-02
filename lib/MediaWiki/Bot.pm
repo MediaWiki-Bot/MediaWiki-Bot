@@ -596,7 +596,7 @@ sub edit {
         $page      = $_[0]->{page};
         $text      = $_[0]->{text};
         $summary   = $_[0]->{summary};
-        $is_minor  = $_[0]->{is_minor};
+        $is_minor  = $_[0]->{minor};
         $assert    = $_[0]->{assert};
         $markasbot = $_[0]->{markasbot};
         $section   = $_[0]->{section};
@@ -639,9 +639,14 @@ sub edit {
         starttimestamp => $tokentime,                     # Guard against the page being deleted/moved
         bot            => $markasbot,
         assert         => $assert,
-        minor          => $is_minor,
         section        => $section,
     };
+    if ($is_minor) {
+        $hash->{minor} = 1;
+    }
+    else {
+        $hash->{notminor} = 1;
+    }
     delete $hash->{section} unless defined($section);
 
     my $res = $self->{api}->api($hash);
@@ -752,7 +757,7 @@ sub move {
 Returns an array containing the history of the specified $page_title, with
 $limit number of revisions (default is as many as possible).
 
-The array returned contains hashrefs with keys: revid, user, comment,
+The array returned contains hashrefs with keys: revid, user, comment, minor,
 timestamp_date, and timestamp_time.
 
 =cut
@@ -768,7 +773,7 @@ sub get_history {
         action  => 'query',
         prop    => 'revisions',
         titles  => $pagename,
-        rvprop  => 'ids|timestamp|user|comment',
+        rvprop  => 'ids|timestamp|user|comment|flags',
         rvlimit => $limit
     };
 
@@ -795,6 +800,7 @@ sub get_history {
                 timestamp_date => $timestamp_date,
                 timestamp_time => $timestamp_time,
                 comment        => $comment,
+                minor          => exists $hash->{minor},
             });
     }
     return @return;
