@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More 0.96 tests => 4;
+use Test::More 0.96 tests => 5;
 BEGIN {
     my $bail_diagnostic = <<'END';
 There was a problem loading the module. Typically,
@@ -71,3 +71,12 @@ subtest 'diag-two' => sub {
     is(  $test_two->{api}->{config}->{api_url}, 'http://127.0.0.1/w/api.php',   'api.php with undef path is OK');
     like($test_two->{api}->{ua}->agent(),       qr/\Q$operator\E/,              'operator appears in the useragent');
 };
+
+subtest 'no assert' => sub {
+    plan tests => 1;
+    my $no_assert_bot = MediaWiki::Bot->new({
+        host    => $host,
+    });
+    ok( not exists $bot->{assert} ) or diag explain $bot;
+};
+

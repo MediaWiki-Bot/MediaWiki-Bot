@@ -2,6 +2,7 @@ Changelog for {{$dist->name}}
 
 {{$NEXT}}
     * Edits may be marked as major once again
+    * Don't use an invalid undefined assertion by default
 
 v3.4.2    2011-08-26
     * Silence spurious warnings in the test suite

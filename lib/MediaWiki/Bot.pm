@@ -166,7 +166,7 @@ sub new {
 
     my $self = bless({}, $package);
     $self->{errstr}   = '';
-    $self->{assert}   = $assert;
+    $self->{assert}   = $assert if $assert;
     $self->{operator} = $operator;
     $self->{debug}    = $debug || 0;
     $self->{api}      = MediaWiki::API->new({
@@ -638,8 +638,8 @@ sub edit {
         basetimestamp  => $lastedit,                      # Guard against edit conflicts
         starttimestamp => $tokentime,                     # Guard against the page being deleted/moved
         bot            => $markasbot,
-        assert         => $assert,
         section        => $section,
+        ( $assert ? (assert => $assert) : ()),
     };
     if ($is_minor) {
         $hash->{minor} = 1;
