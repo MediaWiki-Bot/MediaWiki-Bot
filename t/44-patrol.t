@@ -21,23 +21,28 @@ my $bot = MediaWiki::Bot->new({
     host => $host,
 });
 
-pass;
-my $tests_run = 1;
+my $tests_run = 0;
 {
-    my @rc = $bot->recentchanges(0, 1);
-    if ($rc[0]->{type} eq 'edit') {
-        my $success = $bot->patrol($rc[0]->{rcid});
+    my @rc = $bot->recentchanges(0, 5);
+    foreach my $change (@rc) {
+        if ($change->{type} eq 'edit') {
+            my $success = $bot->patrol($change->{rcid});
 
-        if ($bot->{error}->{details} !~ m/^permissiondenied/) {
-            ok $success, 'Patrolled the page OK' or diag explain [$success, $bot->{error}];
-            $tests_run++;
+            if ($bot->{error}->{details} and $bot->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/) {
+                pass q{Account isn't permitted to patrol};
+                $tests_run++;
+                last;
+            }
+            else {
+                ok $success, 'Patrolled OK';
+                $tests_run++;
+            }
         }
     }
 }
 
 {
-    my $rows      = 10;
-    my @rc        = $bot->recentchanges(0, $rows, { hook => \&mysub });
+    my @rc = $bot->recentchanges(0, 5, { hook => \&mysub });
 
     sub mysub {
         my ($res) = @_;
@@ -45,8 +50,13 @@ my $tests_run = 1;
             next unless defined $hashref->{rcid} and $hashref->{type} eq 'edit';
             my $success = $bot->patrol($hashref->{rcid});
 
-            if ($bot->{error}->{details} !~ m/^permissiondenied/) {
-                ok $success, 'Patrolled the page OK' or diag explain [$success, $bot->{error}];
+            if ($bot->{error}->{details} and $bot->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/) {
+                pass q{Account isn't permitted to patrol};
+                $tests_run++;
+                last;
+            }
+            else {
+                ok $success, 'Patrolled the page OK';
                 $tests_run++;
             }
         }

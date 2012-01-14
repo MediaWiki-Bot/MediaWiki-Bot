@@ -1172,17 +1172,17 @@ arrayref of namespace numbers to get results from several namespaces.
 
 The L</"Options hashref">:
 
-    my @rc = $bot->update_rc(4, 10);
+    my @rc = $bot->recentchanges(4, 10);
     foreach my $hashref (@rc) {
-        print $hashref->{'title'} . "\n";
+        print $hashref->{title} . "\n";
     }
 
     # Or, use a callback for incremental processing:
-    $bot->update_rc(0, 500, { hook => \&mysub });
+    $bot->recentchanges(0, 500, { hook => \&mysub });
     sub mysub {
         my ($res) = @_;
         foreach my $hashref (@$res) {
-            my $page = $hashref->{'title'};
+            my $page = $hashref->{title};
             print "$page\n";
         }
     }
@@ -1201,6 +1201,7 @@ sub recentchanges {
         list        => 'recentchanges',
         rcnamespace => $ns,
         rclimit     => $limit,
+        rcprop      => 'user|comment|timestamp|title|ids',
     };
     $options->{max} = 1 unless $options->{max};
 
@@ -2829,7 +2830,8 @@ sub is_protected {
     $bot->patrol($rcid);
 
 Marks a page or revision identified by the $rcid as patrolled. To mark several
-RCIDs as patrolled, you may pass an arrayref of them.
+RCIDs as patrolled, you may pass an arrayref of them. Returns false and sets
+C<< $bot->{error} >> if the account cannot patrol.
 
 =cut
 
@@ -2853,6 +2855,17 @@ sub patrol {
             rclimit => 1,
         });
         return $self->_handle_api_error() unless $token_res;
+        if (exists $token_res->{warnings} and
+            $token_res->{warnings}->{recentchanges}->{'*'} eq q{Action 'patrol' is not allowed for the current user})
+        {
+            $self->{error} = {
+                code    => 3,
+                details => 'permissiondenied: ' . $token_res->{warnings}->{recentchanges}->{'*'},
+                stacktrace => 'permissiondenied: ' . $token_res->{warnings}->{recentchanges}->{'*'}
+                    . ' at ' . __FILE__ . ' line ' . __LINE__,
+            };
+            return undef;
+        }
         my $token = $token_res->{query}->{recentchanges}->[0]->{patroltoken};
 
         my $res = $self->{api}->api({
@@ -2860,7 +2873,10 @@ sub patrol {
             rcid    => $rcid,
             token   => $token,
         });
-        return $self->_handle_api_error() unless $res;
+        return $self->_handle_api_error()
+            if !$res
+            or $self->{error}->{details} && $self->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/;
+
         return $res;
     }
 }

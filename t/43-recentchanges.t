@@ -18,10 +18,10 @@ my $tests_run = 0;
 
 {   # General structure
     my @rc = $bot->recentchanges();
-    my @should_keys = qw(ns revid old_revid timestamp rcid pageid type title);
-    my @ought_keys  = keys %{ $rc[0] };
-    is_deeply(\@ought_keys, \@should_keys);
-    $tests_run++;
+    my @keys = qw(comment ns old_revid pageid rcid revid timestamp title type user);
+    ok exists $rc[0]->{$_}, "$_ present in hashref" for @keys;
+    $tests_run += @keys;
+
     foreach (@rc) {
         is( $_->{ns}, 0, 'ns 0 used by default');
         $tests_run++;

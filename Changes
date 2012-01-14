@@ -8,6 +8,9 @@ Changelog for {{$dist->name}}
     * Fix page diff test
     * Fix the expandtemplates test
     * Fix the page history test
+    * Make fetching a patrol token fail-fast. If the account cannot get a patrol
+      token, instead of attempting to patrol (and getting a badtoken error), return
+      false and set $bot->{error} with a handcrafted error.
 
 v3.4.2    2011-08-26
     * Silence spurious warnings in the test suite
