@@ -6,6 +6,7 @@ Changelog for {{$dist->name}}
     * Fix tests for logging in (now requires credentials provided in
       PWPUsername and PWPPassword environment variables)
     * Fix page diff test
+    * Fix the expandtemplates test
 
 v3.4.2    2011-08-26
     * Silence spurious warnings in the test suite
