@@ -1,14 +1,18 @@
 use strict;
 use warnings;
-use Test::More 0.96 tests => 5;
+use Test::More 0.96;
 use Test::Warn;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
 
-my $username = defined($ENV{'PWPUsername'}) ? $ENV{'PWPUsername'} : 'Perlwikibot testing';
-my $password = defined($ENV{'PWPPassword'}) ? $ENV{'PWPPassword'} : 'test';
-unlink ".mediawiki-bot-$username-cookies" if -e ".mediawiki-bot-$username-cookies";
+my $username = $ENV{PWPUsername};
+my $password = $ENV{PWPPassword};
+plan defined $username
+    ? (tests => 6)
+    : (skip_all => q{I can't log in without credentials});
+unlink ".mediawiki-bot-$username-cookies"
+    if $username and -e ".mediawiki-bot-$username-cookies";
 
 my $useragent = "MediaWiki::Bot tests ($t)";
 my $host = 'test.wikipedia.org';
@@ -103,6 +107,27 @@ subtest 'secure' => sub {
     ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure});
 };
 
+subtest 'new-secure' => sub {
+    plan tests => 5;
+
+    my $secure = MediaWiki::Bot->new({
+        agent       => $useragent,
+        protocol    => 'https',
+        host        => 'en.wikipedia.org',
+    });
+
+    is($secure->login({
+            username => $username,
+            password => $password,
+            do_sul => 1,
+        }), 1,                                              q{Secure login});
+    ok($secure->_is_loggedin(),                             q{Double-check we're actually logged in});
+    is($secure->set_wiki({host => 'fr.wikipedia.org'}), 1,  q{Switched wikis OK}); # Don't specify path or protocol
+    is($secure->{api}->{config}->{api_url}, 'https://fr.wikipedia.org/w/api.php', q{Protocol and path retained properly});
+    ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure});
+};
+
 END {
-    unlink ".mediawiki-bot-$username-cookies" if -e ".mediawiki-bot-$username-cookies";
+    unlink ".mediawiki-bot-$username-cookies"
+        if $username and -e ".mediawiki-bot-$username-cookies";
 }

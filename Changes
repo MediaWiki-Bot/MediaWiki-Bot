@@ -3,6 +3,7 @@ Changelog for {{$dist->name}}
 {{$NEXT}}
     * Edits may be marked as major once again
     * Don't use an invalid undefined assertion by default
+    * Fix tests for logging in (now requires credentials provided in PWPUsername and PWPPassword environment variables)
 
 v3.4.2    2011-08-26
     * Silence spurious warnings in the test suite
