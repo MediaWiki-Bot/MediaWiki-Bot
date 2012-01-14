@@ -1,12 +1,15 @@
 use strict;
 use warnings;
-use Test::More tests => 1;
+use Test::More;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
 
-my $username = $ENV{'PWPUsername'} || 'Perlwikibot testing';
-my $password = $ENV{'PWPPassword'} || 'test';
+my $username = $ENV{PWPUsername};
+my $password = $ENV{PWPPassword};
+plan $username && $password
+    ? ( tests => 1 )
+    : ( skip_all => q{I can't log in without credentials} );
 
 my $bot = MediaWiki::Bot->new({
     agent   => "MediaWiki::Bot tests ($t)",
