@@ -18,9 +18,10 @@ is_deeply(\@history, [
             'revid' => 92366,
             'comment' => 'moved [[User:Mike.lifeguard/05-get history.t]] to [[User:Mike.lifeguard/06-get history.t]]',
             'timestamp_date' => '2011-01-07',
-            'user' => 'Mike.lifeguard'
+            'user' => 'Mike.lifeguard',
+            'minor' => 1,
           }
-        ],                                           'Loaded page history OK');
+        ],                                           'Loaded page history OK') or diag explain \@history;
 
 my $time = $history[0]->{'timestamp_time'};
 my $date = $history[0]->{'timestamp_date'};
