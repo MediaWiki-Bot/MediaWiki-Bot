@@ -12,6 +12,7 @@ Changelog for {{$dist->name}}
       token, instead of attempting to patrol (and getting a badtoken error), return
       false and set $bot->{error} with a handcrafted error.
     * Fix test for emailing
+    * Fix test for uploading (optional test requirements: GD, Data::Random)
 
 v3.4.2    2011-08-26
     * Silence spurious warnings in the test suite
