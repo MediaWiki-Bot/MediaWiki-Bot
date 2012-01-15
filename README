@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version v3.4.2
+    version 3.004003
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -235,7 +235,7 @@ METHODS
     with $limit number of revisions (default is as many as possible).
 
     The array returned contains hashrefs with keys: revid, user, comment,
-    timestamp_date, and timestamp_time.
+    minor, timestamp_date, and timestamp_time.
 
   get_text
     Returns an the wikitext of the specified $page_title. The second
@@ -354,17 +354,17 @@ METHODS
 
     The "Options hashref":
 
-        my @rc = $bot->update_rc(4, 10);
+        my @rc = $bot->recentchanges(4, 10);
         foreach my $hashref (@rc) {
-            print $hashref->{'title'} . "\n";
+            print $hashref->{title} . "\n";
         }
 
         # Or, use a callback for incremental processing:
-        $bot->update_rc(0, 500, { hook => \&mysub });
+        $bot->recentchanges(0, 500, { hook => \&mysub });
         sub mysub {
             my ($res) = @_;
             foreach my $hashref (@$res) {
-                my $page = $hashref->{'title'};
+                my $page = $hashref->{title};
                 print "$page\n";
             }
         }
@@ -860,7 +860,8 @@ METHODS
         $bot->patrol($rcid);
 
     Marks a page or revision identified by the $rcid as patrolled. To mark
-    several RCIDs as patrolled, you may pass an arrayref of them.
+    several RCIDs as patrolled, you may pass an arrayref of them. Returns
+    false and sets "$bot->{error}" if the account cannot patrol.
 
   email
         $bot->email($user, $subject, $body);
@@ -1005,7 +1006,7 @@ AUTHORS
     *   patch and bug report contributors
 
 COPYRIGHT AND LICENSE
-    This software is Copyright (c) 2011 by the MediaWiki::Bot team
+    This software is Copyright (c) 2012 by the MediaWiki::Bot team
     <perlwikibot@googlegroups.com>.
 
     This is free software, licensed under:
