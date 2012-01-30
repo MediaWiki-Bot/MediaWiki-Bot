@@ -961,6 +961,65 @@ sub get_pages {
     return \%return;
 }
 
+=head2 get_image
+
+    $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
+
+Download an image from a wiki. This is derived from a similar function in 
+MediaWiki::API. This one allows the image to be scaled down by passing a hashref
+with height & width parameters.
+
+It returns raw data in the original format. You may simply spew it to a file, or
+process it directly with a library such as L<Imager>.
+
+    my $img_data = $bot->get_image('File::Foo.jpg');
+    use File::Slurp;
+    write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
+
+Images are scaled proportionally. (height/width) will remain 
+constant, except for rounding errors.
+
+Height and width parameters describe the B<maximum> dimensions. A 400x200 
+image will never be scaled to greater dimensions. You can scale it yourself;
+having the wiki do it is just lazy & selfish.
+
+=cut
+
+sub get_image{
+    my $self = shift;
+    my $name = shift;
+    my $options = shift;
+    my %sizeparams;
+    $sizeparams{iiurlwidth} = $options->{width} if $options->{width};
+    $sizeparams{iiurlheight} = $options->{height} if $options->{height};
+    my $ref = $self->{api}->api({
+          action => 'query',
+          titles => $name,
+          prop   => 'imageinfo',
+          iiprop => 'url|size',
+          %sizeparams
+       } );
+    return $self->_handle_api_error() unless $ref;
+ 
+    # get the page id and the page hashref with title and revisions
+    my ( $pageid, $pageref ) = each %{ $ref->{query}->{pages} };
+    # if the image is missing then return an empty string
+    return '' unless ( defined $pageref->{imageinfo} );
+ 
+    my $url = @{ $pageref->{imageinfo} }[0]->{thumburl};#if width/height provided.
+    $url = @{ $pageref->{imageinfo} }[0]->{url} unless $url;#else
+    die "$url should be absolute or something." unless ( $url =~ /^http\:\/\// );
+    
+    my $response = $self->{api}->{ua}->get($url);
+ 
+    return $self->_handle_api_error ("The file '$url' was not found")
+       unless ( $response->code == 200 );
+
+    
+       #die $response->decoded_content;
+    return $response->decoded_content;
+}
+ 
 =head2 revert
 
 Reverts the specified $page_title to $revid, with an edit summary of $summary. A
