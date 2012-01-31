@@ -22,30 +22,42 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 }
 
 { #no width, no height
-   my $data = $bot->get_image('File:Foo bar foo bar.gif');
+   my $data = $bot->get_image('File:Test-favicon.png');
    ok($data, 'nonscaled image retrieved');
-   my $img = Imager->new(data=>$data);
-   ok($img, 'hopefully retrieved nonscaled data is an image.');
-   is($img->getwidth(),15, 'nonscaled img has w 15');
-   is($img->getheight(),15, 'nonscaled img has h 15');
+   
+   my $img = Imager->new;
+   my $did_read = $img->read(data=>$data);
+   diag $img->errstr unless $did_read;
+   ok($did_read, 'retrieved nonscaled data is an image.');
+
+   is($img->getwidth(),16, 'nonscaled img has w 16');
+   is($img->getheight(),16, 'nonscaled img has h 16');
 }
 { #supply a width
-   my $data = $bot->get_image('File:Foo bar foo bar.gif',{width=>5});
+   my $data = $bot->get_image('File:Test-favicon.png',{width=>12});
    ok($data, 'wscaled image retrieved');
-   my $img = Imager->new(data=>$data);
-   ok($img, 'hopefully retrieved wscaled data is an image.');
-   is($img->getwidth(),5, 'wscaled img has w 5');
-   is($img->getheight(),5, 'wscaled img has h 5');
+   
+   my $img = Imager->new;
+   my $did_read = $img->read(data=>$data);
+   diag $img->errstr unless $did_read;
+   ok($did_read, 'retrieved wscaled data is an image.');
+
+   is($img->getwidth(),12, 'wscaled img has w 12');
+   is($img->getheight(),12, 'wscaled img has h 12');
 }
 {  #supply a width & a not-to-scale height. These 
    # should both be considered maximum dimensions,
    # and scale should be proportional.
-   my $data = $bot->get_image('File:Foo bar foo bar.gif',{width=>5,height=>3});
+   my $data = $bot->get_image('File:Test-favicon.png',{width=>4,height=>8});
    ok($data, 'whscaled image retrieved');
-   my $img = Imager->new(data=>$data);
-   ok($img, 'hopefully retrieved whscaled data is an image.');
-   is($img->getwidth(),3, 'nonscaled img has w 3');
-   is($img->getheight(),3, 'nonscaled img has h 3');
+
+   my $img = Imager->new;
+   my $did_read = $img->read(data=>$data);
+   diag $img->errstr unless $did_read;
+   ok($did_read, 'retrieved whscaled data is an image.');
+
+   is($img->getwidth(),4, 'whscaled img has w 4');
+   is($img->getheight(),4, 'whscaled img has h 4');
 }
 
 done_testing;
