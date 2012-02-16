@@ -46,19 +46,19 @@ __DATA__
   <td colspan="2" class="diff-lineno">Line 24:</td>
 </tr>
 <tr>
-  <td class="diff-marker"> </td>
+  <td class="diff-marker">&#160;</td>
   <td class="diff-context"><div>;21-get_allusers.t:gets a list of users from [[Special:ListUsers]] and [[Special:ListUsers/sysop]]</div></td>
-  <td class="diff-marker"> </td>
+  <td class="diff-marker">&#160;</td>
   <td class="diff-context"><div>;21-get_allusers.t:gets a list of users from [[Special:ListUsers]] and [[Special:ListUsers/sysop]]</div></td>
 </tr>
 <tr>
-  <td class="diff-marker"> </td>
+  <td class="diff-marker">&#160;</td>
   <td class="diff-context"><div>;22-get_id.t:gets the pageid for [[Main Page]]</div></td>
-  <td class="diff-marker"> </td>
+  <td class="diff-marker">&#160;</td>
   <td class="diff-context"><div>;22-get_id.t:gets the pageid for [[Main Page]]</div></td>
 </tr>
 <tr>
   <td class="diff-marker">−</td>
   <td class="diff-deletedline"><div>;23-list_transclusions.t:requires [[Template:Perlwikibot-test]] and for [[Template:Tlx]] to be used</div></td>
-  <td colspan="2">&nbsp;</td>
+  <td colspan="2" class="diff-empty">&#160;</td>
 </tr>
