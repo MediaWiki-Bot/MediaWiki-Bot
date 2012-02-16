@@ -2253,19 +2253,19 @@ sub expandtemplates {
     my $text = shift;
 
     unless ($text) {
+        croak q{You must provide a page title} unless $page;
         $text = $self->get_text($page);
     }
 
     my $hash = {
         action => 'expandtemplates',
-        title  => $page,
+        ( $page ? (title  => $page) : ()),
         text   => $text,
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
-    my $expanded = $res->{expandtemplates}->{'*'};
 
-    return $expanded;
+    return $res->{expandtemplates}->{'*'};
 }
 
 =head2 get_allusers
