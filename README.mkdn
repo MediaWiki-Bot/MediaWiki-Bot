@@ -1,0 +1,1016 @@
+# NAME
+
+MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
+
+# VERSION
+
+version 3.005000
+
+# SYNOPSIS
+
+    use MediaWiki::Bot;
+
+    my $bot = MediaWiki::Bot->new({
+        assert      => 'bot',
+        host        => 'de.wikimedia.org',
+        login_data  => { username => "Mike's bot account", password => "password" },
+    });
+
+    my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+    print "Reverting to $revid\n" if defined($revid);
+    $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+
+# DESCRIPTION
+
+__MediaWiki::Bot__ is a framework that can be used to write bots which interface
+with the MediaWiki API ([http://en.wikipedia.org/w/api.php](http://en.wikipedia.org/w/api.php)).
+
+# METHODS
+
+## new
+
+    my $bot = MediaWiki::Bot({
+        host    => 'en.wikipedia.org',
+    });
+
+Calling `<MediaWiki::Bot-`new()>> will create a new MediaWiki::Bot object. The
+only parameter is a hashref with keys:
+
+- _agent_ sets a custom useragent
+- _assert_ sets a parameter for the AssertEdit extension (commonly 'bot')
+
+Refer to [http://mediawiki.org/wiki/Extension:AssertEdit](http://mediawiki.org/wiki/Extension:AssertEdit).
+
+- _operator_ allows the bot to send you a message when it fails an assert
+
+In addition, it will be integrated into the default useragent (which may not be
+used if you set agent yourself). The message will tell you that $useragent is
+logged out, so use a descriptive one if you set it.
+
+- _maxlag_ allows you to set the maxlag parameter (default is the recommended 5s).
+
+Please refer to the MediaWiki documentation prior to changing this from the
+default.
+
+- _protocol_ allows you to specify 'http' or 'https' (default is 'http')
+- _host_ sets the domain name of the wiki to connect to
+- _path_ sets the path to api.php (with no leading or trailing slash)
+- _login_data_ is a hashref of credentials to pass to ["login"](#login).
+- _debug_ - whether to provide debug output.
+
+1 provides only error messages; 2 provides further detail on internal operations.
+
+For example:
+
+    my $bot = MediaWiki::Bot->new({
+        assert      => 'bot',
+        protocol    => 'https',
+        host        => 'secure.wikimedia.org',
+        path        => 'wikipedia/meta/w',
+        login_data  => { username => "Mike's bot account", password => "password" },
+    });
+
+For backward compatibility, you can specify up to three parameters:
+
+    my $bot = MediaWiki::Bot->new('My custom useragent string', $assert, $operator);
+
+__This form is deprecated__ will never do auto-login or autoconfiguration, and emits
+deprecation warnings.
+
+## set_wiki
+
+Set what wiki to use. The parameter is a hashref with keys:
+
+- _host_ - the domain name
+- _path_ - the part of the path before api.php (usually 'w')
+- _protocol_ is either 'http' or 'https'.
+
+If you don't set any parameter, it's previous value is used. If it has never
+been set, the default settings are 'http', 'en.wikipedia.org' and 'w'.
+
+For example:
+
+    $bot->set_wiki({
+        protocol    => 'https',
+        host        => 'secure.wikimedia.org',
+        path        => 'wikipedia/meta/w',
+    });
+
+For backward compatibility, you can specify up to two parameters:
+
+    $bot->set_wiki($host, $path);
+
+__This form is deprecated__, and will emit deprecation warnings.
+
+## login
+
+This method takes a hashref with keys _username_ and _password_ at a minimum.
+See ["Single User Login"](#Single User Login) and ["Basic authentication"](#Basic authentication) for additional options.
+
+Logs the use $username in, optionally using $password. First, an attempt will be
+made to use cookies to log in. If this fails, an attempt will be made to use the
+password provided to log in, if any. If the login was successful, returns true;
+false otherwise.
+
+    $bot->login({
+        username => $username,
+        password => $password,
+    }) or die "Login failed";
+
+Once logged in, attempt to do some simple auto-configuration. At present, this
+consists of:
+
+- Warning if the account doesn't have the bot flag, and isn't a sysop account.
+- Setting an appropriate default assert.
+
+You can skip this autoconfiguration by passing `autoconfig => 0`
+
+For backward compatibility, you can call this as
+
+    $bot->login($username, $password);
+
+__This form is deprecated__, and will emit deprecation warnings. It will
+never do autoconfiguration or SUL login.
+
+### Single User Login
+
+On WMF wikis, `do_sul` specifies whether to log in on all projects. The default
+is false. But even when false, you still get a CentralAuth cookie for, and are
+thus logged in on, all languages of a given domain (`*.wikipedia.org`, for example).
+When set, a login is done on each WMF domain so you are logged in on all ~800
+content wikis. Since `*.wikimedia.org` is not possible, we explicitly include
+meta, commons, incubator, and wikispecies.
+
+### Basic authentication
+
+If you need to supply basic auth credentials, pass a hashref of data as
+described by [LWP::UserAgent](http://search.cpan.org/perldoc?LWP::UserAgent):
+
+    $bot->login({
+        username    => $username,
+        password    => $password,
+        basic_auth  => {    netloc  => "private.wiki.com:80",
+                            realm   => "Authentication Realm",
+                            uname   => "Basic auth username",
+                            pass    => "password",
+                        }
+    }) or die "Couldn't log in";
+
+## logout
+
+    $bot->logout();
+
+The logout method logs the bot out of the wiki. This invalidates all login
+cookies.
+
+## edit
+
+    my $text = $bot->get_text('My page');
+    $text .= "\n\n* More text\n";
+    $bot->edit({
+        page    => 'My page',
+        text    => $text,
+        summary => 'Adding new content',
+        section => 'new',
+    });
+
+This method edits a wiki page, and takes a hashref of data with keys:
+
+- _summary_ - an edit summary
+- _minor_ - whether to mark the edit as minor
+- _bot_ - whether to mark the edit as a bot edit
+- _assertion_ - usually 'bot', but see [http://mediawiki.org/wiki/Extension:AssertEdit](http://mediawiki.org/wiki/Extension:AssertEdit).
+- _section_ - edit a single section instead of the whole page
+
+An MD5 hash is sent to guard against data corruption while in transit.
+
+You can also call this as:
+
+    $bot->edit($page, $text, $summary, $is_minor, $assert, $markasbot);
+
+__This form is deprecated__, and will emit deprecation warnings.
+
+## move
+
+    $bot->move($from_title, $to_title, $reason, $options_hashref);
+
+This moves a wiki page.
+
+If you wish to specify more options (like whether to suppress creation of a
+redirect), use $options_hashref, which has keys:
+
+- _movetalk_ specifies whether to attempt to the talk page.
+- _noredirect_ specifies whether to suppress creation of a redirect.
+- _movesubpages_ specifies whether to move subpages, if applicable.
+- _watch_ and _unwatch_ add or remove the page and the redirect from your watchlist.
+- _ignorewarnings_ ignores warnings.
+
+    my @pages = ("Humor", "Rumor");
+    foreach my $page (@pages) {
+        my $to = $page;
+        $to =~ s/or$/our/;
+        $bot->move($page, $to, "silly 'merricans");
+    }
+
+## get_history
+
+    my @hist = $bot->get_history($title, $limit, $revid, $direction);
+
+Returns an array containing the history of the specified $page_title, with
+$limit number of revisions (default is as many as possible).
+
+The array returned contains hashrefs with keys: revid, user, comment, minor,
+timestamp_date, and timestamp_time.
+
+## get_text
+
+Returns an the wikitext of the specified $page_title. The second parameter is
+$revid - if defined, returns the text of that revision; the third is
+$section_number - if defined, returns the text of that section.
+
+A blank page will return wikitext of "" (which evaluates to false in Perl,
+but is defined); a nonexistent page will return undef (which also evaluates
+to false in Perl, but is obviously undefined). You can distinguish between
+blank and nonexistent pages by using [defined](http://search.cpan.org/perldoc?perlfunc#defined):
+
+    my $wikitext = $bot->get_text('Page title');
+    print "Wikitext: $wikitext\n" if defined $wikitext;
+
+## get_id
+
+Returns the id of the specified $page_title. Returns undef if page does not exist.
+
+    my $pageid = $bot->get_id("Main Page");
+    die "Page doesn't exist\n" if !defined($pageid);
+
+## get_pages
+
+Returns the text of the specified pages in a hashref. Content of undef means
+page does not exist. Also handles redirects or article names that use namespace
+aliases.
+
+    my @pages = ('Page 1', 'Page 2', 'Page 3');
+    my $thing = $bot->get_pages(\@pages);
+    foreach my $page (keys %$thing) {
+        my $text = $thing->{$page};
+        print "$text\n" if defined($text);
+    }
+
+## get_image
+
+    $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
+
+Download an image from a wiki. This is derived from a similar function in 
+MediaWiki::API. This one allows the image to be scaled down by passing a hashref
+with height & width parameters.
+
+It returns raw data in the original format. You may simply spew it to a file, or
+process it directly with a library such as [Imager](http://search.cpan.org/perldoc?Imager).
+
+    my $img_data = $bot->get_image('File::Foo.jpg');
+    use File::Slurp;
+    write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
+
+Images are scaled proportionally. (height/width) will remain 
+constant, except for rounding errors.
+
+Height and width parameters describe the __maximum__ dimensions. A 400x200 
+image will never be scaled to greater dimensions. You can scale it yourself;
+having the wiki do it is just lazy & selfish.
+
+## revert
+
+Reverts the specified $page_title to $revid, with an edit summary of $summary. A
+default edit summary will be used if $summary is omitted.
+
+    my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+    print "Reverting to $revid\n" if defined($revid);
+    $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+
+## undo
+
+    $bot->undo($title, $revid, $summary, $after);
+
+Reverts the specified $revid, with an edit summary of $summary, using the undo
+function. To undo all revisions from $revid up to but not including this one,
+set $after to another revid. If not set, just undo the one revision ($revid).
+
+See [http://www.mediawiki.org/wiki/API:Edit#Parameters](http://www.mediawiki.org/wiki/API:Edit#Parameters).
+
+## get_last
+
+Returns the revid of the last revision to $page not made by $user. undef is
+returned if no result was found, as would be the case if the page is deleted.
+
+    my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
+    if defined($revid) {
+        print "Reverting to $revid\n";
+        $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+    }
+
+## update_rc
+
+__This method is deprecated__, and will emit deprecation warnings.
+Replace calls to `update_rc()` with calls to the newer `recentchanges()`, which
+returns all available data, including rcid.
+
+Returns an array containing the $limit most recent changes to the wiki's _main
+namespace_. The array contains hashrefs with keys title, revid, old_revid,
+and timestamp.
+
+    my @rc = $bot->update_rc(5);
+    foreach my $hashref (@rc) {
+        my $title = $hash->{'title'};
+        print "$title\n";
+    }
+
+The ["Options hashref"](#Options hashref) is also available:
+
+    # Use a callback for incremental processing:
+    my $options = { hook => \&mysub, };
+    $bot->update_rc($options);
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $page = $hashref->{'title'};
+            print "$page\n";
+        }
+    }
+
+## recentchanges($ns, $limit, $options_hashref)
+
+Returns an array of hashrefs containing recentchanges data for the specified
+namespace number. If specified, the second parameter is the number of rows to
+fetch, and an $options_hashref can be used.
+
+The hashref returned might contain the following keys:
+
+- _ns_ - the namespace number
+- _revid_
+- _old_revid_
+- _timestamp_
+- _rcid_ - can be used with `patrol()`
+- _pageid_
+- _type_ - one of edit, new, log (there may be others)
+- _title_
+
+By default, the main namespace is used, and limit is set to 50. Pass an
+arrayref of namespace numbers to get results from several namespaces.
+
+The ["Options hashref"](#Options hashref):
+
+    my @rc = $bot->recentchanges(4, 10);
+    foreach my $hashref (@rc) {
+        print $hashref->{title} . "\n";
+    }
+
+    # Or, use a callback for incremental processing:
+    $bot->recentchanges(0, 500, { hook => \&mysub });
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $page = $hashref->{title};
+            print "$page\n";
+        }
+    }
+
+## what_links_here
+
+Returns an array containing a list of all pages linking to $page.
+
+Additional optional parameters are:
+
+- One of: all (default), redirects, or nonredirects.
+- A namespace number to search (pass an arrayref to search in multiple namespaces)
+- An ["Options hashref"](#Options hashref).
+
+A typical query:
+
+    my @links = $bot->what_links_here("Meta:Sandbox",
+        undef, 1,
+        { hook=>\&mysub }
+    );
+    sub mysub{
+        my ($res) = @_;
+        foreach my $hash (@$res) {
+            my $title = $hash->{'title'};
+            my $is_redir = $hash->{'redirect'};
+            print "Redirect: $title\n" if $is_redir;
+            print "Page: $title\n" unless $is_redir;
+        }
+    }
+
+Transclusions are no longer handled by what_links_here() - use
+["list_transclusions"](#list_transclusions) instead.
+
+## list_transclusions
+
+Returns an array containing a list of all pages transcluding $page.
+
+Other parameters are:
+
+- One of: all (default), redirects, or nonredirects
+- A namespace number to search (pass an arrayref to search in multiple namespaces).
+- $options_hashref as described by [MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API):
+
+Set max to limit the number of queries performed.
+
+Set hook to a subroutine reference to use a callback hook for incremental
+processing.
+
+Refer to the section on ["linksearch"](#linksearch) for examples.
+
+A typical query:
+
+    $bot->list_transclusions("Template:Tlx", undef, 4, {hook => \&mysub});
+    sub mysub{
+        my ($res) = @_;
+        foreach my $hash (@$res) {
+            my $title = $hash->{'title'};
+            my $is_redir = $hash->{'redirect'};
+            print "Redirect: $title\n" if $is_redir;
+            print "Page: $title\n" unless $is_redir;
+        }
+    }
+
+## get_pages_in_category
+
+Returns an array containing the names of all pages in the specified category
+(include the Category: prefix). Does not recurse into sub-categories.
+
+    my @pages = $bot->get_pages_in_category('Category:People on stamps of Gabon');
+    print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
+
+The options hashref is as described in ["Options hashref"](#Options hashref).
+Use `{ max => 0 }` to get all results.
+
+## get_all_pages_in_category
+
+    my @pages = $bot->get_all_pages_in_category($category, $options_hashref);
+
+Returns an array containing the names of __all__ pages in the specified category
+(include the Category: prefix), including sub-categories. The $options_hashref
+is described fully in ["Options hashref"](#Options hashref).
+
+## linksearch
+
+Runs a linksearch on the specified $link and returns an array containing
+anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page
+the link is on.
+
+Additional parameters are:
+
+- A namespace number to search (pass an arrayref to search in multiple namespaces).
+- You can search by $protocol (http is default).
+- $options_hashref is fully documented in ["Options hashref"](#Options hashref):
+
+Set _max_ in $options to get more than one query's worth of results:
+
+    my $options = { max => 10, }; # I only want some results
+    my @links = $bot->linksearch("slashdot.org", 1, undef, $options);
+    foreach my $hash (@links) {
+        my $url = $hash->{'url'};
+        my $page = $hash->{'title'};
+        print "$page: $url\n";
+    }
+
+Set _hook_ to a subroutine reference to use a callback hook for incremental
+processing:
+
+    my $options = { hook => \&mysub, }; # I want to do incremental processing
+    $bot->linksearch("slashdot.org", 1, undef, $options);
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $url  = $hashref->{'url'};
+            my $page = $hashref->{'title'};
+            print "$page: $url\n";
+        }
+    }
+
+## purge_page
+
+Purges the server cache of the specified $page. Returns true on success; false
+on failure. Pass an array reference to purge multiple pages.
+
+If you really care, a true return value is the number of pages successfully
+purged. You could check that it is the same as the number you wanted to
+purge - maybe some pages don't exist, or you passed invalid titles, or you
+aren't allowed to purge the cache:
+
+    my @to_purge = ('Main Page', 'A', 'B', 'C', 'Very unlikely to exist');
+    my $size = scalar @to_purge;
+
+    print "all-at-once:\n";
+    my $success = $bot->purge_page(\@to_purge);
+
+    if ($success == $size) {
+        print "@to_purge: OK ($success/$size)\n";
+    }
+    else {
+        my $missed = @to_purge - $success;
+        print "We couldn't purge $missed pages (list was: "
+            . join(', ', @to_purge)
+            . ")\n";
+    }
+
+    # OR
+    print "\n\none-at-a-time:\n";
+    foreach my $page (@to_purge) {
+        my $ok = $bot->purge_page($page);
+        print "$page: $ok\n";
+    }
+
+## get_namespace_names
+
+    my %namespace_names = $bot->get_namespace_names();
+
+Returns a hash linking the namespace id, such as 1, to its named equivalent,
+such as "Talk".
+
+## image_usage
+
+Gets a list of pages which include a certain $image. Include the `File:`
+namespace prefix to avoid incurring an extra round-trip (which will also emit
+a deprecation warnings).
+
+Additional parameters are:
+
+- A namespace number to fetch results from (or an arrayref of multiple namespace
+numbers)
+- One of all, redirect, or nonredirects.
+- $options is a hashref as described in the section for ["linksearch"](#linksearch).
+
+    my @pages = $bot->image_usage("File:Albert Einstein Head.jpg");
+
+Or, make use of the ["Options hashref"](#Options hashref) to do incremental processing:
+
+    $bot->image_usage("File:Albert Einstein Head.jpg",
+        undef, undef,
+        { hook=>\&mysub, max=>5 }
+    );
+    sub mysub {
+        my $res = shift;
+        foreach my $page (@$res) {
+            my $title = $page->{'title'};
+            print "$title\n";
+        }
+    }
+
+## global_image_usage($image, $results, $filterlocal)
+
+Returns an array of hashrefs of data about pages which use the given image.
+
+    my @data = $bot->global_image_usage('File:Albert Einstein Head.jpg');
+
+The keys in each hashref are title, url, and wiki. `$results` is the maximum
+number of results that will be returned (not the maximum number of requests that
+will be sent, like `max` in the ["Options hashref"](#Options hashref)); the default is to
+attempt to fetch 500 (set to 0 to get all results). `$filterlocal` will filter
+out local uses of the image.
+
+## links_to_image
+
+A backward-compatible call to ["image_usage"](#image_usage). You can provide only the image
+title.
+
+__This method is deprecated__, and will emit deprecation warnings.
+
+## is_blocked
+
+    my $blocked = $bot->is_blocked('User:Mike.lifeguard');
+
+Checks if a user is currently blocked.
+
+## test_blocked
+
+Retained for backwards compatibility. Use ["is_blocked"](#is_blocked) for clarity.
+
+__This method is deprecated__, and will emit deprecation warnings.
+
+## test_image_exists
+
+Checks if an image exists at $page.
+
+- 0 means "Nothing there"
+- 1 means "Yes, an image exists locally"
+- 2 means "Yes, an image exists on [Commons](http://commons.wikimedia.org)"
+- 3 means "No image exists, but there is text on the page"
+
+If you pass in an arrayref of images, you'll get out an arrayref of
+results.
+
+    my $exists = $bot->test_image_exists('File:Albert Einstein Head.jpg');
+    if ($exists == 0) {
+        print "Doesn't exist\n";
+    }
+    elsif ($exists == 1) {
+        print "Exists locally\n";
+    }
+    elsif ($exists == 2) {
+        print "Exists on Commons\n";
+    }
+    elsif ($exists == 3) {
+        print "Page exists, but no image\n";
+    }
+
+## get_pages_in_namespace
+
+    $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
+
+Returns an array containing the names of all pages in the specified namespace.
+The $namespace_id must be a number, not a namespace name.
+
+Setting $page_limit is optional, and specifies how many items to retrieve at
+once. Setting this to 'max' is recommended, and this is the default if omitted.
+If $page_limit is over 500, it will be rounded up to the next multiple of 500.
+If $page_limit is set higher than you are allowed to use, it will silently be
+reduced. Consider setting key 'max' in the ["Options hashref"](#Options hashref) to
+retrieve multiple sets of results:
+
+    # Gotta get 'em all!
+    my @pages = $bot->get_pages_in_namespace(6, 'max', { max => 0 });
+
+## count_contributions
+
+    my $count = $bot->count_contributions($user);
+
+Uses the API to count $user's contributions.
+
+## last_active
+
+    my $latest_timestamp = $bot->last_active($user);
+
+Returns the last active time of $user in `YYYY-MM-DDTHH:MM:SSZ`.
+
+## recent_edit_to_page
+
+     my ($timestamp, $user) = $bot->recent_edit_to_page($title);
+
+Returns timestamp and username for most recent (top) edit to $page.
+
+## get_users
+
+    my @recent_editors = $bot->get_users($title, $limit, $revid, $direction);
+
+Gets the most recent editors to $page, up to $limit, starting from $revision
+and going in $direction.
+
+## was_blocked
+
+    for ("Mike.lifeguard", "Jimbo Wales") {
+        print "$_ was blocked\n" if $bot->was_blocked($_);
+    }
+
+Returns whether $user has ever been blocked.
+
+## test_block_hist
+
+Retained for backwards compatibility. Use ["was_blocked"](#was_blocked) for clarity.
+
+__This method is deprecated__, and will emit deprecation warnings.
+
+## expandtemplates
+
+    my $expanded = $bot->expandtemplates($title, $wikitext);
+
+Expands templates on $page, using $text if provided, otherwise loading the page
+text automatically.
+
+## get_allusers
+
+    my @users = $bot->get_allusers($limit, $user_group, $options_hashref);
+
+Returns an array of all users. Default $limit is 500. Optionally specify a
+$group (like 'sysop') to list that group only. The last optional parameter
+is an ["Options hashref"](#Options hashref).
+
+## db_to_domain
+
+Converts a wiki/database name (enwiki) to the domain name (en.wikipedia.org).
+
+    my @wikis = ("enwiki", "kowiki", "bat-smgwiki", "nonexistent");
+    foreach my $wiki (@wikis) {
+        my $domain = $bot->db_to_domain($wiki);
+        next if !defined($domain);
+        print "$wiki: $domain\n";
+    }
+
+You can pass an arrayref to do bulk lookup:
+
+    my @wikis = ("enwiki", "kowiki", "bat-smgwiki", "nonexistent");
+    my $domains = $bot->db_to_domain(\@wikis);
+    foreach my $domain (@$domains) {
+        next if !defined($domain);
+        print "$domain\n";
+    }
+
+## domain_to_db
+
+    my $db = $bot->domain_to_db($domain_name);
+
+As you might expect, does the opposite of ["domain_to_db"](#domain_to_db): Converts a domain
+name (meta.wikimedia.org) into a database/wiki name (metawiki).
+
+## diff
+
+This allows retrieval of a diff from the API. The return is a scalar containing
+the _HTML table_ of the diff. Options are passed as a hashref with keys:
+
+- _title_ is the title to use. Provide _either_ this or revid.
+- _revid_ is any revid to diff from. If you also specified title, only title will
+be honoured.
+- _oldid_ is an identifier to diff to. This can be a revid, or the special values
+'cur', 'prev' or 'next'
+
+## prefixindex
+
+This returns an array of hashrefs containing page titles that start with the
+given $prefix. The hashref has keys 'title' and 'redirect' (present if the
+page is a redirect, not present otherwise).
+
+Additional parameters are:
+
+- One of all, redirects, or nonredirects
+- A single namespace number (unlike linksearch etc, which can accept an arrayref
+of numbers).
+- $options_hashref as described in ["Options hashref"](#Options hashref).
+
+    my @prefix_pages = $bot->prefixindex("User:Mike.lifeguard");
+    # Or, the more efficient equivalent
+    my @prefix_pages = $bot->prefixindex("Mike.lifeguard", 2);
+    foreach my $hashref (@pages) {
+        my $title = $hashref->{'title'};
+        if $hashref->{'redirect'} {
+            print "$title is a redirect\n";
+        }
+        else {
+            print "$title\n is not a redirect\n";
+        }
+    }
+
+## search
+
+This is a simple search for your $search_term in page text. It returns an array
+of page titles matching.
+
+Additional optional parameters are:
+
+- A namespace number to search in, or an arrayref of numbers (default is the
+main namespace)
+- $options_hashref is a hashref as described in ["Options hashref"](#Options hashref):
+
+    my @pages = $bot->search("Mike.lifeguard", 2);
+    print "@pages\n";
+
+Or, use a callback for incremental processing:
+
+    my @pages = $bot->search("Mike.lifeguard", 2, { hook => \&mysub });
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $page = $hashref->{'title'};
+            print "$page\n";
+        }
+    }
+
+## get_log
+
+This fetches log entries, and returns results as an array of hashes. The first
+parameter is a hashref with keys:
+
+- _type_ is the log type (block, delete...)
+- _user_ is the user who _performed_ the action. Do not include the User: prefix
+- _target_ is the target of the action. Where an action was performed to a page,
+it is the page title. Where an action was performed to a user, it is
+User:$username.
+
+The second is the familiar ["Options hashref"](#Options hashref).
+
+    my $log = $bot->get_log({
+            type => 'block',
+            user => 'User:Mike.lifeguard',
+        });
+    foreach my $entry (@$log) {
+        my $user = $entry->{'title'};
+        print "$user\n";
+    }
+
+    $bot->get_log({
+            type => 'block',
+            user => 'User:Mike.lifeguard',
+        },
+        { hook => \&mysub, max => 10 }
+    );
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $title = $hashref->{'title'};
+            print "$title\n";
+        }
+    }
+
+## is_g_blocked
+
+    my $is_globally_blocked = $bot->is_g_blocked('127.0.0.1');
+
+Returns what IP/range block _currently in place_ affects the IP/range. The
+return is a scalar of an IP/range if found (evaluates to true in boolean
+context); undef otherwise (evaluates false in boolean context). Pass in a
+single IP or CIDR range.
+
+## was_g_blocked
+
+    print "127.0.0.1 was globally blocked\n" if $bot->was_g_blocked('127.0.0.1');
+
+Returns whether an IP/range was ever globally blocked. You should probably
+call this method only when your bot is operating on Meta - this method will
+warn if not.
+
+## was_locked
+
+    my $was_locked = $bot->was_locked('Mike.lifeguard');
+
+Returns whether a user was ever locked. You should probably call this method
+only when your bot is operating on Meta - this method will warn if not.
+
+## get_protection
+
+Returns data on page protection as a array of up to two hashrefs. Each hashref
+has a type, level, and expiry. Levels are 'sysop' and 'autoconfirmed'; types are
+'move' and 'edit'; expiry is a timestamp. Additionally, the key 'cascade' will
+exist if cascading protection is used.
+
+    my $page = 'Main Page';
+    $bot->edit({
+        page    => $page,
+        text    => rand(),
+        summary => 'test',
+    }) unless $bot->get_protection($page);
+
+You can also pass an arrayref of page titles to do bulk queries:
+
+    my @pages = ('Main Page', 'User:Mike.lifeguard', 'Project:Sandbox');
+    my $answer = $bot->get_protection(\@pages);
+    foreach my $title (keys %$answer) {
+        my $protected = $answer->{$title};
+        print "$title is protected\n" if $protected;
+        print "$title is unprotected\n" unless $protected;
+    }
+
+## is_protected
+
+This is a synonym for ["get_protection"](#get_protection), which should be used in preference.
+
+__This method is deprecated__, and will emit deprecation warnings.
+
+## patrol
+
+    $bot->patrol($rcid);
+
+Marks a page or revision identified by the $rcid as patrolled. To mark several
+RCIDs as patrolled, you may pass an arrayref of them. Returns false and sets
+`$bot->{error}` if the account cannot patrol.
+
+## email
+
+    $bot->email($user, $subject, $body);
+
+This allows you to send emails through the wiki. All 3 of $user (without the
+User: prefix), $subject and $body are required. If $user is an arrayref, this
+will send the same email (subject and body) to all users.
+
+## top_edits
+
+Returns an array of the page titles where the $user is the latest editor. The
+second parameter is the familiar [$options_hashref](#linksearch).
+
+    my @pages = $bot->top_edits("Mike.lifeguard", {max => 5});
+    foreach my $page (@pages) {
+        $bot->rollback($page, "Mike.lifeguard");
+    }
+
+Note that accessing the data with a callback happens __before__ filtering
+the top edits is done. For that reason, you should use ["contributions"](#contributions)
+if you need to use a callback. If you use a callback with top_edits(),
+you __will not__ necessarily get top edits returned. It is only safe to use a
+callback if you _check_ that it is a top edit:
+
+    $bot->top_edits("Mike.lifeguard", { hook => \&rv });
+    sub rv {
+        my $data = shift;
+        foreach my $page (@$data) {
+            if (exists($page->{'top'})) {
+                $bot->rollback($page->{'title'}, "Mike.lifeguard");
+            }
+        }
+    }
+
+## contributions
+
+    my @contribs = $bot->contributions($user, $namespace);
+
+Returns an array of hashrefs of data for the user's contributions. $ns can be an
+arrayref of namespace numbers. $options can be specified as in ["linksearch"](#linksearch).
+
+## upload
+
+    $bot->upload({ data => $file_contents, summary => 'uploading file' });
+    $bot->upload({ file => $file_name,     title   => 'Target filename.png' });
+
+Upload a file to the wiki. Specify the file by either giving the filename, which
+will be read in, or by giving the data directly.
+
+## usergroups
+
+Returns a list of the usergroups a user is in:
+
+    my @usergroups = $bot->usergroups('Mike.lifeguard');
+
+## Options hashref
+
+This is passed through to the lower-level interface [MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API), and is
+fully documented there.
+
+The hashref can have 3 keys:
+
+- max
+
+Specifies the maximum number of queries to retrieve data from the wiki. This is
+independent of the _size_ of each query (how many items each query returns).
+Set to 0 to retrieve all the results.
+
+- hook
+
+Specifies a coderef to a hook function that can be used to process large lists
+as they come in. When this is used, your subroutine will get the raw data. This
+is noted in cases where it is known to be significant. For example, when
+using a hook with `top_edits()`, you need to check whether the edit is the top
+edit yourself - your subroutine gets results as they come in, and before they're
+filtered.
+
+- skip_encoding
+
+MediaWiki's API uses UTF-8 and any 8 bit character string parameters are encoded
+automatically by the API call. If your parameters are already in UTF-8 this will
+be detected and the encoding will be skipped. If your parameters for some reason
+contain UTF-8 data but no UTF-8 flag is set (i.e. you did not use the
+`use [utf8](http://search.cpan.org/perldoc?utf8);` pragma) you should prevent re-encoding by passing an option
+`skip_encoding => 1`. For example:
+
+    $category ="Cat\x{e9}gorie:moyen_fran\x{e7}ais"; # latin1 string
+    $bot->get_all_pages_in_category($category); # OK
+
+    $category = "Cat". pack("U", 0xe9)."gorie:moyen_fran".pack("U",0xe7)."ais"; # unicode string
+    $bot->get_all_pages_in_category($category); # OK
+
+    $category ="Cat\x{c3}\x{a9}gorie:moyen_fran\x{c3}\x{a7}ais"; # unicode data without utf-8 flag
+    # $bot->get_all_pages_in_category($category); # NOT OK
+    $bot->get_all_pages_in_category($category, { skip_encoding => 1 }); # OK
+
+If you need this, it probably means you're doing something wrong. Feel free to
+ask for help.
+
+# ERROR HANDLING
+
+All functions will return undef in any handled error situation. Further error
+data is stored in `$bot->{error}->{code}` and `$bot->{error}->{details}`.
+
+# AVAILABILITY
+
+The project homepage is [https://metacpan.org/module/MediaWiki::Bot](https://metacpan.org/module/MediaWiki::Bot).
+
+The latest version of this module is available from the Comprehensive Perl
+Archive Network (CPAN). Visit [http://www.perl.com/CPAN/](http://www.perl.com/CPAN/) to find a CPAN
+site near you, or see [https://metacpan.org/module/MediaWiki::Bot/](https://metacpan.org/module/MediaWiki::Bot/).
+
+# SOURCE
+
+The development version is on github at [http://github.com/MediaWiki-Bot/MediaWiki-Bot](http://github.com/MediaWiki-Bot/MediaWiki-Bot)
+and may be cloned from [git://github.com/MediaWiki-Bot/MediaWiki-Bot.git](git://github.com/MediaWiki-Bot/MediaWiki-Bot.git)
+
+# BUGS AND LIMITATIONS
+
+You can make new bug reports, and view existing ones, through the
+web interface at [https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues](https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues).
+
+# AUTHORS
+
+- Dan Collins <dcollins@cpan.org>
+- Mike.lifeguard <lifeguard@cpan.org>
+- Alex Rowe <alex.d.rowe@gmail.com>
+- Oleg Alexandrov <oleg.alexandrov@gmail.com>
+- jmax.code <jmax.code@gmail.com>
+- Stefan Petrea <stefan.petrea@gmail.com>
+- kc2aei <kc2aei@gmail.com>
+- bosborne@alum.mit.edu
+- Brian Obio <brianobio@gmail.com>
+- patch and bug report contributors
+
+# COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2012 by the MediaWiki::Bot team <perlwikibot@googlegroups.com>.
+
+This is free software, licensed under:
+
+    The GNU General Public License, Version 3, June 2007
