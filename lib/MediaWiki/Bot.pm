@@ -989,34 +989,27 @@ sub get_image{
     my $self = shift;
     my $name = shift;
     my $options = shift;
+
     my %sizeparams;
     $sizeparams{iiurlwidth} = $options->{width} if $options->{width};
     $sizeparams{iiurlheight} = $options->{height} if $options->{height};
+
     my $ref = $self->{api}->api({
           action => 'query',
           titles => $name,
           prop   => 'imageinfo',
           iiprop => 'url|size',
           %sizeparams
-       } );
-    return $self->_handle_api_error() unless $ref;
+       } ) or return $self->_handle_api_error();
  
-    # get the page id and the page hashref with title and revisions
-    my ( $pageid, $pageref ) = each %{ $ref->{query}->{pages} };
-    # if the image is missing then return an empty string
-    return '' unless ( defined $pageref->{imageinfo} );
- 
-    my $url = @{ $pageref->{imageinfo} }[0]->{thumburl};#if width/height provided.
-    $url = @{ $pageref->{imageinfo} }[0]->{url} unless $url;#else
-    die "$url should be absolute or something." unless ( $url =~ /^http\:\/\// );
-    
-    my $response = $self->{api}->{ua}->get($url);
- 
-    return $self->_handle_api_error ("The file '$url' was not found")
-       unless ( $response->code == 200 );
+    my ($pageref) = values %{ $ref->{query}->{pages} };
+    return unless defined $pageref->{imageinfo}; # if the image is missing
 
-    
-       #die $response->decoded_content;
+    my $url = @{ $pageref->{imageinfo} }[0]->{thumburl} || @{ $pageref->{imageinfo} }[0]->{url};
+    die "$url should be absolute or something." unless ( $url =~ m{^https?://} );
+
+    my $response = $self->{api}->{ua}->get($url);
+    return $self->_handle_api_error() unless ( $response->code == 200 );
     return $response->decoded_content;
 }
  
