@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+3.005000  2012-03-03
     * Expandtemplates will now behave correctly when the page title is omitted
     * Better detection of login failure
 

@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 3.004003
+    version 3.005000
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -268,6 +268,27 @@ METHODS
             my $text = $thing->{$page};
             print "$text\n" if defined($text);
         }
+
+  get_image
+        $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
+
+    Download an image from a wiki. This is derived from a similar function
+    in MediaWiki::API. This one allows the image to be scaled down by
+    passing a hashref with height & width parameters.
+
+    It returns raw data in the original format. You may simply spew it to a
+    file, or process it directly with a library such as Imager.
+
+        my $img_data = $bot->get_image('File::Foo.jpg');
+        use File::Slurp;
+        write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
+
+    Images are scaled proportionally. (height/width) will remain constant,
+    except for rounding errors.
+
+    Height and width parameters describe the maximum dimensions. A 400x200
+    image will never be scaled to greater dimensions. You can scale it
+    yourself; having the wiki do it is just lazy & selfish.
 
   revert
     Reverts the specified $page_title to $revid, with an edit summary of
@@ -965,13 +986,8 @@ AVAILABILITY
 
     The latest version of this module is available from the Comprehensive
     Perl Archive Network (CPAN). Visit <http://www.perl.com/CPAN/> to find a
-    CPAN site near you, or see <http://search.cpan.org/dist/MediaWiki-Bot/>.
-
-    The development version lives at
-    <http://github.com/MediaWiki-Bot/MediaWiki-Bot> and may be cloned from
-    <git://github.com/MediaWiki-Bot/MediaWiki-Bot.git>. Instead of sending
-    patches, please fork this project using the standard git and github
-    infrastructure.
+    CPAN site near you, or see
+    <https://metacpan.org/module/MediaWiki::Bot/>.
 
 SOURCE
     The development version is on github at
@@ -979,10 +995,8 @@ SOURCE
     <git://github.com/MediaWiki-Bot/MediaWiki-Bot.git>
 
 BUGS AND LIMITATIONS
-    No bugs have been reported.
-
-    Please report any bugs or feature requests through the web interface at
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues>.
+    You can make new bug reports, and view existing ones, through the web
+    interface at <https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues>.
 
 AUTHORS
     *   Dan Collins <dcollins@cpan.org>
