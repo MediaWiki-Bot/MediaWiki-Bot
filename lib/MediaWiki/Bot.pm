@@ -3194,7 +3194,7 @@ sub _handle_api_error {
 sub _is_loggedin {
     my $self = shift;
 
-    my $is    = $self->_whoami();
+    my $is    = $self->_whoami() || return $self->_handle_api_error();
     my $ought = $self->{username};
     warn "Testing if logged in: we are $is, and we should be $ought" if $self->{debug} > 1;
     return ($is eq $ought);

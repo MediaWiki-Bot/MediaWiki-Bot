@@ -100,7 +100,7 @@ subtest 'secure' => sub {
             username => $username,
             password => $password,
             do_sul => 1,
-        }), 1,                                              q{Secure login});
+        }), 1,                                              q{Secure login}) or diag explain $secure->{error};
     ok($secure->_is_loggedin(),                             q{Double-check we're actually logged in});
     is($secure->set_wiki({path => 'wikipedia/meta/w'}), 1,  q{Switched wikis OK}); # Don't specify host or protocol - Issue 130
     is($secure->{api}->{config}->{api_url}, 'https://secure.wikimedia.org/wikipedia/meta/w/api.php', q{Protocol and host retained properly});
@@ -124,7 +124,8 @@ subtest 'new-secure' => sub {
     ok($secure->_is_loggedin(),                             q{Double-check we're actually logged in});
     is($secure->set_wiki({host => 'fr.wikipedia.org'}), 1,  q{Switched wikis OK}); # Don't specify path or protocol
     is($secure->{api}->{config}->{api_url}, 'https://fr.wikipedia.org/w/api.php', q{Protocol and path retained properly});
-    ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure});
+    ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure})
+        or is($secure->{error}->{code}, 3);
 };
 
 END {
