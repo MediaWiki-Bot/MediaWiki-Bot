@@ -27,12 +27,14 @@ my $title = 'User:Mike.lifeguard/05-revert.t';
     my $text = $bot->get_text($title, $revid);
     my $res = $bot->revert($title, $revid, $agent);
 
-    skip 'You are blocked, cannot proceed with editing tests', 2 if
-        defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
+    SKIP: {
+        skip 'Cannot proceed with editing tests', 2 if
+            defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
-    my $newtext = $bot->get_text($title);
+        my $newtext = $bot->get_text($title);
 
-    is($text, $newtext, 'Reverted successfully');
+        is($text, $newtext, 'Reverted successfully');
+    }
 }
 
 $bot->purge_page($title);
