@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * Fixed erroneous documentation on the edit method
 
 3.005000  2012-03-03
     * Expandtemplates will now behave correctly when the page title is omitted

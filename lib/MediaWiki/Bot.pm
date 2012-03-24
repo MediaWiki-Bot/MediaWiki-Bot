@@ -552,15 +552,23 @@ This method edits a wiki page, and takes a hashref of data with keys:
 
 =item *
 
+I<page> - the page title to edit
+
+=item *
+
+I<text> - the page text to write
+
+=item *
+
 I<summary> - an edit summary
 
 =item *
 
-I<minor> - whether to mark the edit as minor
+I<minor> - whether to mark the edit as minor or not (boolean)
 
 =item *
 
-I<bot> - whether to mark the edit as a bot edit
+I<bot> - whether to mark the edit as a bot edit (boolean)
 
 =item *
 
@@ -568,7 +576,7 @@ I<assertion> - usually 'bot', but see L<http://mediawiki.org/wiki/Extension:Asse
 
 =item *
 
-I<section> - edit a single section instead of the whole page
+I<section> - edit a single section (identified by number) instead of the whole page
 
 =back
 
