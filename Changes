@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+3.005001  2012-04-08
     * Fixed erroneous documentation on the edit method
     * Fixed edit failures due to changes in HTTP::Message 6.03 (GH#39)
 

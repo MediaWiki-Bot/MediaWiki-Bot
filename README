@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 3.005000
+    version 3.005001
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -183,16 +183,21 @@ METHODS
 
     This method edits a wiki page, and takes a hashref of data with keys:
 
+    *   *page* - the page title to edit
+
+    *   *text* - the page text to write
+
     *   *summary* - an edit summary
 
-    *   *minor* - whether to mark the edit as minor
+    *   *minor* - whether to mark the edit as minor or not (boolean)
 
-    *   *bot* - whether to mark the edit as a bot edit
+    *   *bot* - whether to mark the edit as a bot edit (boolean)
 
     *   *assertion* - usually 'bot', but see
         <http://mediawiki.org/wiki/Extension:AssertEdit>.
 
-    *   *section* - edit a single section instead of the whole page
+    *   *section* - edit a single section (identified by number) instead of
+        the whole page
 
     An MD5 hash is sent to guard against data corruption while in transit.
 

@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 3.005000
+version 3.005001
 
 # SYNOPSIS
 
@@ -176,11 +176,13 @@ cookies.
 
 This method edits a wiki page, and takes a hashref of data with keys:
 
+- _page_ - the page title to edit
+- _text_ - the page text to write
 - _summary_ - an edit summary
-- _minor_ - whether to mark the edit as minor
-- _bot_ - whether to mark the edit as a bot edit
+- _minor_ - whether to mark the edit as minor or not (boolean)
+- _bot_ - whether to mark the edit as a bot edit (boolean)
 - _assertion_ - usually 'bot', but see [http://mediawiki.org/wiki/Extension:AssertEdit](http://mediawiki.org/wiki/Extension:AssertEdit).
-- _section_ - edit a single section instead of the whole page
+- _section_ - edit a single section (identified by number) instead of the whole page
 
 An MD5 hash is sent to guard against data corruption while in transit.
 
