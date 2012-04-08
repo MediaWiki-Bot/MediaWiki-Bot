@@ -635,27 +635,27 @@ sub edit {
     my ($edittoken, $lastedit, $tokentime) = $self->_get_edittoken($page);
     return $self->_handle_api_error() unless $edittoken;
 
+    # HTTP::Message will do this eventually as of 6.03  (RT#75592), so we need
+    # to do it here - otherwise, the md5 won't match what eventually is sent to
+    # the server, and the edit will fail - GH#39.
+    # If HTTP::Message becomes unbroken in the future, might have to keep this
+    # workaround for people using 6.03 and other future broken versions.
+    $text =~ s{(?<!\r)\n}{\r\n}g;
+    my $md5 = md5_hex(encode_utf8($text)); # Pass only bytes to md5_hex()
     my $hash = {
         action         => 'edit',
         title          => $page,
         token          => $edittoken,
         text           => $text,
-        md5            => md5_hex(encode_utf8($text)),    # Guard against data corruption
-                                                          # Pass only bytes to md5_hex()
+        md5            => $md5,             # Guard against data corruption
         summary        => $summary,
-        basetimestamp  => $lastedit,                      # Guard against edit conflicts
-        starttimestamp => $tokentime,                     # Guard against the page being deleted/moved
+        basetimestamp  => $lastedit,        # Guard against edit conflicts
+        starttimestamp => $tokentime,       # Guard against the page being deleted/moved
         bot            => $markasbot,
-        section        => $section,
-        ( $assert ? (assert => $assert) : ()),
+        ( $section  ? (section => $section) : ()),
+        ( $assert   ? (assert => $assert)   : ()),
+        ( $is_minor ? (minor => 1)          : (notminor => 1)),
     };
-    if ($is_minor) {
-        $hash->{minor} = 1;
-    }
-    else {
-        $hash->{notminor} = 1;
-    }
-    delete $hash->{section} unless defined($section);
 
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;

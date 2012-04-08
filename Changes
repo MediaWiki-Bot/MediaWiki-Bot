@@ -2,6 +2,7 @@ Changelog for {{$dist->name}}
 
 {{$NEXT}}
     * Fixed erroneous documentation on the edit method
+    * Fixed edit failures due to changes in HTTP::Message 6.03 (GH#39)
 
 3.005000  2012-03-03
     * Expandtemplates will now behave correctly when the page title is omitted
