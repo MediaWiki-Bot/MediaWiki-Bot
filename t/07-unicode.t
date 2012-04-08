@@ -53,7 +53,7 @@ subtest 'write' => sub {
     });
 
     SKIP: {
-        skip 'You are blocked, cannot use editing tests', 5 if
+        skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 5 if
             defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
         my $rand2 = rand();

@@ -44,6 +44,7 @@ SKIP: {
         summary => $agent,
         minor   => 1,
     });
+    $bot->purge_page($title);
     $is = $bot->get_text($title);
     my $ought = <<"END";
 $rand

@@ -29,10 +29,8 @@ SKIP: {
         my $res = $bot->revert($title, $revid, $agent);
         my $err = $bot->{error};
 
-        if ($err->{code} and $err->{code} == 3) {
-            diag explain { error => $bot->{error}, revid => $revid, text => $text };
-            skip 'Cannot proceed with editing tests', 2;
-        }
+        skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2 if
+            defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
         my $newtext = $bot->get_text($title);
 
