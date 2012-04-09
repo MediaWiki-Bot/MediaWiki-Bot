@@ -43,7 +43,7 @@ with the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
         host    => 'en.wikipedia.org',
     });
 
-Calling C<<MediaWiki::Bot->new()>> will create a new MediaWiki::Bot object. The
+Calling C<< MediaWiki::Bot->new() >> will create a new MediaWiki::Bot object. The
 only parameter is a hashref with keys:
 
 =over 4
