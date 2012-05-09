@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+3.005002  2012-05-08
     * Updated test suite for on-wiki changes
 
 3.005001  2012-04-08

@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 3.005001
+version 3.005002
 
 # SYNOPSIS
 
@@ -33,7 +33,7 @@ with the MediaWiki API ([http://en.wikipedia.org/w/api.php](http://en.wikipedia.
         host    => 'en.wikipedia.org',
     });
 
-Calling `<MediaWiki::Bot-`new()>> will create a new MediaWiki::Bot object. The
+Calling `MediaWiki::Bot->new()` will create a new MediaWiki::Bot object. The
 only parameter is a hashref with keys:
 
 - _agent_ sets a custom useragent

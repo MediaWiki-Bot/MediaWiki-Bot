@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 3.005001
+    version 3.005002
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -28,8 +28,8 @@ METHODS
             host    => 'en.wikipedia.org',
         });
 
-    Calling "<MediaWiki::Bot-"new()>> will create a new MediaWiki::Bot
-    object. The only parameter is a hashref with keys:
+    Calling "MediaWiki::Bot->new()" will create a new MediaWiki::Bot object.
+    The only parameter is a hashref with keys:
 
     *   *agent* sets a custom useragent
 
