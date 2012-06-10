@@ -79,4 +79,3 @@ subtest 'no assert' => sub {
     });
     ok( not exists $bot->{assert} ) or diag explain $bot;
 };
-
