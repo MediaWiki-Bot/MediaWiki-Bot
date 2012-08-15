@@ -3029,7 +3029,7 @@ sub top_edits {
         ucprop  => 'title|flags',
         uclimit => 'max',
     }, $options);
-    return _handle_api_error() unless $res;
+    return $self->_handle_api_error() unless $res;
     return 1 if (!ref $res);    # Not a ref when using callback
 
     my @titles;
@@ -3070,7 +3070,7 @@ sub contributions {
         ucprop      => 'ids|title|timestamp|comment|flags',
         uclimit     => 'max',
     }, $opts);
-    return _handle_api_error() unless $res->[0];
+    return $self->_handle_api_error() unless $res->[0];
     return 1 if (!ref $res->[0]); # Not a ref when using callback
 
     return $res->[0]; # Can we make this more useful?
@@ -3109,7 +3109,7 @@ sub upload {
         filename => $filename,
         comment  => $args->{summary},
         file     => [ undef, $filename, Content => $data ],
-    });
+    }) || return $self->_handle_api_error();
     return $success;
 }
 
