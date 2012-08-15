@@ -2659,9 +2659,11 @@ sub get_log {
     my $user     = $data->{user};
     my $target   = $data->{target};
 
-    my $ns_data      = $self->_get_ns_data();
-    my $user_ns_name = $ns_data->{2};
-    $user =~ s/^$user_ns_name://;
+    if ($user) {
+        my $ns_data      = $self->_get_ns_data();
+        my $user_ns_name = $ns_data->{2};
+        $user =~ s/^$user_ns_name://;
+    }
 
     my $hash = {
         action  => 'query',

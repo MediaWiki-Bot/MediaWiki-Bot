@@ -1,8 +1,10 @@
 use strict;
 use warnings;
-use Test::More tests => 1;
+use Test::More tests => 2;
+use Test::NoWarnings;
 
 use MediaWiki::Bot;
+
 my $t = __FILE__;
 
 my $bot = MediaWiki::Bot->new({

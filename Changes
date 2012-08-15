@@ -2,6 +2,7 @@ Changelog for {{$dist->name}}
 
 {{$NEXT}}
     * Improved error handling for uploads (GH#33)
+    * Fix an uninitialized warning in get_log (GH#42)
 
 3.005002  2012-05-08
     * Updated test suite for on-wiki changes
