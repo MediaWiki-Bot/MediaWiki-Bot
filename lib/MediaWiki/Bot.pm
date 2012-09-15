@@ -1333,7 +1333,7 @@ sub what_links_here {
         bltitle     => $page,
         bllimit     => 'max',
     };
-    $hash->{blnamespace}   = $ns if $ns;
+    $hash->{blnamespace}   = $ns if defined $ns;
     $hash->{blfilterredir} = $filter if $filter;
     $options->{max} = 1 unless $options->{max};
 
@@ -1414,7 +1414,7 @@ sub list_transclusions {
         eilimit     => 'max',
     };
     $hash->{eifilterredir} = $filter if $filter;
-    $hash->{einamespace}   = $ns if $ns;
+    $hash->{einamespace}   = $ns if defined $ns;
     $options->{max} = 1 unless $options->{max};
 
     my $res = $self->{api}->list($hash, $options);
@@ -1599,7 +1599,7 @@ sub linksearch {
         euquery     => $link,
         eulimit     => 'max',
     };
-    $hash->{eunamespace} = $ns if $ns;
+    $hash->{eunamespace} = $ns if defined $ns;
     $hash->{euprotocol}  = $prot if $prot;
     $options->{max} = 1 unless $options->{max};
 
@@ -1773,7 +1773,7 @@ sub image_usage {
         iutitle         => $image,
         iulimit         => 'max',
     };
-    $hash->{iunamespace} = $ns if $ns;
+    $hash->{iunamespace} = $ns if defined $ns;
     if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {
         $hash->{'iufilterredir'} = $1;
     }
@@ -2496,7 +2496,7 @@ sub prefixindex {
         $filter = $1;
     }
 
-    if (!$ns && $prefix =~ m/:/) {
+    if (!defined $ns && $prefix =~ m/:/) {
         print STDERR "Converted '$prefix' to..." if $self->{debug} > 1;
         my ($name) = split(/:/, $prefix, 2);
         my $ns_data = $self->_get_ns_data();
@@ -2511,7 +2511,7 @@ sub prefixindex {
         apprefix => $prefix,
         aplimit  => 'max',
     };
-    $hash->{apnamespace}   = $ns     if $ns;
+    $hash->{apnamespace}   = $ns     if defined $ns;
     $hash->{apfilterredir} = $filter if $filter;
     $options->{max} = 1 unless $options->{max};
 

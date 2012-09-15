@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * Correctly handle namespace #0 (GH#43, thanks Seth!)
     * Improved error handling for uploads (GH#33)
     * Fix an uninitialized warning in get_log (GH#42)
 
