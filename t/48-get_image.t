@@ -24,7 +24,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 { #no width, no height
    my $data = $bot->get_image('File:Test-favicon.png');
    ok($data, 'nonscaled image retrieved');
-   
+
    my $img = Imager->new;
    my $did_read = $img->read(data=>$data);
    diag $img->errstr unless $did_read;
@@ -36,7 +36,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 { #supply a width
    my $data = $bot->get_image('File:Test-favicon.png',{width=>12});
    ok($data, 'wscaled image retrieved');
-   
+
    my $img = Imager->new;
    my $did_read = $img->read(data=>$data);
    diag $img->errstr unless $did_read;
@@ -45,7 +45,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
    is($img->getwidth(),12, 'wscaled img has w 12');
    is($img->getheight(),12, 'wscaled img has h 12');
 }
-{  #supply a width & a not-to-scale height. These 
+{  #supply a width & a not-to-scale height. These
    # should both be considered maximum dimensions,
    # and scale should be proportional.
    my $data = $bot->get_image('File:Test-favicon.png',{width=>4,height=>8});

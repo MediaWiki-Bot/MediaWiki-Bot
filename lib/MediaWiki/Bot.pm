@@ -973,7 +973,7 @@ sub get_pages {
 
     $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
 
-Download an image from a wiki. This is derived from a similar function in 
+Download an image from a wiki. This is derived from a similar function in
 MediaWiki::API. This one allows the image to be scaled down by passing a hashref
 with height & width parameters.
 
@@ -984,10 +984,10 @@ process it directly with a library such as L<Imager>.
     use File::Slurp;
     write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
 
-Images are scaled proportionally. (height/width) will remain 
+Images are scaled proportionally. (height/width) will remain
 constant, except for rounding errors.
 
-Height and width parameters describe the B<maximum> dimensions. A 400x200 
+Height and width parameters describe the B<maximum> dimensions. A 400x200
 image will never be scaled to greater dimensions. You can scale it yourself;
 having the wiki do it is just lazy & selfish.
 
@@ -1009,7 +1009,7 @@ sub get_image{
           iiprop => 'url|size',
           %sizeparams
        } ) or return $self->_handle_api_error();
- 
+
     my ($pageref) = values %{ $ref->{query}->{pages} };
     return unless defined $pageref->{imageinfo}; # if the image is missing
 
@@ -1020,7 +1020,7 @@ sub get_image{
     return $self->_handle_api_error() unless ( $response->code == 200 );
     return $response->decoded_content;
 }
- 
+
 =head2 revert
 
 Reverts the specified $page_title to $revid, with an edit summary of $summary. A
