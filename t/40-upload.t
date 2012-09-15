@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Test::More 0.88;
+use File::Spec;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -9,16 +10,14 @@ my $username = $ENV{'PWPUsername'};
 my $password = $ENV{'PWPPassword'};
 plan skip_all => 'upload test requires login with upload permission'
     unless $username and $password;
-unless (eval q{use Data::Random qw(rand_image); 1 }) {
-    plan skip_all => q{Data::Random needed to generating images};
-    exit;
-}
-else {
-    open my $png_out, '>:raw', 't/tiny.png' or die "Couldn't open t/tiny.png for writing: $!";
-    print $png_out rand_image();
-    close $png_out or die "Couldn't close t/tiny.png: $!";
-}
-END { unlink 't/tiny.png' if -e 't/tiny.png' }
+plan skip_all => q{Data::Random and GD needed for generating images}
+    unless (eval q{use Data::Random qw(rand_image); use GD; 1 });
+
+my $tiny_png_filename = File::Spec->catfile(qw/t tiny.png/);
+open my $png_out, '>:raw', $tiny_png_filename or die "Couldn't open $tiny_png_filename for writing: $!";
+print $png_out rand_image();
+close $png_out or die "Couldn't close $tiny_png_filename: $!";
+END { unlink $tiny_png_filename if $tiny_png_filename && -e $tiny_png_filename }
 
 my $bot = MediaWiki::Bot->new({
     agent   => "MediaWiki::Bot tests ($t)",
@@ -31,7 +30,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 
 {
     my $status = $bot->upload({
-        data => do { local $/; open my $in, '<:raw', 't/tiny.png' or die $!; <$in> },
+        data => do { local $/; open my $in, '<:raw', $tiny_png_filename or die $!; <$in> },
     });
     is $status, undef or diag explain $status;
     is_deeply $bot->{error}, { code => 6, details => q{You must specify a title to upload to.} } or diag explain $bot;
@@ -47,7 +46,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
     my $filename = rand() . '.png';
     my $status = $bot->upload({
         title => $filename,
-        file => 't/tiny.png',
+        file => $tiny_png_filename,
     });
     ok $status and diag "Uploaded to $filename";
     like $status->{upload}->{result}, qr/Success|Warning/, 'Success or Warning' or diag explain $status;

@@ -3098,6 +3098,7 @@ sub upload {
     unless (defined $data) {
         $self->{error}->{code} = 6;
         $self->{error}->{details} = q{You must provide either file contents or a filename.};
+        return undef;
     }
     unless (defined $args->{file} or defined $args->{title}) {
         $self->{error}->{code} = 6;
