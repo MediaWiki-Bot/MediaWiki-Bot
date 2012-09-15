@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 3.005002
+version 5.005003
 
 # SYNOPSIS
 
@@ -55,7 +55,7 @@ default.
 - _protocol_ allows you to specify 'http' or 'https' (default is 'http')
 - _host_ sets the domain name of the wiki to connect to
 - _path_ sets the path to api.php (with no leading or trailing slash)
-- _login_data_ is a hashref of credentials to pass to ["login"](#login).
+- _login\_data_ is a hashref of credentials to pass to ["login"](#login).
 - _debug_ - whether to provide debug output.
 
 1 provides only error messages; 2 provides further detail on internal operations.
@@ -77,7 +77,7 @@ For backward compatibility, you can specify up to three parameters:
 __This form is deprecated__ will never do auto-login or autoconfiguration, and emits
 deprecation warnings.
 
-## set_wiki
+## set\_wiki
 
 Set what wiki to use. The parameter is a hashref with keys:
 
@@ -199,7 +199,7 @@ __This form is deprecated__, and will emit deprecation warnings.
 This moves a wiki page.
 
 If you wish to specify more options (like whether to suppress creation of a
-redirect), use $options_hashref, which has keys:
+redirect), use $options\_hashref, which has keys:
 
 - _movetalk_ specifies whether to attempt to the talk page.
 - _noredirect_ specifies whether to suppress creation of a redirect.
@@ -214,21 +214,21 @@ redirect), use $options_hashref, which has keys:
         $bot->move($page, $to, "silly 'merricans");
     }
 
-## get_history
+## get\_history
 
     my @hist = $bot->get_history($title, $limit, $revid, $direction);
 
-Returns an array containing the history of the specified $page_title, with
+Returns an array containing the history of the specified $page\_title, with
 $limit number of revisions (default is as many as possible).
 
 The array returned contains hashrefs with keys: revid, user, comment, minor,
-timestamp_date, and timestamp_time.
+timestamp\_date, and timestamp\_time.
 
-## get_text
+## get\_text
 
-Returns an the wikitext of the specified $page_title. The second parameter is
+Returns an the wikitext of the specified $page\_title. The second parameter is
 $revid - if defined, returns the text of that revision; the third is
-$section_number - if defined, returns the text of that section.
+$section\_number - if defined, returns the text of that section.
 
 A blank page will return wikitext of "" (which evaluates to false in Perl,
 but is defined); a nonexistent page will return undef (which also evaluates
@@ -238,14 +238,14 @@ blank and nonexistent pages by using [defined](http://search.cpan.org/perldoc?pe
     my $wikitext = $bot->get_text('Page title');
     print "Wikitext: $wikitext\n" if defined $wikitext;
 
-## get_id
+## get\_id
 
-Returns the id of the specified $page_title. Returns undef if page does not exist.
+Returns the id of the specified $page\_title. Returns undef if page does not exist.
 
     my $pageid = $bot->get_id("Main Page");
     die "Page doesn't exist\n" if !defined($pageid);
 
-## get_pages
+## get\_pages
 
 Returns the text of the specified pages in a hashref. Content of undef means
 page does not exist. Also handles redirects or article names that use namespace
@@ -258,11 +258,11 @@ aliases.
         print "$text\n" if defined($text);
     }
 
-## get_image
+## get\_image
 
     $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
 
-Download an image from a wiki. This is derived from a similar function in 
+Download an image from a wiki. This is derived from a similar function in
 MediaWiki::API. This one allows the image to be scaled down by passing a hashref
 with height & width parameters.
 
@@ -273,16 +273,16 @@ process it directly with a library such as [Imager](http://search.cpan.org/perld
     use File::Slurp;
     write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
 
-Images are scaled proportionally. (height/width) will remain 
+Images are scaled proportionally. (height/width) will remain
 constant, except for rounding errors.
 
-Height and width parameters describe the __maximum__ dimensions. A 400x200 
+Height and width parameters describe the __maximum__ dimensions. A 400x200
 image will never be scaled to greater dimensions. You can scale it yourself;
 having the wiki do it is just lazy & selfish.
 
 ## revert
 
-Reverts the specified $page_title to $revid, with an edit summary of $summary. A
+Reverts the specified $page\_title to $revid, with an edit summary of $summary. A
 default edit summary will be used if $summary is omitted.
 
     my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
@@ -297,9 +297,9 @@ Reverts the specified $revid, with an edit summary of $summary, using the undo
 function. To undo all revisions from $revid up to but not including this one,
 set $after to another revid. If not set, just undo the one revision ($revid).
 
-See [http://www.mediawiki.org/wiki/API:Edit#Parameters](http://www.mediawiki.org/wiki/API:Edit#Parameters).
+See [http://www.mediawiki.org/wiki/API:Edit\#Parameters](http://www.mediawiki.org/wiki/API:Edit\#Parameters).
 
-## get_last
+## get\_last
 
 Returns the revid of the last revision to $page not made by $user. undef is
 returned if no result was found, as would be the case if the page is deleted.
@@ -310,14 +310,14 @@ returned if no result was found, as would be the case if the page is deleted.
         $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
     }
 
-## update_rc
+## update\_rc
 
 __This method is deprecated__, and will emit deprecation warnings.
 Replace calls to `update_rc()` with calls to the newer `recentchanges()`, which
 returns all available data, including rcid.
 
 Returns an array containing the $limit most recent changes to the wiki's _main
-namespace_. The array contains hashrefs with keys title, revid, old_revid,
+namespace_. The array contains hashrefs with keys title, revid, old\_revid,
 and timestamp.
 
     my @rc = $bot->update_rc(5);
@@ -339,17 +339,17 @@ The ["Options hashref"](#Options hashref) is also available:
         }
     }
 
-## recentchanges($ns, $limit, $options_hashref)
+## recentchanges($ns, $limit, $options\_hashref)
 
 Returns an array of hashrefs containing recentchanges data for the specified
 namespace number. If specified, the second parameter is the number of rows to
-fetch, and an $options_hashref can be used.
+fetch, and an $options\_hashref can be used.
 
 The hashref returned might contain the following keys:
 
 - _ns_ - the namespace number
 - _revid_
-- _old_revid_
+- _old\_revid_
 - _timestamp_
 - _rcid_ - can be used with `patrol()`
 - _pageid_
@@ -376,7 +376,7 @@ The ["Options hashref"](#Options hashref):
         }
     }
 
-## what_links_here
+## what\_links\_here
 
 Returns an array containing a list of all pages linking to $page.
 
@@ -402,10 +402,10 @@ A typical query:
         }
     }
 
-Transclusions are no longer handled by what_links_here() - use
-["list_transclusions"](#list_transclusions) instead.
+Transclusions are no longer handled by what\_links\_here() - use
+["list\_transclusions"](#list\_transclusions) instead.
 
-## list_transclusions
+## list\_transclusions
 
 Returns an array containing a list of all pages transcluding $page.
 
@@ -413,7 +413,7 @@ Other parameters are:
 
 - One of: all (default), redirects, or nonredirects
 - A namespace number to search (pass an arrayref to search in multiple namespaces).
-- $options_hashref as described by [MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API):
+- $options\_hashref as described by [MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API):
 
 Set max to limit the number of queries performed.
 
@@ -435,7 +435,7 @@ A typical query:
         }
     }
 
-## get_pages_in_category
+## get\_pages\_in\_category
 
 Returns an array containing the names of all pages in the specified category
 (include the Category: prefix). Does not recurse into sub-categories.
@@ -446,12 +446,12 @@ Returns an array containing the names of all pages in the specified category
 The options hashref is as described in ["Options hashref"](#Options hashref).
 Use `{ max => 0 }` to get all results.
 
-## get_all_pages_in_category
+## get\_all\_pages\_in\_category
 
     my @pages = $bot->get_all_pages_in_category($category, $options_hashref);
 
 Returns an array containing the names of __all__ pages in the specified category
-(include the Category: prefix), including sub-categories. The $options_hashref
+(include the Category: prefix), including sub-categories. The $options\_hashref
 is described fully in ["Options hashref"](#Options hashref).
 
 ## linksearch
@@ -464,7 +464,7 @@ Additional parameters are:
 
 - A namespace number to search (pass an arrayref to search in multiple namespaces).
 - You can search by $protocol (http is default).
-- $options_hashref is fully documented in ["Options hashref"](#Options hashref):
+- $options\_hashref is fully documented in ["Options hashref"](#Options hashref):
 
 Set _max_ in $options to get more than one query's worth of results:
 
@@ -490,7 +490,7 @@ processing:
         }
     }
 
-## purge_page
+## purge\_page
 
 Purges the server cache of the specified $page. Returns true on success; false
 on failure. Pass an array reference to purge multiple pages.
@@ -523,14 +523,14 @@ aren't allowed to purge the cache:
         print "$page: $ok\n";
     }
 
-## get_namespace_names
+## get\_namespace\_names
 
     my %namespace_names = $bot->get_namespace_names();
 
 Returns a hash linking the namespace id, such as 1, to its named equivalent,
 such as "Talk".
 
-## image_usage
+## image\_usage
 
 Gets a list of pages which include a certain $image. Include the `File:`
 namespace prefix to avoid incurring an extra round-trip (which will also emit
@@ -559,7 +559,7 @@ Or, make use of the ["Options hashref"](#Options hashref) to do incremental proc
         }
     }
 
-## global_image_usage($image, $results, $filterlocal)
+## global\_image\_usage($image, $results, $filterlocal)
 
 Returns an array of hashrefs of data about pages which use the given image.
 
@@ -571,26 +571,26 @@ will be sent, like `max` in the ["Options hashref"](#Options hashref)); the defa
 attempt to fetch 500 (set to 0 to get all results). `$filterlocal` will filter
 out local uses of the image.
 
-## links_to_image
+## links\_to\_image
 
-A backward-compatible call to ["image_usage"](#image_usage). You can provide only the image
+A backward-compatible call to ["image\_usage"](#image\_usage). You can provide only the image
 title.
 
 __This method is deprecated__, and will emit deprecation warnings.
 
-## is_blocked
+## is\_blocked
 
     my $blocked = $bot->is_blocked('User:Mike.lifeguard');
 
 Checks if a user is currently blocked.
 
-## test_blocked
+## test\_blocked
 
-Retained for backwards compatibility. Use ["is_blocked"](#is_blocked) for clarity.
+Retained for backwards compatibility. Use ["is\_blocked"](#is\_blocked) for clarity.
 
 __This method is deprecated__, and will emit deprecation warnings.
 
-## test_image_exists
+## test\_image\_exists
 
 Checks if an image exists at $page.
 
@@ -616,49 +616,49 @@ results.
         print "Page exists, but no image\n";
     }
 
-## get_pages_in_namespace
+## get\_pages\_in\_namespace
 
     $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
 
 Returns an array containing the names of all pages in the specified namespace.
-The $namespace_id must be a number, not a namespace name.
+The $namespace\_id must be a number, not a namespace name.
 
-Setting $page_limit is optional, and specifies how many items to retrieve at
+Setting $page\_limit is optional, and specifies how many items to retrieve at
 once. Setting this to 'max' is recommended, and this is the default if omitted.
-If $page_limit is over 500, it will be rounded up to the next multiple of 500.
-If $page_limit is set higher than you are allowed to use, it will silently be
+If $page\_limit is over 500, it will be rounded up to the next multiple of 500.
+If $page\_limit is set higher than you are allowed to use, it will silently be
 reduced. Consider setting key 'max' in the ["Options hashref"](#Options hashref) to
 retrieve multiple sets of results:
 
     # Gotta get 'em all!
     my @pages = $bot->get_pages_in_namespace(6, 'max', { max => 0 });
 
-## count_contributions
+## count\_contributions
 
     my $count = $bot->count_contributions($user);
 
 Uses the API to count $user's contributions.
 
-## last_active
+## last\_active
 
     my $latest_timestamp = $bot->last_active($user);
 
 Returns the last active time of $user in `YYYY-MM-DDTHH:MM:SSZ`.
 
-## recent_edit_to_page
+## recent\_edit\_to\_page
 
      my ($timestamp, $user) = $bot->recent_edit_to_page($title);
 
 Returns timestamp and username for most recent (top) edit to $page.
 
-## get_users
+## get\_users
 
     my @recent_editors = $bot->get_users($title, $limit, $revid, $direction);
 
 Gets the most recent editors to $page, up to $limit, starting from $revision
 and going in $direction.
 
-## was_blocked
+## was\_blocked
 
     for ("Mike.lifeguard", "Jimbo Wales") {
         print "$_ was blocked\n" if $bot->was_blocked($_);
@@ -666,9 +666,9 @@ and going in $direction.
 
 Returns whether $user has ever been blocked.
 
-## test_block_hist
+## test\_block\_hist
 
-Retained for backwards compatibility. Use ["was_blocked"](#was_blocked) for clarity.
+Retained for backwards compatibility. Use ["was\_blocked"](#was\_blocked) for clarity.
 
 __This method is deprecated__, and will emit deprecation warnings.
 
@@ -679,7 +679,7 @@ __This method is deprecated__, and will emit deprecation warnings.
 Expands templates on $page, using $text if provided, otherwise loading the page
 text automatically.
 
-## get_allusers
+## get\_allusers
 
     my @users = $bot->get_allusers($limit, $user_group, $options_hashref);
 
@@ -687,7 +687,7 @@ Returns an array of all users. Default $limit is 500. Optionally specify a
 $group (like 'sysop') to list that group only. The last optional parameter
 is an ["Options hashref"](#Options hashref).
 
-## db_to_domain
+## db\_to\_domain
 
 Converts a wiki/database name (enwiki) to the domain name (en.wikipedia.org).
 
@@ -707,11 +707,11 @@ You can pass an arrayref to do bulk lookup:
         print "$domain\n";
     }
 
-## domain_to_db
+## domain\_to\_db
 
     my $db = $bot->domain_to_db($domain_name);
 
-As you might expect, does the opposite of ["domain_to_db"](#domain_to_db): Converts a domain
+As you might expect, does the opposite of ["domain\_to\_db"](#domain\_to\_db): Converts a domain
 name (meta.wikimedia.org) into a database/wiki name (metawiki).
 
 ## diff
@@ -736,7 +736,7 @@ Additional parameters are:
 - One of all, redirects, or nonredirects
 - A single namespace number (unlike linksearch etc, which can accept an arrayref
 of numbers).
-- $options_hashref as described in ["Options hashref"](#Options hashref).
+- $options\_hashref as described in ["Options hashref"](#Options hashref).
 
     my @prefix_pages = $bot->prefixindex("User:Mike.lifeguard");
     # Or, the more efficient equivalent
@@ -753,14 +753,14 @@ of numbers).
 
 ## search
 
-This is a simple search for your $search_term in page text. It returns an array
+This is a simple search for your $search\_term in page text. It returns an array
 of page titles matching.
 
 Additional optional parameters are:
 
 - A namespace number to search in, or an arrayref of numbers (default is the
 main namespace)
-- $options_hashref is a hashref as described in ["Options hashref"](#Options hashref):
+- $options\_hashref is a hashref as described in ["Options hashref"](#Options hashref):
 
     my @pages = $bot->search("Mike.lifeguard", 2);
     print "@pages\n";
@@ -776,7 +776,7 @@ Or, use a callback for incremental processing:
         }
     }
 
-## get_log
+## get\_log
 
 This fetches log entries, and returns results as an array of hashes. The first
 parameter is a hashref with keys:
@@ -812,7 +812,7 @@ The second is the familiar ["Options hashref"](#Options hashref).
         }
     }
 
-## is_g_blocked
+## is\_g\_blocked
 
     my $is_globally_blocked = $bot->is_g_blocked('127.0.0.1');
 
@@ -821,7 +821,7 @@ return is a scalar of an IP/range if found (evaluates to true in boolean
 context); undef otherwise (evaluates false in boolean context). Pass in a
 single IP or CIDR range.
 
-## was_g_blocked
+## was\_g\_blocked
 
     print "127.0.0.1 was globally blocked\n" if $bot->was_g_blocked('127.0.0.1');
 
@@ -829,14 +829,14 @@ Returns whether an IP/range was ever globally blocked. You should probably
 call this method only when your bot is operating on Meta - this method will
 warn if not.
 
-## was_locked
+## was\_locked
 
     my $was_locked = $bot->was_locked('Mike.lifeguard');
 
 Returns whether a user was ever locked. You should probably call this method
 only when your bot is operating on Meta - this method will warn if not.
 
-## get_protection
+## get\_protection
 
 Returns data on page protection as a array of up to two hashrefs. Each hashref
 has a type, level, and expiry. Levels are 'sysop' and 'autoconfirmed'; types are
@@ -860,9 +860,9 @@ You can also pass an arrayref of page titles to do bulk queries:
         print "$title is unprotected\n" unless $protected;
     }
 
-## is_protected
+## is\_protected
 
-This is a synonym for ["get_protection"](#get_protection), which should be used in preference.
+This is a synonym for ["get\_protection"](#get\_protection), which should be used in preference.
 
 __This method is deprecated__, and will emit deprecation warnings.
 
@@ -882,10 +882,10 @@ This allows you to send emails through the wiki. All 3 of $user (without the
 User: prefix), $subject and $body are required. If $user is an arrayref, this
 will send the same email (subject and body) to all users.
 
-## top_edits
+## top\_edits
 
 Returns an array of the page titles where the $user is the latest editor. The
-second parameter is the familiar [$options_hashref](#linksearch).
+second parameter is the familiar [$options\_hashref](#linksearch).
 
     my @pages = $bot->top_edits("Mike.lifeguard", {max => 5});
     foreach my $page (@pages) {
@@ -894,7 +894,7 @@ second parameter is the familiar [$options_hashref](#linksearch).
 
 Note that accessing the data with a callback happens __before__ filtering
 the top edits is done. For that reason, you should use ["contributions"](#contributions)
-if you need to use a callback. If you use a callback with top_edits(),
+if you need to use a callback. If you use a callback with top\_edits(),
 you __will not__ necessarily get top edits returned. It is only safe to use a
 callback if you _check_ that it is a top edit:
 
@@ -951,7 +951,7 @@ using a hook with `top_edits()`, you need to check whether the edit is the top
 edit yourself - your subroutine gets results as they come in, and before they're
 filtered.
 
-- skip_encoding
+- skip\_encoding
 
 MediaWiki's API uses UTF-8 and any 8 bit character string parameters are encoded
 automatically by the API call. If your parameters are already in UTF-8 this will
@@ -980,21 +980,19 @@ data is stored in `$bot->{error}->{code}` and `$bot->{error}->{details}`.
 
 # AVAILABILITY
 
-The project homepage is [https://metacpan.org/module/MediaWiki::Bot](https://metacpan.org/module/MediaWiki::Bot).
-
 The latest version of this module is available from the Comprehensive Perl
 Archive Network (CPAN). Visit [http://www.perl.com/CPAN/](http://www.perl.com/CPAN/) to find a CPAN
 site near you, or see [https://metacpan.org/module/MediaWiki::Bot/](https://metacpan.org/module/MediaWiki::Bot/).
 
 # SOURCE
 
-The development version is on github at [http://github.com/MediaWiki-Bot/MediaWiki-Bot](http://github.com/MediaWiki-Bot/MediaWiki-Bot)
-and may be cloned from [git://github.com/MediaWiki-Bot/MediaWiki-Bot.git](git://github.com/MediaWiki-Bot/MediaWiki-Bot.git)
+The development version is on github at [http://github.com/doherty/MediaWiki-Bot](http://github.com/doherty/MediaWiki-Bot)
+and may be cloned from [git://github.com/doherty/MediaWiki-Bot.git](git://github.com/doherty/MediaWiki-Bot.git)
 
 # BUGS AND LIMITATIONS
 
 You can make new bug reports, and view existing ones, through the
-web interface at [https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues](https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues).
+web interface at [http://rt.cpan.org](http://rt.cpan.org).
 
 # AUTHORS
 

@@ -8,14 +8,15 @@ use Module::Build 0.3601;
 my %module_build_args = (
   "build_requires" => {
     "File::Find" => 0,
+    "File::Spec" => 0,
     "File::Temp" => 0,
     "Module::Build" => "0.3601",
     "Test::More" => "0.96",
+    "Test::NoWarnings" => 0,
     "Test::Warn" => 0,
     "utf8" => 0
   },
   "configure_requires" => {
-    "ExtUtils::MakeMaker" => "6.30",
     "Module::Build" => "0.3601"
   },
   "dist_abstract" => "a high-level bot framework for interacting with MediaWiki wikis",
@@ -32,7 +33,7 @@ my %module_build_args = (
     "patch and bug report contributors"
   ],
   "dist_name" => "MediaWiki-Bot",
-  "dist_version" => "3.005002",
+  "dist_version" => "5.005003",
   "license" => "gpl",
   "module_name" => "MediaWiki::Bot",
   "recommends" => {},

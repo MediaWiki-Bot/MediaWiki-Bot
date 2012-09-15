@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 3.005002
+    version 5.005003
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -987,8 +987,6 @@ ERROR HANDLING
     "$bot->{error}->{details}".
 
 AVAILABILITY
-    The project homepage is <https://metacpan.org/module/MediaWiki::Bot>.
-
     The latest version of this module is available from the Comprehensive
     Perl Archive Network (CPAN). Visit <http://www.perl.com/CPAN/> to find a
     CPAN site near you, or see
@@ -996,12 +994,12 @@ AVAILABILITY
 
 SOURCE
     The development version is on github at
-    <http://github.com/MediaWiki-Bot/MediaWiki-Bot> and may be cloned from
-    <git://github.com/MediaWiki-Bot/MediaWiki-Bot.git>
+    <http://github.com/doherty/MediaWiki-Bot> and may be cloned from
+    <git://github.com/doherty/MediaWiki-Bot.git>
 
 BUGS AND LIMITATIONS
     You can make new bug reports, and view existing ones, through the web
-    interface at <https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues>.
+    interface at <http://rt.cpan.org>.
 
 AUTHORS
     *   Dan Collins <dcollins@cpan.org>
