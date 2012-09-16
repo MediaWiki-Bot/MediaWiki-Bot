@@ -9,7 +9,7 @@ use Carp;
 use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
 use MediaWiki::API 0.36;
-
+use Data::Dumper;
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
     #print "Found plugin $plugin\n";
@@ -429,6 +429,13 @@ sub login {
     }) or return $self->_handle_api_error();
     $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
     $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
+
+    if (!$res->{login}) {
+        die "no login";
+    }
+    if (!$res->{login}->{result} ) {
+        die "no result";
+    }
 
     if ($res->{login}->{result} eq 'NeedToken') {
         my $token = $res->{login}->{token};
@@ -3227,6 +3234,9 @@ sub _do_autoconfig {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
 
+    die "No query" unless  $res->{query};
+    die "No user info" unless  $res->{query}->{userinfo};
+    die "No user Name" unless  $res->{query}->{userinfo}->{name};
     my $is    = $res->{query}->{userinfo}->{name};
     my $ought = $self->{username};
 
@@ -3242,6 +3252,8 @@ sub _do_autoconfig {
             $default_assert = 'bot';
         }
     }
+
+    die "No groups" unless  $res->{query}->{userinfo}->{groups};
 
     my @groups   = @{ $res->{query}->{userinfo}->{groups} };
     my $is_sysop = 0;
