@@ -3,3 +3,7 @@ MediaWiki-Bot*
 .mediawiki-bot-*-cookies
 t/tiny.png
 *~
+*.patch
+*.diff
+*.orig
+*.rej

@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * More robust error-checking in some cases (GH#45, James DuPont)
 
 5.005003  2012-09-14
     * Be more liberal with matching whitespace in the diff test

@@ -9,7 +9,7 @@ use Carp;
 use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
 use MediaWiki::API 0.36;
-#  use Data::Dumper; # only when debugging, commented out.
+
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
     #print "Found plugin $plugin\n";
@@ -2024,7 +2024,6 @@ sub test_image_exists {
         }
     }
 
-    # print STDERR Dumper(\@return) and die;
     return \@return;
 }
 
@@ -3239,7 +3238,7 @@ sub _do_autoconfig {
     # Should we try to recover by logging in again? croak?
     carp "We're logged in as $is but we should be logged in as $ought" if ($is ne $ought);
 
-    my @rights            = @{ $res->{query}->{userinfo}->{rights} };
+    my @rights            = @{ $res->{query}->{userinfo}->{rights} || [] };
     my $has_bot           = 0;
     my $default_assert    = 'user';                                           # At a *minimum*, the bot should be logged in.
     foreach my $right (@rights) {
@@ -3272,7 +3271,6 @@ sub _get_sitematrix {
     return $self->_handle_api_error() unless $res;
     my %sitematrix = %{ $res->{sitematrix} };
 
-#    print STDERR Dumper(\%sitematrix) and die;
     # This hash is a monstrosity (see http://sprunge.us/dfBD?pl), and needs
     # lots of post-processing to have a sane data structure :\
     my %by_db;
@@ -3330,7 +3328,6 @@ sub _get_sitematrix {
     # disk instead of over network.
     $self->{sitematrix} = \%by_db;
 
-#    print STDERR Dumper($self->{'sitematrix'}) and die;
     return $self->{sitematrix};
 }
 
