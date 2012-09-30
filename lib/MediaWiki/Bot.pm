@@ -9,7 +9,7 @@ use Carp;
 use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
 use MediaWiki::API 0.36;
-
+#  use Data::Dumper; # only when debugging, commented out.
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
     #print "Found plugin $plugin\n";
@@ -429,6 +429,9 @@ sub login {
     }) or return $self->_handle_api_error();
     $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
     $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
+
+    return $self->_handle_api_error() unless $res->{login};
+    return $self->_handle_api_error() unless $res->{login}->{result};
 
     if ($res->{login}->{result} eq 'NeedToken') {
         my $token = $res->{login}->{token};
@@ -2021,7 +2024,7 @@ sub test_image_exists {
         }
     }
 
-    # use Data::Dumper; print STDERR Dumper(\@return) and die;
+    # print STDERR Dumper(\@return) and die;
     return \@return;
 }
 
@@ -3226,6 +3229,9 @@ sub _do_autoconfig {
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
+    return $self->_handle_api_error() unless  $res->{query};
+    return $self->_handle_api_error() unless  $res->{query}->{userinfo};
+    return $self->_handle_api_error() unless  $res->{query}->{userinfo}->{name};
 
     my $is    = $res->{query}->{userinfo}->{name};
     my $ought = $self->{username};
@@ -3243,7 +3249,7 @@ sub _do_autoconfig {
         }
     }
 
-    my @groups   = @{ $res->{query}->{userinfo}->{groups} };
+    my @groups = @{ $res->{query}->{userinfo}->{groups} || [] }; # anon arrayref in case there are no groups
     my $is_sysop = 0;
     foreach my $group (@groups) {
         if ($group eq 'sysop') {
@@ -3266,7 +3272,6 @@ sub _get_sitematrix {
     return $self->_handle_api_error() unless $res;
     my %sitematrix = %{ $res->{sitematrix} };
 
-#    use Data::Dumper;
 #    print STDERR Dumper(\%sitematrix) and die;
     # This hash is a monstrosity (see http://sprunge.us/dfBD?pl), and needs
     # lots of post-processing to have a sane data structure :\
@@ -3324,7 +3329,7 @@ sub _get_sitematrix {
     # method, if mtime is less than, say, 14d, you could load it from
     # disk instead of over network.
     $self->{sitematrix} = \%by_db;
-#    use Data::Dumper;
+
 #    print STDERR Dumper($self->{'sitematrix'}) and die;
     return $self->{sitematrix};
 }
