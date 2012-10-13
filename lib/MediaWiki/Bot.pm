@@ -3062,14 +3062,15 @@ sub contributions {
     $opts->{max} = 1 unless defined($opts->{max});
     delete($opts->{max}) if $opts->{max} == 0;
 
-    my $res = $self->{api}->list({
+    my $query = {
         action      => 'query',
         list        => 'usercontribs',
         ucuser      => $user,
-        ucnamespace => $ns,
+        ( defined $ns ? (ucnamespace => $ns) : ()),
         ucprop      => 'ids|title|timestamp|comment|flags',
         uclimit     => 'max',
-    }, $opts);
+    };
+    my $res = $self->{api}->list($query, $opts);
     return $self->_handle_api_error() unless $res->[0];
     return 1 if (!ref $res->[0]); # Not a ref when using callback
 

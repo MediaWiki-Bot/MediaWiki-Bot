@@ -21,9 +21,8 @@ subtest 'patrolled' => sub { # issue 151
 };
 
 subtest 'contribs' => sub {
-    plan tests => 2;
-    my @contribs = $bot->contributions('Mike.lifeguard', 0);
+    plan tests => 1;
+    my @contribs = $bot->contributions('Mike.lifeguard');
 
-    isa_ok(\@contribs, 'ARRAY', 'Got an array');
-    isa_ok($contribs[0], 'HASH', 'array of hashes');
+    isa_ok $contribs[0], 'HASH', 'array of hashes' or diag explain \@contribs;
 };
