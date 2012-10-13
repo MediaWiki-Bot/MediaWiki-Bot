@@ -3042,10 +3042,12 @@ sub top_edits {
 
 =head2 contributions
 
-    my @contribs = $bot->contributions($user, $namespace);
+    my @contribs = $bot->contributions($user, $namespace, $options);
 
 Returns an array of hashrefs of data for the user's contributions. $ns can be an
 arrayref of namespace numbers. $options can be specified as in L</linksearch>.
+
+Specify an arrayref of users to get results for multiple users.
 
 =cut
 
@@ -3055,9 +3057,10 @@ sub contributions {
     my $ns   = shift;
     my $opts = shift;
 
-    $user =~ s/^User://;
-
-    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
+    $user = join '|', map { $_ =~ s{^User:}{}; $_ } @$user
+        if ref $user eq 'ARRAY';
+    $ns = join '|', @$ns
+        if ref $ns eq 'ARRAY';
 
     $opts->{max} = 1 unless defined($opts->{max});
     delete($opts->{max}) if $opts->{max} == 0;
@@ -3072,9 +3075,9 @@ sub contributions {
     };
     my $res = $self->{api}->list($query, $opts);
     return $self->_handle_api_error() unless $res->[0];
-    return 1 if (!ref $res->[0]); # Not a ref when using callback
+    return 1 if (!ref $res); # Not a ref when using callback
 
-    return $res->[0]; # Can we make this more useful?
+    return @$res;
 }
 
 =head2 upload
