@@ -2064,11 +2064,7 @@ sub get_pages_in_namespace {
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
     return 1 if (!ref $res); # Not a ref when using callback
-    my @return;
-    foreach (@{$res}) {
-        push @return, $_->{title};
-    }
-    return @return;
+    return map { $_->{title} } @$res;
 }
 
 =head2 count_contributions
