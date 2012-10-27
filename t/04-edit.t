@@ -34,7 +34,7 @@ SKIP: {
         defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
     my $is = $bot->get_text($title);
-    is($is, $rand, 'Did whole-page editing successfully');
+    is $is => $rand, 'Did whole-page editing successfully';
 
     my $rand2 = rand();
     $status = $bot->edit({
@@ -53,10 +53,14 @@ $rand
 
 $rand2
 END
-    is("$is\n", $ought, 'Did section editing successfully');
+    1 while (chomp $is);
+    1 while (chomp $ought);
+    is $is => $ought, 'Did section editing successfully'
+        or diag explain $status;
+
     if ($login_data) {
         my @hist = $bot->get_history($title, 1);
-        ok($hist[0]->{minor}, 'Minor edit');
+        ok $hist[0]->{minor}, 'Minor edit' or diag explain $hist[0];
 
         $bot->edit({
             page    => $title,
@@ -65,6 +69,6 @@ END
             minor   => 0,
         });
         @hist = $bot->get_history($title, 1);
-        ok(!$hist[0]->{minor}, 'Not a minor edit') or diag explain \@hist;
+        ok !$hist[0]->{minor}, 'Not a minor edit' or diag explain $hist[0];
     }
 }
