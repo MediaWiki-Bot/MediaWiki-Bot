@@ -26,7 +26,8 @@ my $rand   = rand();
 my $status = $bot->edit({
     page => $title,
     text => $rand,
-    summary => $agent,
+    summary => $agent . ' (should be a minor edit)',
+    minor   => 1,
 });
 
 SKIP: {
@@ -42,7 +43,6 @@ SKIP: {
         text    => $rand2,
         section => 'new',
         summary => $agent,
-        minor   => 1,
     });
     $bot->purge_page($title);
     $is = $bot->get_text($title);
@@ -59,8 +59,8 @@ END
         or diag explain $status;
 
     if ($login_data) {
-        my @hist = $bot->get_history($title, 1);
-        ok $hist[0]->{minor}, 'Minor edit' or diag explain $hist[0];
+        my @hist = $bot->get_history($title, 2);
+        ok $hist[1]->{minor}, 'Minor edit' or diag explain \@hist;
 
         $bot->edit({
             page    => $title,
@@ -69,6 +69,6 @@ END
             minor   => 0,
         });
         @hist = $bot->get_history($title, 1);
-        ok !$hist[0]->{minor}, 'Not a minor edit' or diag explain $hist[0];
+        ok !$hist[0]->{minor}, 'Not a minor edit' or diag explain \@hist;
     }
 }
