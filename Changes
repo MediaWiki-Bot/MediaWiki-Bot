@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+5.005004  2012-10-27
     * More robust error-checking in some cases (GH#45, James DuPont)
 
 5.005003  2012-09-14

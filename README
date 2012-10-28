@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 5.005003
+    version 5.005004
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -284,8 +284,8 @@ METHODS
     It returns raw data in the original format. You may simply spew it to a
     file, or process it directly with a library such as Imager.
 
+        use File::Slurp qw(write_file);
         my $img_data = $bot->get_image('File::Foo.jpg');
-        use File::Slurp;
         write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
 
     Images are scaled proportionally. (height/width) will remain constant,
@@ -922,11 +922,13 @@ METHODS
         }
 
   contributions
-        my @contribs = $bot->contributions($user, $namespace);
+        my @contribs = $bot->contributions($user, $namespace, $options);
 
     Returns an array of hashrefs of data for the user's contributions. $ns
     can be an arrayref of namespace numbers. $options can be specified as in
     "linksearch".
+
+    Specify an arrayref of users to get results for multiple users.
 
   upload
         $bot->upload({ data => $file_contents, summary => 'uploading file' });
