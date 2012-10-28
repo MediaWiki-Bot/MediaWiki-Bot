@@ -3057,8 +3057,12 @@ sub contributions {
     my $ns   = shift;
     my $opts = shift;
 
-    $user = join '|', map { $_ =~ s{^User:}{}; $_ } @$user
-        if ref $user eq 'ARRAY';
+    if (ref $user eq 'ARRAY') {
+        $user = join '|', map { my $u = $_; $u =~ s{^User:}{}; $u } @$user;
+    }
+    else {
+        $user =~ s{^User:}{};
+    }
     $ns = join '|', @$ns
         if ref $ns eq 'ARRAY';
 
