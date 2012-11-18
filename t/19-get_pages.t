@@ -23,7 +23,7 @@ is(     $result->{'This page had better not exist..........'},  undef,  'Check t
 ok(     defined($result->{'Wikipedia:What Test Wiki is not'}),          'Check for something not horribly wrong');
 ok(!    defined($result->{'Wikipedia:SAND'}),                           'Should not return expanded names where an alias was requested');
 ok(     defined($result->{'WP:SAND'}),                                  'Namespace aliases work as expected');
-like(   $result->{'Main Page'},                         qr/Main Page/,  'Got Main Page on multi-page get');
+like(   $result->{'Main Page'},                         qr/MediaWiki/,  'Got Main Page on multi-page get');
 like(   $result->{'Wikipedia:What Test Wiki is not'},   qr/Wikipedia/,  '[[Wikipedia:What Test Wiki is not]] contains the string "Wikipedia"');
 
 # Do tests again with array
