@@ -87,7 +87,7 @@ subtest 'fail' => sub {
 };
 
 subtest 'secure' => sub {
-    plan tests => 5;
+    plan tests => 1;
 
     my $secure = MediaWiki::Bot->new({
         agent       => $useragent,
@@ -96,15 +96,10 @@ subtest 'secure' => sub {
         path        => 'wikipedia/en/w',
     });
 
-    is($secure->login({
-            username => $username,
-            password => $password,
-            do_sul => 1,
-        }), 1,                                              q{Secure login}) or diag explain $secure->{error};
-    ok($secure->_is_loggedin(),                             q{Double-check we're actually logged in});
-    is($secure->set_wiki({path => 'wikipedia/meta/w'}), 1,  q{Switched wikis OK}); # Don't specify host or protocol - Issue 130
-    is($secure->{api}->{config}->{api_url}, 'https://secure.wikimedia.org/wikipedia/meta/w/api.php', q{Protocol and host retained properly});
-    ok($secure->_is_loggedin(),                             q{Double-check we're logged in on secure});
+    warning_like(
+        sub { $secure->login({ username => $username, password => $password, do_sul => 1 }) },
+        qr{^\QSSL is now supported on the main Wikimedia Foundation sites.}
+    );
 };
 
 subtest 'new-secure' => sub {

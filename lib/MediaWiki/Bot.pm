@@ -394,9 +394,12 @@ sub login {
             $basic_auth->{pass}
         );
     }
-    $do_sul = 0 if (
-        ($self->{protocol} eq 'https') and
-        ($self->{host} eq 'secure.wikimedia.org') );
+
+    if ($self->{host} eq 'secure.wikimedia.org') {
+        warnings::warnif('deprecated', 'SSL is now supported on the main Wikimedia Foundation sites. '
+            . 'Use en.wikipedia.org (or whatever) instead of secure.wikimedia.org.');
+        return;
+    }
 
     if($do_sul) {
         my $sul_success = $self->_do_sul($password);
@@ -2725,26 +2728,19 @@ sub was_g_blocked {
     $ip =~ s/User://i; # Strip User: prefix, if present
 
     # This query should always go to Meta
-    unless ($self->{api}->{config}->{api_url} =~
-        m,
-            http://meta.wikimedia.org/w/api.php
-                |
-            https://secure.wikimedia.org/wikipedia/meta/w/api.php
-        ,x # /x flag is pretty awesome :)
-        ) {
+    unless ( $self->{host} eq 'meta.wikimedia.org' ) {
         carp "GlobalBlocking queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{debug};
     }
 
     # http://meta.wikimedia.org/w/api.php?action=query&list=logevents&letype=gblblock&letitle=User:127.0.0.1&lelimit=1&leprop=ids
-    my $hash = {
+    my $res = $self->{api}->api({
         action  => 'query',
         list    => 'logevents',
         letype  => 'gblblock',
         letitle => "User:$ip",    # Ensure the User: prefix is there!
         lelimit => 1,
         leprop  => 'ids',
-    };
-    my $res = $self->{api}->api($hash);
+    });
 
     return $self->_handle_api_error() unless $res;
     my $number = scalar @{ $res->{query}->{logevents} };    # The number of blocks returned

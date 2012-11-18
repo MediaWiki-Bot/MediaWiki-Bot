@@ -15,8 +15,7 @@ if (defined($username) and defined($password)) {
 my $agent = "MediaWiki::Bot tests ($t)";
 my $bot   = MediaWiki::Bot->new({
     agent       => $agent,
-    host        => 'secure.wikimedia.org',
-    path        => 'wikipedia/test/w',
+    host        => 'test.wikipedia.org',
     protocol    => 'https',
     login_data  => $login_data,
 });
