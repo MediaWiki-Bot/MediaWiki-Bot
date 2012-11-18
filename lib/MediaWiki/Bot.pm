@@ -9,6 +9,7 @@ use Carp;
 use Digest::MD5 2.39 qw(md5_hex);
 use Encode qw(encode_utf8);
 use MediaWiki::API 0.36;
+use List::Util qw(sum);
 
 use Module::Pluggable search_path => [qw(MediaWiki::Bot::Plugin)], 'require' => 1;
 foreach my $plugin (__PACKAGE__->plugins) {
@@ -512,9 +513,7 @@ sub _do_sul {
         path     => $path,
     });
 
-    my $sum = 0;
-    no warnings qw(uninitialized);
-    $sum += $_ for @logins;
+    my $sum = sum 0, @logins;
     my $total = scalar @WMF_projects;
     warn "$sum/$total logins succeeded" if $debug > 1;
     $self->{debug} = $debug; # Reset debug to it's old value
