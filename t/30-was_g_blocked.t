@@ -15,9 +15,7 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 }
 
 # 127.0.0.1 has been blocked before
-my $result = $bot->was_g_blocked('127.0.0.1');
-is($result, 1, 'globalblock history');
+ok $bot->was_g_blocked('127.0.0.1'), q{127.0.0.1 has been globalblocked};
 
 # 127.0.4.4 probably hasn't been
-$result = $bot->was_g_blocked('127.0.4.4');
-is($result, 0, 'globalblock history');
+ok !$bot->was_g_blocked('127.0.4.4'), q{127.0.4.4 hasn't been globalblocked};

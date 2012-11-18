@@ -2703,7 +2703,9 @@ sub is_g_blocked {
             list    => 'globalblocks',
             bglimit => 1,
             bgprop  => 'address',
-            bgip    => $ip,              # So handy! It searches for blocks affecting this IP or IP range, including rangeblocks! Can't get that from UI.
+            # So handy! It searches for blocks affecting this IP or IP range,
+            # including rangeblocks! Can't get that from UI.
+            bgip    => $ip,
     });
     return $self->_handle_api_error() unless $res;
     return 0 unless ($res->{query}->{globalblocks}->[0]);
@@ -2751,6 +2753,7 @@ sub was_g_blocked {
         return 0;
     }
     else {
+        warn "Got multiple results for $ip unexpectedly";
         return; # UNPOSSIBLE!
     }
 }
