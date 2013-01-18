@@ -1257,6 +1257,8 @@ sub recentchanges {
     my $ns      = shift || 0;
     my $limit   = defined($_[0]) ? shift : 50;
     my $options = shift;
+    my $user    = shift;
+    my $show    = shift;
     $ns = join('|', @$ns) if ref $ns eq 'ARRAY';
 
     my $hash = {
@@ -1266,6 +1268,9 @@ sub recentchanges {
         rclimit     => $limit,
         rcprop      => 'user|comment|timestamp|title|ids',
     };
+    $hash->{'rcuser'} = $user if (defined($user));
+    $hash->{'rcshow'} = $show if (defined($show));
+
     $options->{max} = 1 unless $options->{max};
 
     my $res = $self->{api}->list($hash, $options);
