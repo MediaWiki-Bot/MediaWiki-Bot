@@ -2096,6 +2096,30 @@ sub count_contributions {
     return ${$res}[0]->{editcount};
 }
 
+=head2 timed_count_contributions
+
+    ($timed_edits_count, $total_count) = $bot->timed_count_contributions($user, $days);
+
+Uses the API to count $user's contributions in last number of $days and total number of user's contributions (if needed).
+
+=cut
+
+sub timed_count_contributions {
+    my $self     = shift;
+    my $username = shift;
+    my $days     = shift;
+    $username =~ s/User://i;    # Strip namespace
+
+    my $res = $self->{api}->api({
+            action  => 'userdailycontribs',
+            user    => $username,
+            daysago => $days,
+        },
+        { max => 1 });
+    return $self->_handle_api_error() unless $res;
+    return ($res->{userdailycontribs}->{timeFrameEdits}, $res->{userdailycontribs}->{totalEdits});
+}
+
 =head2 last_active
 
     my $latest_timestamp = $bot->last_active($user);
