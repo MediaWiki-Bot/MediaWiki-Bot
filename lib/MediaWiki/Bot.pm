@@ -1186,11 +1186,15 @@ sub update_rc {
     return @rc_table;
 }
 
-=head2 recentchanges($ns, $limit, $options_hashref)
+=head2 recentchanges($ns, $limit, $options_hashref, $user, $show)
 
 Returns an array of hashrefs containing recentchanges data for the specified
 namespace number. If specified, the second parameter is the number of rows to
-fetch, and an $options_hashref can be used.
+fetch, fourth parameter is username (rcuser), and fifth parameter is string
+which contains anything out of following (pipe delimited):
+minor, !minor, bot, !bot, anon, !anon, redirect, !redirect, patrolled, !patrolled
+
+An $options_hashref can be used (third parameter).
 
 The hashref returned might contain the following keys:
 
@@ -1257,6 +1261,8 @@ sub recentchanges {
     my $ns      = shift || 0;
     my $limit   = defined($_[0]) ? shift : 50;
     my $options = shift;
+    my $user    = shift;
+    my $show    = shift;
     $ns = join('|', @$ns) if ref $ns eq 'ARRAY';
 
     my $hash = {
@@ -1266,6 +1272,9 @@ sub recentchanges {
         rclimit     => $limit,
         rcprop      => 'user|comment|timestamp|title|ids',
     };
+    $hash->{'rcuser'} = $user if (defined($user));
+    $hash->{'rcshow'} = $show if (defined($show));
+
     $options->{max} = 1 unless $options->{max};
 
     my $res = $self->{api}->list($hash, $options);
@@ -2089,6 +2098,43 @@ sub count_contributions {
         { max => 1 });
     return $self->_handle_api_error() unless $res;
     return ${$res}[0]->{editcount};
+}
+
+=head2 timed_count_contributions
+
+    ($timed_edits_count, $total_count) = $bot->timed_count_contributions($user, $days);
+
+Uses the API to count $user's contributions in last number of $days and total number of user's contributions (if needed).
+
+Example: If you want to get user contribs for last 30 and 365 days, and total number of edits you would write
+something like this:
+
+    my ($last30days, $total) = $bot->timed_count_contributions($user, 30);
+    my $last365days = $bot->timed_count_contributions($user, 365);
+
+You could get total number of edits also by separately calling count_contributions like this:
+
+    my $total = $bot->count_contributions($user);
+
+and use timed_count_contributions only in scalar context, but that would mean one more call to server (meaning more
+server load) of which you are excused as timed_count_contributions returns array with two parameters.
+
+=cut
+
+sub timed_count_contributions {
+    my $self     = shift;
+    my $username = shift;
+    my $days     = shift;
+    $username =~ s/User://i;    # Strip namespace
+
+    my $res = $self->{api}->api({
+            action  => 'userdailycontribs',
+            user    => $username,
+            daysago => $days,
+        },
+        { max => 1 });
+    return $self->_handle_api_error() unless $res;
+    return ($res->{userdailycontribs}->{timeFrameEdits}, $res->{userdailycontribs}->{totalEdits});
 }
 
 =head2 last_active
@@ -3121,6 +3167,39 @@ sub upload {
     }) || return $self->_handle_api_error();
     return $success;
 }
+
+=head2 upload_from_url
+
+Upload file directly from URL to the wiki. Specify URL, the new filename and summary. Summary and new filename are optional.
+
+    $bot->upload_from_url({ url => 'http://some.domain.ext/pic.png', title => 'Target_filename.png', summary => 'uploading new pic' });
+
+If on your target wiki is enabled uploading from URL, meaning $wgAllowCopyUploads is set to true in LocalSettings.php and you have
+appropriate user rights, you can use this function to upload files to your wiki directly from remote server.
+
+=cut
+
+sub upload_from_url {
+    my $self = shift;
+    my $args = shift;
+
+    my $url  = delete $args->{url};
+    unless (defined $url) {
+        $self->{error}->{code} = 6;
+        $self->{error}->{details} = q{You must provide URL of file to upload.};
+        return undef;
+    }
+    my $surl = $url."";
+    my $filename = $args->{title} || do { require File::Basename; File::Basename::basename($args->{url}) };
+    my $success = $self->{api}->edit({
+        action   => 'upload',
+        filename => $filename,
+        comment  => $args->{summary},
+        url     => $surl,
+    }) || return $self->_handle_api_error();
+    return $success;
+}
+
 
 =head2 usergroups
 
