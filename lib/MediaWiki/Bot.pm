@@ -2106,6 +2106,19 @@ sub count_contributions {
 
 Uses the API to count $user's contributions in last number of $days and total number of user's contributions (if needed).
 
+Example: If you want to get user contribs for last 30 and 365 days, and total number of edits you would write
+something like this:
+
+    my ($last30days, $total) = $bot->timed_count_contributions($user, 30);
+    my $last365days = $bot->timed_count_contributions($user, 365);
+
+You could get total number of edits also by separately calling count_contributions like this:
+
+    my $total = $bot->count_contributions($user);
+
+and use timed_count_contributions only in scalar context, but that would mean one more call to server (meaning more
+server load) of which you are excused as timed_count_contributions returns array with two parameters.
+
 =cut
 
 sub timed_count_contributions {
