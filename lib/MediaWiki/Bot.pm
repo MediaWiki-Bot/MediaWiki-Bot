@@ -1186,11 +1186,15 @@ sub update_rc {
     return @rc_table;
 }
 
-=head2 recentchanges($ns, $limit, $options_hashref)
+=head2 recentchanges($ns, $limit, $options_hashref, $user, $show)
 
 Returns an array of hashrefs containing recentchanges data for the specified
 namespace number. If specified, the second parameter is the number of rows to
-fetch, and an $options_hashref can be used.
+fetch, fourth parameter is username (rcuser), and fifth parameter is string
+which contains anything out of following (pipe delimited):
+minor, !minor, bot, !bot, anon, !anon, redirect, !redirect, patrolled, !patrolled
+
+An $options_hashref can be used (third parameter).
 
 The hashref returned might contain the following keys:
 
@@ -3150,6 +3154,39 @@ sub upload {
     }) || return $self->_handle_api_error();
     return $success;
 }
+
+=head2 upload_from_url
+
+Upload file directly from URL to the wiki. Specify URL, the new filename and summary. Summary and new filename are optional.
+
+    $bot->upload_from_url({ url => 'http://some.domain.ext/pic.png', title => 'Target_filename.png', summary => 'uploading new pic' });
+
+If on your target wiki is enabled uploading from URL, meaning $wgAllowCopyUploads is set to true in LocalSettings.php and you have
+appropriate user rights, you can use this function to upload files to your wiki directly from remote server.
+
+=cut
+
+sub upload_from_url {
+    my $self = shift;
+    my $args = shift;
+
+    my $url  = delete $args->{url};
+    unless (defined $url) {
+        $self->{error}->{code} = 6;
+        $self->{error}->{details} = q{You must provide URL of file to upload.};
+        return undef;
+    }
+    my $surl = $url."";
+    my $filename = $args->{title} || do { require File::Basename; File::Basename::basename($args->{url}) };
+    my $success = $self->{api}->edit({
+        action   => 'upload',
+        filename => $filename,
+        comment  => $args->{summary},
+        url     => $surl,
+    }) || return $self->_handle_api_error();
+    return $success;
+}
+
 
 =head2 usergroups
 
