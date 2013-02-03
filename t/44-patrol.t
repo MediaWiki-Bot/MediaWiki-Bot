@@ -23,26 +23,27 @@ my $bot = MediaWiki::Bot->new({
 
 my $tests_run = 0;
 {
-    my @rc = $bot->recentchanges(0, 5);
-    foreach my $change (@rc) {
-        if ($change->{type} eq 'edit') {
-            my $success = $bot->patrol($change->{rcid});
+    my @rc = grep { defined $_->{rcid} and $_->{type} eq 'edit' }
+        $bot->recentchanges(0, 20);
 
-            if ($bot->{error}->{details} and $bot->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/) {
-                pass q{Account isn't permitted to patrol};
-                $tests_run++;
-                last;
-            }
-            else {
-                ok $success, 'Patrolled OK';
-                $tests_run++;
-            }
+    foreach my $change (@rc) {
+        my $success = $bot->patrol($change->{rcid});
+
+        if ($bot->{error}->{details} and $bot->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/) {
+            pass q{Account isn't permitted to patrol};
+            note explain $bot->{error};
+            $tests_run++;
+            last;
+        }
+        else {
+            ok $success, 'Patrolled OK';
+            $tests_run++;
         }
     }
 }
 
 {
-    my @rc = $bot->recentchanges(0, 5, { hook => \&mysub });
+    my @rc = $bot->recentchanges(0, 20, { hook => \&mysub });
 
     sub mysub {
         my ($res) = @_;
@@ -52,6 +53,7 @@ my $tests_run = 0;
 
             if ($bot->{error}->{details} and $bot->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/) {
                 pass q{Account isn't permitted to patrol};
+                note explain $bot->{error};
                 $tests_run++;
                 last;
             }
