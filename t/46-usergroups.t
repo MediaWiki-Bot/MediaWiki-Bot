@@ -15,4 +15,5 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 }
 
 my @usergroups = $bot->usergroups('Mike.lifeguard');
-is_deeply [ sort @usergroups ], [ sort qw(* user autoconfirmed patroller editor reviewer sysop) ], 'Right usergroups were returned';
+is_deeply [ sort @usergroups ], [ sort qw(* user autoconfirmed patroller editor reviewer sysop ipblock-exempt) ],
+    'Right usergroups were returned';
