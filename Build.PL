@@ -33,7 +33,7 @@ my %module_build_args = (
     "patch and bug report contributors"
   ],
   "dist_name" => "MediaWiki-Bot",
-  "dist_version" => "5.005004",
+  "dist_version" => "5.005005",
   "license" => "gpl",
   "module_name" => "MediaWiki::Bot",
   "recommends" => {},
@@ -45,6 +45,7 @@ my %module_build_args = (
     "File::Basename" => 0,
     "HTML::Entities" => "3.28",
     "LWP::Protocol::https" => "0.57",
+    "List::Util" => 0,
     "MediaWiki::API" => "0.36",
     "Module::Pluggable" => 0,
     "perl" => "5.008",

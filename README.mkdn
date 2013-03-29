@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 5.005004
+version 5.005005
 
 # SYNOPSIS
 
@@ -39,18 +39,18 @@ only parameter is a hashref with keys:
 - _agent_ sets a custom useragent
 - _assert_ sets a parameter for the AssertEdit extension (commonly 'bot')
 
-Refer to [http://mediawiki.org/wiki/Extension:AssertEdit](http://mediawiki.org/wiki/Extension:AssertEdit).
+    Refer to [http://mediawiki.org/wiki/Extension:AssertEdit](http://mediawiki.org/wiki/Extension:AssertEdit).
 
 - _operator_ allows the bot to send you a message when it fails an assert
 
-In addition, it will be integrated into the default useragent (which may not be
-used if you set agent yourself). The message will tell you that $useragent is
-logged out, so use a descriptive one if you set it.
+    In addition, it will be integrated into the default useragent (which may not be
+    used if you set agent yourself). The message will tell you that $useragent is
+    logged out, so use a descriptive one if you set it.
 
 - _maxlag_ allows you to set the maxlag parameter (default is the recommended 5s).
 
-Please refer to the MediaWiki documentation prior to changing this from the
-default.
+    Please refer to the MediaWiki documentation prior to changing this from the
+    default.
 
 - _protocol_ allows you to specify 'http' or 'https' (default is 'http')
 - _host_ sets the domain name of the wiki to connect to
@@ -58,7 +58,7 @@ default.
 - _login\_data_ is a hashref of credentials to pass to ["login"](#login).
 - _debug_ - whether to provide debug output.
 
-1 provides only error messages; 2 provides further detail on internal operations.
+    1 provides only error messages; 2 provides further detail on internal operations.
 
 For example:
 
@@ -339,35 +339,30 @@ The ["Options hashref"](#Options hashref) is also available:
         }
     }
 
-## recentchanges($ns, $limit, $options\_hashref)
+## recentchanges($wiki\_hashref, $options\_hashref)
 
-Returns an array of hashrefs containing recentchanges data for the specified
-namespace number. If specified, the second parameter is the number of rows to
-fetch, and an $options\_hashref can be used.
+Returns an array of hashrefs containing recentchanges data.
 
-The hashref returned might contain the following keys:
+The first parameter is a hashref with the following keys:
 
-- _ns_ - the namespace number
-- _revid_
-- _old\_revid_
-- _timestamp_
-- _rcid_ - can be used with `patrol()`
-- _pageid_
-- _type_ - one of edit, new, log (there may be others)
-- _title_
+- _ns_ - the namespace number, or an arrayref of numbers to
+specify several; default is the main namespace
+- _limit_ - the number of rows to fetch; default is 50
+- _user_ - only list changes by this user
+- _show_ - itself a hashref where the key is a category and the value is
+a boolean. If true, the category will be included; if false, excluded. The
+categories are kinds of edits: minor, bot, anon, redirect, patrolled. See
+"rcshow" at [http://www.mediawiki.org/wiki/API:Recentchanges\#Parameters](http://www.mediawiki.org/wiki/API:Recentchanges\#Parameters).
 
-By default, the main namespace is used, and limit is set to 50. Pass an
-arrayref of namespace numbers to get results from several namespaces.
+An ["Options hashref"](#Options hashref) can be used as the second parameter:
 
-The ["Options hashref"](#Options hashref):
-
-    my @rc = $bot->recentchanges(4, 10);
+    my @rc = $bot->recentchanges({ ns => 4, limit => 100 });
     foreach my $hashref (@rc) {
         print $hashref->{title} . "\n";
     }
 
     # Or, use a callback for incremental processing:
-    $bot->recentchanges(0, 500, { hook => \&mysub });
+    $bot->recentchanges({ ns => [0,1], limit => 500 }, { hook => \&mysub });
     sub mysub {
         my ($res) = @_;
         foreach my $hashref (@$res) {
@@ -375,6 +370,22 @@ The ["Options hashref"](#Options hashref):
             print "$page\n";
         }
     }
+
+The hashref returned might contain the following keys:
+
+- _ns_ - the namespace number
+- _revid_
+- _old\_revid_
+- _timestamp_
+- _rcid_ - can be used with ["patrol"](#patrol)
+- _pageid_
+- _type_ - one of edit, new, log (there may be others)
+- _title_
+
+For backwards compatibility, the previous method signature is still
+supported:
+
+    $bot->recentchanges($ns, $limit, $options_hashref);
 
 ## what\_links\_here
 
@@ -415,12 +426,12 @@ Other parameters are:
 - A namespace number to search (pass an arrayref to search in multiple namespaces).
 - $options\_hashref as described by [MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API):
 
-Set max to limit the number of queries performed.
+    Set max to limit the number of queries performed.
 
-Set hook to a subroutine reference to use a callback hook for incremental
-processing.
+    Set hook to a subroutine reference to use a callback hook for incremental
+    processing.
 
-Refer to the section on ["linksearch"](#linksearch) for examples.
+    Refer to the section on ["linksearch"](#linksearch) for examples.
 
 A typical query:
 
@@ -466,29 +477,29 @@ Additional parameters are:
 - You can search by $protocol (http is default).
 - $options\_hashref is fully documented in ["Options hashref"](#Options hashref):
 
-Set _max_ in $options to get more than one query's worth of results:
+    Set _max_ in $options to get more than one query's worth of results:
 
-    my $options = { max => 10, }; # I only want some results
-    my @links = $bot->linksearch("slashdot.org", 1, undef, $options);
-    foreach my $hash (@links) {
-        my $url = $hash->{'url'};
-        my $page = $hash->{'title'};
-        print "$page: $url\n";
-    }
-
-Set _hook_ to a subroutine reference to use a callback hook for incremental
-processing:
-
-    my $options = { hook => \&mysub, }; # I want to do incremental processing
-    $bot->linksearch("slashdot.org", 1, undef, $options);
-    sub mysub {
-        my ($res) = @_;
-        foreach my $hashref (@$res) {
-            my $url  = $hashref->{'url'};
-            my $page = $hashref->{'title'};
+        my $options = { max => 10, }; # I only want some results
+        my @links = $bot->linksearch("slashdot.org", 1, undef, $options);
+        foreach my $hash (@links) {
+            my $url = $hash->{'url'};
+            my $page = $hash->{'title'};
             print "$page: $url\n";
         }
-    }
+
+    Set _hook_ to a subroutine reference to use a callback hook for incremental
+    processing:
+
+        my $options = { hook => \&mysub, }; # I want to do incremental processing
+        $bot->linksearch("slashdot.org", 1, undef, $options);
+        sub mysub {
+            my ($res) = @_;
+            foreach my $hashref (@$res) {
+                my $url  = $hashref->{'url'};
+                my $page = $hashref->{'title'};
+                print "$page: $url\n";
+            }
+        }
 
 ## purge\_page
 
@@ -638,6 +649,25 @@ retrieve multiple sets of results:
     my $count = $bot->count_contributions($user);
 
 Uses the API to count $user's contributions.
+
+## timed\_count\_contributions
+
+    ($timed_edits_count, $total_count) = $bot->timed_count_contributions($user, $days);
+
+Uses the API to count $user's contributions in last number of $days and total number of user's contributions (if needed).
+
+Example: If you want to get user contribs for last 30 and 365 days, and total number of edits you would write
+something like this:
+
+    my ($last30days, $total) = $bot->timed_count_contributions($user, 30);
+    my $last365days = $bot->timed_count_contributions($user, 365);
+
+You could get total number of edits also by separately calling count\_contributions like this:
+
+    my $total = $bot->count_contributions($user);
+
+and use timed\_count\_contributions only in scalar context, but that would mean one more call to server (meaning more
+server load) of which you are excused as timed\_count\_contributions returns array with two parameters.
 
 ## last\_active
 
@@ -925,6 +955,15 @@ Specify an arrayref of users to get results for multiple users.
 Upload a file to the wiki. Specify the file by either giving the filename, which
 will be read in, or by giving the data directly.
 
+## upload\_from\_url
+
+Upload file directly from URL to the wiki. Specify URL, the new filename and summary. Summary and new filename are optional.
+
+    $bot->upload_from_url({ url => 'http://some.domain.ext/pic.png', title => 'Target_filename.png', summary => 'uploading new pic' });
+
+If on your target wiki is enabled uploading from URL, meaning $wgAllowCopyUploads is set to true in LocalSettings.php and you have
+appropriate user rights, you can use this function to upload files to your wiki directly from remote server.
+
 ## usergroups
 
 Returns a list of the usergroups a user is in:
@@ -940,40 +979,40 @@ The hashref can have 3 keys:
 
 - max
 
-Specifies the maximum number of queries to retrieve data from the wiki. This is
-independent of the _size_ of each query (how many items each query returns).
-Set to 0 to retrieve all the results.
+    Specifies the maximum number of queries to retrieve data from the wiki. This is
+    independent of the _size_ of each query (how many items each query returns).
+    Set to 0 to retrieve all the results.
 
 - hook
 
-Specifies a coderef to a hook function that can be used to process large lists
-as they come in. When this is used, your subroutine will get the raw data. This
-is noted in cases where it is known to be significant. For example, when
-using a hook with `top_edits()`, you need to check whether the edit is the top
-edit yourself - your subroutine gets results as they come in, and before they're
-filtered.
+    Specifies a coderef to a hook function that can be used to process large lists
+    as they come in. When this is used, your subroutine will get the raw data. This
+    is noted in cases where it is known to be significant. For example, when
+    using a hook with `top_edits()`, you need to check whether the edit is the top
+    edit yourself - your subroutine gets results as they come in, and before they're
+    filtered.
 
 - skip\_encoding
 
-MediaWiki's API uses UTF-8 and any 8 bit character string parameters are encoded
-automatically by the API call. If your parameters are already in UTF-8 this will
-be detected and the encoding will be skipped. If your parameters for some reason
-contain UTF-8 data but no UTF-8 flag is set (i.e. you did not use the
-`use [utf8](http://search.cpan.org/perldoc?utf8);` pragma) you should prevent re-encoding by passing an option
-`skip_encoding => 1`. For example:
+    MediaWiki's API uses UTF-8 and any 8 bit character string parameters are encoded
+    automatically by the API call. If your parameters are already in UTF-8 this will
+    be detected and the encoding will be skipped. If your parameters for some reason
+    contain UTF-8 data but no UTF-8 flag is set (i.e. you did not use the
+    `use [utf8](http://search.cpan.org/perldoc?utf8);` pragma) you should prevent re-encoding by passing an option
+    `skip_encoding => 1`. For example:
 
-    $category ="Cat\x{e9}gorie:moyen_fran\x{e7}ais"; # latin1 string
-    $bot->get_all_pages_in_category($category); # OK
+        $category ="Cat\x{e9}gorie:moyen_fran\x{e7}ais"; # latin1 string
+        $bot->get_all_pages_in_category($category); # OK
 
-    $category = "Cat". pack("U", 0xe9)."gorie:moyen_fran".pack("U",0xe7)."ais"; # unicode string
-    $bot->get_all_pages_in_category($category); # OK
+        $category = "Cat". pack("U", 0xe9)."gorie:moyen_fran".pack("U",0xe7)."ais"; # unicode string
+        $bot->get_all_pages_in_category($category); # OK
 
-    $category ="Cat\x{c3}\x{a9}gorie:moyen_fran\x{c3}\x{a7}ais"; # unicode data without utf-8 flag
-    # $bot->get_all_pages_in_category($category); # NOT OK
-    $bot->get_all_pages_in_category($category, { skip_encoding => 1 }); # OK
+        $category ="Cat\x{c3}\x{a9}gorie:moyen_fran\x{c3}\x{a7}ais"; # unicode data without utf-8 flag
+        # $bot->get_all_pages_in_category($category); # NOT OK
+        $bot->get_all_pages_in_category($category, { skip_encoding => 1 }); # OK
 
-If you need this, it probably means you're doing something wrong. Feel free to
-ask for help.
+    If you need this, it probably means you're doing something wrong. Feel free to
+    ask for help.
 
 # ERROR HANDLING
 
@@ -982,19 +1021,21 @@ data is stored in `$bot->{error}->{code}` and `$bot->{error}->{details}`.
 
 # AVAILABILITY
 
+The project homepage is [https://metacpan.org/module/MediaWiki::Bot](https://metacpan.org/module/MediaWiki::Bot).
+
 The latest version of this module is available from the Comprehensive Perl
 Archive Network (CPAN). Visit [http://www.perl.com/CPAN/](http://www.perl.com/CPAN/) to find a CPAN
 site near you, or see [https://metacpan.org/module/MediaWiki::Bot/](https://metacpan.org/module/MediaWiki::Bot/).
 
 # SOURCE
 
-The development version is on github at [http://github.com/doherty/MediaWiki-Bot](http://github.com/doherty/MediaWiki-Bot)
-and may be cloned from [git://github.com/doherty/MediaWiki-Bot.git](git://github.com/doherty/MediaWiki-Bot.git)
+The development version is on github at [http://github.com/MediaWiki-Bot/MediaWiki-Bot](http://github.com/MediaWiki-Bot/MediaWiki-Bot)
+and may be cloned from [git://github.com/MediaWiki-Bot/MediaWiki-Bot.git](git://github.com/MediaWiki-Bot/MediaWiki-Bot.git)
 
 # BUGS AND LIMITATIONS
 
 You can make new bug reports, and view existing ones, through the
-web interface at [http://rt.cpan.org](http://rt.cpan.org).
+web interface at [https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues](https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues).
 
 # AUTHORS
 
@@ -1011,7 +1052,7 @@ web interface at [http://rt.cpan.org](http://rt.cpan.org).
 
 # COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2012 by the MediaWiki::Bot team <perlwikibot@googlegroups.com>.
+This software is Copyright (c) 2013 by the MediaWiki::Bot team <perlwikibot@googlegroups.com>.
 
 This is free software, licensed under:
 

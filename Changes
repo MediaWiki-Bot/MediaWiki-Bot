@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+5.005005  2013-03-29
     * Added upload_from_url function (GH#48; stemd)
     * Added two parameters to recentchanges functions (GH#48; stemd)
     * Added timed_count_contributions function (GH#48; stemd)

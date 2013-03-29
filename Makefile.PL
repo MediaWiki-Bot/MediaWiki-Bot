@@ -35,12 +35,13 @@ my %WriteMakefileArgs = (
     "File::Basename" => 0,
     "HTML::Entities" => "3.28",
     "LWP::Protocol::https" => "0.57",
+    "List::Util" => 0,
     "MediaWiki::API" => "0.36",
     "Module::Pluggable" => 0,
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "5.005004",
+  "VERSION" => "5.005005",
   "test" => {
     "TESTS" => "t/*.t"
   }
