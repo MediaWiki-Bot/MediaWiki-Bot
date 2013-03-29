@@ -3189,13 +3189,17 @@ sub upload_from_url {
         $self->{error}->{details} = q{You must provide URL of file to upload.};
         return undef;
     }
-    my $surl = $url."";
-    my $filename = $args->{title} || do { require File::Basename; File::Basename::basename($args->{url}) };
+
+    my $filename = $args->{title} || do {
+        require File::Basename;
+        File::Basename::basename($url)
+    };
     my $success = $self->{api}->edit({
         action   => 'upload',
         filename => $filename,
         comment  => $args->{summary},
-        url     => $surl,
+        url      => $url,
+        ignorewarnings => 1,
     }) || return $self->_handle_api_error();
     return $success;
 }
