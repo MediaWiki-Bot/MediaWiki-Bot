@@ -1186,66 +1186,37 @@ sub update_rc {
     return @rc_table;
 }
 
-=head2 recentchanges($ns, $limit, $options_hashref, $user, $show)
+=head2 recentchanges($wiki_hashref, $options_hashref)
 
-Returns an array of hashrefs containing recentchanges data for the specified
-namespace number. If specified, the second parameter is the number of rows to
-fetch, fourth parameter is username (rcuser), and fifth parameter is string
-which contains anything out of following (pipe delimited):
-minor, !minor, bot, !bot, anon, !anon, redirect, !redirect, patrolled, !patrolled
+Returns an array of hashrefs containing recentchanges data.
 
-An $options_hashref can be used (third parameter).
-
-The hashref returned might contain the following keys:
+The first parameter is a hashref with the following keys:
 
 =over 4
 
-=item *
+=item I<ns> - the namespace number, or an arrayref of numbers to
+specify several; default is the main namespace
 
-I<ns> - the namespace number
+=item I<limit> - the number of rows to fetch; default is 50
 
-=item *
+=item I<user> - only list changes by this user
 
-I<revid>
-
-=item *
-
-I<old_revid>
-
-=item *
-
-I<timestamp>
-
-=item *
-
-I<rcid> - can be used with C<patrol()>
-
-=item *
-
-I<pageid>
-
-=item *
-
-I<type> - one of edit, new, log (there may be others)
-
-=item *
-
-I<title>
+=item I<show> - itself a hashref where the key is a category and the value is
+a boolean. If true, the category will be included; if false, excluded. The
+categories are kinds of edits: minor, bot, anon, redirect, patrolled. See
+"rcshow" at L<http://www.mediawiki.org/wiki/API:Recentchanges#Parameters>.
 
 =back
 
-By default, the main namespace is used, and limit is set to 50. Pass an
-arrayref of namespace numbers to get results from several namespaces.
+An L</"Options hashref"> can be used as the second parameter:
 
-The L</"Options hashref">:
-
-    my @rc = $bot->recentchanges(4, 10);
+    my @rc = $bot->recentchanges({ ns => 4, limit => 100 });
     foreach my $hashref (@rc) {
         print $hashref->{title} . "\n";
     }
 
     # Or, use a callback for incremental processing:
-    $bot->recentchanges(0, 500, { hook => \&mysub });
+    $bot->recentchanges({ ns => [0,1], limit => 500 }, { hook => \&mysub });
     sub mysub {
         my ($res) = @_;
         foreach my $hashref (@$res) {
@@ -1254,15 +1225,66 @@ The L</"Options hashref">:
         }
     }
 
+The hashref returned might contain the following keys:
+
+=over 4
+
+=item I<ns> - the namespace number
+
+=item I<revid>
+
+=item I<old_revid>
+
+=item I<timestamp>
+
+=item I<rcid> - can be used with L</patrol>
+
+=item I<pageid>
+
+=item I<type> - one of edit, new, log (there may be others)
+
+=item I<title>
+
+=back
+
+For backwards compatibility, the previous method signature is still
+supported:
+
+    $bot->recentchanges($ns, $limit, $options_hashref);
+
 =cut
 
 sub recentchanges {
-    my $self    = shift;
-    my $ns      = shift || 0;
-    my $limit   = defined($_[0]) ? shift : 50;
-    my $options = shift;
-    my $user    = shift;
-    my $show    = shift;
+    my $self = shift;
+    my $ns;
+    my $limit;
+    my $options;
+    my $user;
+    my $show;
+    if (ref $_[0] eq 'HASH') { # unpack for new args
+        my %args = %{ +shift };
+        $ns     = delete $args{ns};
+        $limit  = delete $args{limit};
+        $user   = delete $args{user};
+
+        if (ref $args{show} eq 'HASH') {
+            my @show;
+            while (my ($k, $v) = each %{ $args{show} }) {
+                push @show, '!'x!$v . $k;
+            }
+            $show = join '|', @show;
+        }
+        else {
+            $show = delete $args{show};
+        }
+
+        $options = shift;
+    }
+    else {
+        $ns      = shift || 0;
+        $limit   = shift || 50;
+        $options = shift;
+    }
     $ns = join('|', @$ns) if ref $ns eq 'ARRAY';
 
     my $hash = {
@@ -1272,13 +1294,13 @@ sub recentchanges {
         rclimit     => $limit,
         rcprop      => 'user|comment|timestamp|title|ids',
     };
-    $hash->{'rcuser'} = $user if (defined($user));
-    $hash->{'rcshow'} = $show if (defined($show));
+    $hash->{rcuser} = $user if defined $user;
+    $hash->{rcshow} = $show if defined $show;
 
     $options->{max} = 1 unless $options->{max};
 
-    my $res = $self->{api}->list($hash, $options);
-    return $self->_handle_api_error() unless $res;
+    my $res = $self->{api}->list($hash, $options)
+        or return $self->_handle_api_error();
     return 1 unless ref $res;    # Not a ref when using callback
     return @$res;
 }
