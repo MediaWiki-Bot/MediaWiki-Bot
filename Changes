@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * Plan t/40-upload.t properly [GH#50]
 
 5.005005  2013-03-29
     * Added upload_from_url function (GH#48; stemd)

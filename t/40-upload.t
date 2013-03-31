@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More 0.88 tests => 2;
+use Test::More 0.88;
 use File::Spec;
 
 use MediaWiki::Bot;
@@ -8,8 +8,9 @@ my $t = __FILE__;
 
 my $username = $ENV{'PWPUsername'};
 my $password = $ENV{'PWPPassword'};
-plan skip_all => 'upload test requires login with upload permission'
-    unless $username and $password;
+plan $username && $password
+    ? (tests => 2)
+    : (skip_all => 'upload test requires login with upload permission');
 
 my $bot = MediaWiki::Bot->new({
     agent   => "MediaWiki::Bot tests ($t)",
