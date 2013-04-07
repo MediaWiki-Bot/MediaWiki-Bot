@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 5.005005
+    version 5.005006
 
 SYNOPSIS
         use MediaWiki::Bot;

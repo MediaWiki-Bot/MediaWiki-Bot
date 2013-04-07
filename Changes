@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+5.005006  2013-04-07
     * Plan t/40-upload.t properly [GH#50]
 
 5.005005  2013-03-29
