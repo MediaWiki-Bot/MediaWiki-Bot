@@ -5,9 +5,9 @@ use Test::More 0.96;
 use MediaWiki::Bot;
 my $t = __FILE__;
 
-plan eval q{use Imager; 1 }
+plan eval q{ use Imager; use Imager::File::JPEG; 1 }
     ? (tests => 3)
-    : (skip_all => q{Imager required});
+    : (skip_all => q{Imager & Imager::File::JPEG required});
 
 my $username = $ENV{'PWPUsername'};
 my $password = $ENV{'PWPPassword'};
