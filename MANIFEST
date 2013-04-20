@@ -1,3 +1,4 @@
+.travis.yml
 Build.PL
 Changes
 lib/MediaWiki/Bot.pm
@@ -55,4 +56,3 @@ t/45-contributions.t
 t/46-usergroups.t
 t/47-global_image_usage.t
 t/48-get_image.t
-travis.yml
