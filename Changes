@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+    * Don't fail due to new Module::Pluggable warnings
 
 5.005006  2013-04-07
     * Plan t/40-upload.t properly [GH#50]
