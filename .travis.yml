@@ -5,8 +5,19 @@ perl:
   - "5.12"
   - "5.10"
 before_install:
-  - "git config --global github.user doherty"
-  - "cpanm -n Dist::Zilla::PluginBundle::Author::DOHERTY"
+  - "git config --global github.user travis"
+  - "cpanm -vn Dist::Zilla::PluginBundle::Author::DOHERTY"
   - "sudo apt-get install libgd2-xpm-dev"
   - "dzil authordeps 2>/dev/null | xargs cpanm -vn"
 install: "dzil listdeps 2>/dev/null | xargs cpanm -vn"
+script: ".travis.sh"
+notifications:
+    email:
+        recipients:
+            - perlwikibot-commits@googlegroups.com
+    irc:
+        channels:
+            - "irc.freenode.org#perlwikibot"
+        skip_join: true
+    template:
+        - "Build %{build_number} on %{branch} (%{commit} by %{author}): %{message} %{build_url}"
