@@ -3,11 +3,15 @@ use warnings;
 use utf8;
 use Test::More 0.94 tests => 2;
 
-# Fix "Wide character in print" warning on failure
-my $builder = Test::More->builder;
-binmode $builder->output,         ':encoding(UTF-8)';
-binmode $builder->failure_output, ':encoding(UTF-8)';
-binmode $builder->todo_output,    ':encoding(UTF-8)';
+BEGIN {
+    # Fix "Wide character in print" warning on failure
+    my $builder = Test::More->builder;
+    binmode $builder->output,           ':encoding(UTF-8)';
+    binmode $builder->failure_output,   ':encoding(UTF-8)';
+    binmode $builder->todo_output,      ':encoding(UTF-8)';
+    binmode STDOUT,                     ':encoding(UTF-8)';
+    binmode STDERR,                     ':encoding(UTF-8)';
+}
 
 use MediaWiki::Bot;
 my $t = __FILE__;
