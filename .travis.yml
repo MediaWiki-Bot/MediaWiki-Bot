@@ -10,7 +10,7 @@ before_install:
   - "sudo apt-get install libgd2-xpm-dev"
   - "cpanm -n $( dzil authordeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
 install: "cpanm $( dzil listdeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
-script: ".travis.sh"
+script: "./.travis.sh"
 notifications:
     email:
         recipients:
