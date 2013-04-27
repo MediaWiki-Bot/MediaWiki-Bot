@@ -40,13 +40,11 @@ my $string = 'éółŽć';
 subtest 'read' => sub {
     plan tests => 1;
 
-    my $load   = $bot->get_text("$base/1");
-
-    is($load, $string, 'Is our string the same as what we load?');
+    is $bot->get_text("$base/1") => $string, 'Is our string the same as what we load?';
 };
 
 subtest 'write' => sub {
-    plan tests => 5;
+    plan tests => 4;
 
     my $old  = $bot->get_text("$base/2");
     my $rand = rand();
@@ -60,25 +58,17 @@ subtest 'write' => sub {
         skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 5 if
             defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
+        is $bot->get_text("$base/2") => "$rand\n$string", "Successfully edited $base/2";
+
         my $rand2 = rand();
         $bot->edit({page => "$base/3", text => "$rand2\n$string\n", summary => "$agent ($string)"});
         my @history = $bot->get_history("$base/3", 1);
-        is($history[0]->{comment}, "$agent ($string)", 'Use unicode in an edit summary correctly');
+        is $bot->get_text("$base/3") => "$rand2\n$string", "Edited $base/3 OK";
+        is $history[0]->{comment} => "$agent ($string)", "Edited $base/3 with unicode in an edit summary";
 
         my $rand3 = rand();
         $bot->edit({page => "$base/$string", text => "$rand3\n$string\n", summary => $agent});
-        {
-            my $new = $bot->get_text("$base/2");
-            isnt($new, $old,                  'Successfully saved test string');
-            is(  $new, "$rand\n$string",      'Successfully loaded test string');
-        }
-        {
-            my $new = $bot->get_text("$base/3");
-            is($new, "$rand2\n$string",       'Saved data from load correctly');
-        }
-        {
-            my $new = $bot->get_text("$base/$string");
-            is($new, "$rand3\n$string",       'Saved data from load correctly to page with unicode title');
-        }
+        is $bot->get_text("$base/$string") => "$rand3\n$string",
+            "Edited $base/$string OK";
     } # end SKIP
 };
