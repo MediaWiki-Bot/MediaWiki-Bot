@@ -1068,7 +1068,7 @@ See L<http://www.mediawiki.org/wiki/API:Edit#Parameters>.
 sub undo {
     my $self    = shift;
     my $page    = shift;
-    my $revid   = shift;
+    my $revid   = shift || croak "No revid given";
     my $summary = shift || "Reverting revision #$revid";
     my $after   = shift;
     $summary = "Reverting edits between #$revid & #$after" if defined($after);    # Is that clear? Correct?
@@ -1078,7 +1078,7 @@ sub undo {
         action         => 'edit',
         title          => $page,
         undo           => $revid,
-        undoafter      => $after,
+        (undoafter     => $after)x!! defined $after,
         summary        => $summary,
         token          => $edittoken,
         starttimestamp => $starttimestamp,
