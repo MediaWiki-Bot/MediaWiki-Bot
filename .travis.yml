@@ -19,5 +19,5 @@ notifications:
         channels:
             - "irc.freenode.org#perlwikibot"
         skip_join: true
-    template:
-        - "Build %{build_number} on %{branch} (%{commit} by %{author}): %{message} %{build_url}"
+        template:
+            - "Build %{build_number} on %{branch} (%{commit} by %{author}): %{message} %{build_url}"
