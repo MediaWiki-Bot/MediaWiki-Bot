@@ -1,3 +1,2 @@
 #!/usr/bin/env bash
-perl Build.PL && ./Build test
-prove -bj4
+perl Build.PL && ./Build test && prove -bj4
