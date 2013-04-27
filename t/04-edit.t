@@ -34,7 +34,7 @@ SKIP: {
     skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2
         if defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
-    is $bot->get_text($title) => $rand, 'Did whole-page editing successfully';
+    is $bot->get_text($title, $status->{newrevid}) => $rand, 'Did whole-page editing successfully';
 
     my $rand2 = rand();
     $status = $bot->edit({
@@ -44,7 +44,7 @@ SKIP: {
         summary => $agent,
     }) or diag explain $bot->{error};
 
-    like $bot->get_text($title) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
+    like $bot->get_text($title, $status->{newrevid}) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
         'Did section editing successfully'
         or diag explain { status => $status };
 
