@@ -4,3 +4,8 @@ perl:
   - "5.14"
   - "5.12"
   - "5.10"
+before_install:
+  - "cpanm Dist::Zilla::PluginBundle::Author::DOHERTY"
+  - "git config --global github.user doherty"
+  - "dzil authordeps | xargs cpanm"
+install: "dzil listdeps | xargs cpanm"
