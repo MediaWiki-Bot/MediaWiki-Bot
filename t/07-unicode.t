@@ -55,7 +55,7 @@ subtest 'write' => sub {
     });
 
     SKIP: {
-        skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 5 if
+        skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 4 if
             defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
         is $bot->get_text("$base/2", $status->{newrevid}) => "$rand\n$string", "Successfully edited $base/2";
