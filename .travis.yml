@@ -7,5 +7,6 @@ perl:
 before_install:
   - "git config --global github.user doherty"
   - "cpanm -n Dist::Zilla::PluginBundle::Author::DOHERTY"
+  - "sudo apt-get install libgd2-xpm-dev"
   - "dzil authordeps 2>/dev/null | xargs cpanm"
 install: "dzil listdeps 2>/dev/null | xargs cpanm"
