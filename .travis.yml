@@ -6,10 +6,10 @@ perl:
   - "5.10"
 before_install:
   - "git config --global github.user travis"
-  - "cpanm -vn Dist::Zilla::PluginBundle::Author::DOHERTY"
+  - "cpanm Dist::Zilla::PluginBundle::Author::DOHERTY || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
   - "sudo apt-get install libgd2-xpm-dev"
-  - "dzil authordeps 2>/dev/null | xargs cpanm -vn"
-install: "dzil listdeps 2>/dev/null | xargs cpanm -vn"
+  - "cpanm $( dzil authordeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
+install: "cpanm $( dzil listdeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
 script: ".travis.sh"
 notifications:
     email:
