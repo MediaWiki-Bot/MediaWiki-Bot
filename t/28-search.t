@@ -19,4 +19,5 @@ isa_ok(\@pages, 'ARRAY', 'Right return type');
 is($pages[0], 'Main Page', 'Found [[Main Page]]');
 
 @pages = $bot->search('62c77d65adf258464e0f0820696b871251c21eb4');
-is(scalar @pages, 0, 'No results found for a nonsensical search');
+is scalar @pages, 0, 'No results found for a nonsensical search'
+    or diag explain \@pages;
