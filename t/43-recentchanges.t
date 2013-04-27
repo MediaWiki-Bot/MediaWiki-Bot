@@ -43,7 +43,7 @@ subtest 'basic' => sub {
             $tests_run++;
             like($rc[$i]->{type},       qr/^\w+$/,                                  'Type looks vaguely OK');
             $tests_run++;
-            like($rc[$i]->{title},      qr/\w+/,                                    'Title looks vaguely OK');
+            cmp_ok(length $rc[$i]->{title}, '>', 0,                                 'Title looks vaguely OK');
             $tests_run++;
         }
     }
