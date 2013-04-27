@@ -21,26 +21,24 @@ my $bot   = MediaWiki::Bot->new({
 
 my $title = 'User:Mike.lifeguard/05-revert.t';
 SKIP: {
+    my $oldrevid;
     {   # Exercise revert()
         my @history = $bot->get_history($title, 10);
-        my $oldrevid = $history[ int( rand() * 10) ]->{revid};
+        $oldrevid = $history[ int( rand() * 10) ]->{revid};
 
         my $res = $bot->revert($title, $oldrevid, $agent);
 
         skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2 if
             defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
-        is $bot->get_text($title, $res->{newrevid}) => $bot->get_text($title, $oldrevid), 'Reverted successfully';
+        is $bot->get_text($title, $res->{edit}->{newrevid}) => $bot->get_text($title, $oldrevid),
+            'Reverted successfully';
     }
-
-    $bot->purge_page($title);
-
     {   # Exercise undo()
-        my @history = $bot->get_history($title, 2);
-        my $revid   = $history[0]->{revid};
-        my $res = $bot->undo($title, $revid);
+        my $res = $bot->edit({ page => $title, text => rand() });
+        $res = $bot->undo($title, $res->{edit}->{newrevid});
 
-        is $bot->get_text($title, $res->{newrevid}) => $bot->get_text($title, $history[1]->{revid}),
+        is $bot->get_text($title, $res->{edit}->{newrevid}) => $bot->get_text($title, $oldrevid),
             'Undo was successful';
     }
 }

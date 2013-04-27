@@ -68,7 +68,7 @@ subtest 'write' => sub {
 
         my $rand3 = rand();
         $status = $bot->edit({page => "$base/$string", text => "$rand3\n$string\n", summary => $agent});
-        is $bot->get_text("$base/$string", $status->{newrevid}) => "$rand3\n$string",
+        is $bot->get_text("$base/$string", $status->{edit}->{newrevid}) => "$rand3\n$string",
             "Edited $base/$string OK";
     } # end SKIP
 };

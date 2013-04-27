@@ -44,7 +44,7 @@ SKIP: {
         summary => $agent,
     }) or diag explain $bot->{error};
 
-    like $bot->get_text($title, $status->{newrevid}) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
+    like $bot->get_text($title, $status->{edit}->{newrevid}) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
         'Did section editing successfully'
         or diag explain { status => $status };
 
