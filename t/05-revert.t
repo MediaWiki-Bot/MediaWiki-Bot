@@ -25,16 +25,12 @@ SKIP: {
         my @history = $bot->get_history($title, 10);
         my $revid = $history[ int( rand() * 10) ]->{revid};
 
-        my $text = $bot->get_text($title, $revid);
         my $res = $bot->revert($title, $revid, $agent);
-        my $err = $bot->{error};
 
         skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2 if
             defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
-        my $newtext = $bot->get_text($title);
-
-        is $text, $newtext, 'Reverted successfully';
+        is $bot->get_text($title) => $bot->get_text($title, $revid), 'Reverted successfully';
     }
 
     $bot->purge_page($title);
@@ -42,10 +38,9 @@ SKIP: {
     {   # Exercise undo()
         my @history = $bot->get_history($title, 2);
         my $revid   = $history[0]->{revid};
-        my $text    = $bot->get_text($title, $history[1]->{revid});
         $bot->undo($title, $revid);
-        my $newtext = $bot->get_text($title);
 
-        is $text, $newtext, 'Undo was successful';
+        is $bot->get_text($title) => $bot->get_text($title, $history[1]->{revid}),
+            'Undo was successful';
     }
 }

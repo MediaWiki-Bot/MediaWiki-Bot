@@ -31,11 +31,10 @@ my $status = $bot->edit({
 });
 
 SKIP: {
-    skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2 if
-        defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
+    skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2
+        if defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
-    my $is = $bot->get_text($title);
-    is $is => $rand, 'Did whole-page editing successfully';
+    is $bot->get_text($title) => $rand, 'Did whole-page editing successfully';
 
     my $rand2 = rand();
     $status = $bot->edit({
@@ -43,32 +42,24 @@ SKIP: {
         text    => $rand2,
         section => 'new',
         summary => $agent,
-    });
-    $bot->purge_page($title);
-    $is = $bot->get_text($title);
-    my $ought = <<"END";
-$rand
+    }) or diag explain $bot->{error};
 
-== $agent ==
-
-$rand2
-END
-    1 while (chomp $is);
-    1 while (chomp $ought);
-    is $is => $ought, 'Did section editing successfully'
-        or diag explain $status;
+    like $bot->get_text($title) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
+        'Did section editing successfully'
+        or diag explain { status => $status };
 
     if ($login_data) {
         my @hist = $bot->get_history($title, 2);
         ok $hist[1]->{minor}, 'Minor edit' or diag explain \@hist;
 
-        $bot->edit({
+        $status = $bot->edit({
             page    => $title,
             text    => $rand2.$rand,
             summary => $agent . ' (major)',
             minor   => 0,
         });
         @hist = $bot->get_history($title, 1);
-        ok !$hist[0]->{minor}, 'Not a minor edit' or diag explain \@hist;
+        ok !$hist[0]->{minor}, 'Not a minor edit'
+            or diag explain { hist => \@hist, status => $status };
     }
 }
