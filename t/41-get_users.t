@@ -12,11 +12,7 @@ my $bot = MediaWiki::Bot->new({
 
 my $title = 'User:Mike.lifeguard/04-edit.t';
 
-my @history = $bot->get_history($title, 5);
-my @history_users;
-foreach my $entry (@history) {
-    push(@history_users, $entry->{'user'});
-}
+my @history = map { $_->{user} } $bot->get_history($title, 5);
 my @users   = $bot->get_users($title, 5);
 
-is_deeply(\@users, \@history_users,     'Concordance between two methods of getting the same data');
+is_deeply(\@users, \@history, 'Concordance between two methods of getting the same data');
