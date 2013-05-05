@@ -7,3 +7,4 @@ t/tiny.png
 *.diff
 *.orig
 *.rej
+.prove

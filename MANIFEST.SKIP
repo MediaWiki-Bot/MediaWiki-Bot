@@ -56,6 +56,4 @@
 
 # Specific to this project
 ^script\.pl$
-^dist\.ini$
 ^\.mediawiki-bot-.*-cookies$
-^MANIFEST\.SKIP$
