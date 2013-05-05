@@ -20,25 +20,28 @@ my $bot   = MediaWiki::Bot->new({
 });
 
 my $title = 'User:Mike.lifeguard/05-revert.t';
-SKIP: {
-    my $oldrevid;
-    {   # Exercise revert()
-        my @history = $bot->get_history($title, 10);
-        $oldrevid = $history[ int( rand() * 10) ]->{revid};
 
-        my $res = $bot->revert($title, $oldrevid, $agent);
+subtest revert => sub {
+    my @history = $bot->get_history($title, 20);
+    my $oldrevid = $history[ int( rand() * 20 ) ]->{revid};
+    my $res = $bot->revert($title, $oldrevid, $agent);
+    plan defined $bot->{error}->{code} && $bot->{error}->{code} == 3
+        ? (skip_all => q{Can't use editing tests: } . $bot->{error}->{details})
+        : (tests => 1);
 
-        skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 2 if
-            defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
+    is $bot->get_text($title, $res->{edit}->{newrevid}) => $bot->get_text($title, $oldrevid),
+        'Reverted successfully';
+};
 
-        is $bot->get_text($title, $res->{edit}->{newrevid}) => $bot->get_text($title, $oldrevid),
-            'Reverted successfully';
-    }
-    {   # Exercise undo()
-        my $res = $bot->edit({ page => $title, text => rand() });
-        $res = $bot->undo($title, $res->{edit}->{newrevid});
+subtest undo => sub {
+    my @history = $bot->get_history($title, 2);
+    my $res = $bot->undo($title, $history[0]->{revid});
+    plan defined $bot->{error}->{code} && $bot->{error}->{code} == 3
+        ? (skip_all => q{Can't use editing tests: } . $bot->{error}->{details})
+        : (tests => 1);
 
-        is $bot->get_text($title, $res->{edit}->{newrevid}) => $bot->get_text($title, $oldrevid),
-            'Undo was successful';
-    }
-}
+    my $is    = $bot->get_text($title, $res->{edit}->{newrevid});
+    my $ought = $bot->get_text($title, $history[1]->{revid});
+    is $is => $ought, 'Undo was successful'
+        or diag explain { is => $is, ought => $ought, history => \@history };
+};
