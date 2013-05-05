@@ -58,16 +58,27 @@ subtest 'write' => sub {
         skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 4 if
             defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
 
-        is $bot->get_text("$base/2", $status->{newrevid}) => "$rand\n$string", "Successfully edited $base/2";
+        is $bot->get_text("$base/2", $status->{edit}->{newrevid}) => "$rand\n$string",
+            "Successfully edited $base/2";
 
         my $rand2 = rand();
-        $status = $bot->edit({page => "$base/3", text => "$rand2\n$string\n", summary => "$agent ($string)"});
-        is $bot->get_text("$base/3", $status->{newrevid}) => "$rand2\n$string", "Edited $base/3 OK";
+        $status = $bot->edit({
+            page => "$base/3",
+            text => "$rand2\n$string\n",
+            summary => "$agent ($string)"
+        });
+        is $bot->get_text("$base/3", $status->{edit}->{newrevid}) => "$rand2\n$string",
+            "Edited $base/3 OK";
         my @history = $bot->get_history("$base/3", 1);
-        is $history[0]->{comment} => "$agent ($string)", "Edited $base/3 with unicode in an edit summary";
+        is $history[0]->{comment} => "$agent ($string)",
+            "Edited $base/3 with unicode in an edit summary";
 
         my $rand3 = rand();
-        $status = $bot->edit({page => "$base/$string", text => "$rand3\n$string\n", summary => $agent});
+        $status = $bot->edit({
+            page => "$base/$string",
+            text => "$rand3\n$string\n",
+            summary => $agent
+        });
         is $bot->get_text("$base/$string", $status->{edit}->{newrevid}) => "$rand3\n$string",
             "Edited $base/$string OK";
     } # end SKIP
