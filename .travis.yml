@@ -18,3 +18,4 @@ notifications:
         skip_join: true
         template:
             - "Build %{build_number} on %{branch} (%{commit} by %{author}): %{message} %{build_url}"
+env: AUTHOR_TESTING=1 RELEASE_TESTING=1 AUTOMATED_TESTING=1
