@@ -1569,6 +1569,43 @@ is described fully in L</"Options hashref">.
     }
 }    # This ends the bare block around get_all_pages_in_category()
 
+=head2 get_all_categories
+
+Returns an array containing the names of all categories.
+
+    my @categories = $bot->get_all_categories();
+    print "The categories are:\n@categories\n";
+
+Use C<< { max => 0 } >> to get all results. The default number
+of categories returned is 10, the maximum allowed is 5000.
+
+=cut
+
+sub get_all_categories {
+    my $self     = shift;
+    my $options  = shift;
+    my $max = 500;
+
+    my $query = {
+        action => 'query',
+        list => 'allcategories',
+    };
+
+    if ( defined $options && $options->{'max'} == '0' ) {
+        $query->{'aclimit'} = $max;
+    }
+
+    my $res = $self->{api}->api($query);
+    return $self->_handle_api_error() unless $res;
+
+    my @categories;
+    foreach my $category ( @{$res->{'query'}->{'allcategories'}} ) {
+        my $title = $category->{'*'};
+        push @categories, $title;
+    }
+    return @categories;
+}
+
 =head2 linksearch
 
 Runs a linksearch on the specified $link and returns an array containing
