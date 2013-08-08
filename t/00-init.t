@@ -12,7 +12,10 @@ members of perlwikibot@googlegroups.com.
 The test suite will bail out now; doing more testing is
 pointless since everything will fail.
 END
-    use_ok('MediaWiki::Bot') or BAIL_OUT($bail_diagnostic);
+    use_ok('MediaWiki::Bot') or do {
+        diag($bail_diagnostic);
+        BAIL_OUT("Couldn't load the module");
+    };
 };
 
 # Provide some info to the tester
