@@ -1,319 +1,355 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
-    * Don't fail due to new Module::Pluggable warnings
-    * Ensure t/48-get_image.t has JPEG support
-    * Corrected documentation for get_image (GH#54, thanks sanxiago!)
+  - Don't fail due to new Module::Pluggable warnings
+  - Ensure t/48-get_image.t has JPEG support
+  - Corrected documentation for get_image (GH#54, thanks sanxiago!)
 
 5.005006  2013-04-07
-    * Plan t/40-upload.t properly [GH#50]
+  - Plan t/40-upload.t properly [GH#50]
 
 5.005005  2013-03-29
-    * Added upload_from_url function (GH#48; stemd)
-    * Added two parameters to recentchanges functions (GH#48; stemd)
-    * Added timed_count_contributions function (GH#48; stemd)
+  - Added upload_from_url function (GH#48; stemd)
+  - Added two parameters to recentchanges functions (GH#48; stemd)
+  - Added timed_count_contributions function (GH#48; stemd)
 
 5.005004  2012-10-27
-    * More robust error-checking in some cases (GH#45, James DuPont)
+  - More robust error-checking in some cases (GH#45, James DuPont)
 
 5.005003  2012-09-14
-    * Be more liberal with matching whitespace in the diff test
-    * Correctly handle namespace #0 (GH#43, thanks Seth!)
-    * Improved error handling for uploads (GH#33)
-    * Fix an uninitialized warning in get_log (GH#42)
+  - Be more liberal with matching whitespace in the diff test
+  - Correctly handle namespace #0 (GH#43, thanks Seth!)
+  - Improved error handling for uploads (GH#33)
+  - Fix an uninitialized warning in get_log (GH#42)
 
 3.005002  2012-05-08
-    * Updated test suite for on-wiki changes
+  - Updated test suite for on-wiki changes
 
 3.005001  2012-04-08
-    * Fixed erroneous documentation on the edit method
-    * Fixed edit failures due to changes in HTTP::Message 6.03 (GH#39)
+  - Fixed erroneous documentation on the edit method
+  - Fixed edit failures due to changes in HTTP::Message 6.03 (GH#39)
 
 3.005000  2012-03-03
-    * Expandtemplates will now behave correctly when the page title is omitted
-    * Better detection of login failure
+  - Expandtemplates will now behave correctly when the page title is omitted
+  - Better detection of login failure
 
 3.004003  2012-01-14
-    * Edits may be marked as major once again
-    * Don't use an invalid undefined assertion by default
-    * Fix tests for logging in (now requires credentials provided in
-      PWPUsername and PWPPassword environment variables)
-    * Fix page diff test
-    * Fix the expandtemplates test
-    * Fix the page history test
-    * Make fetching a patrol token fail-fast. If the account cannot get a patrol
-      token, instead of attempting to patrol (and getting a badtoken error), return
-      false and set $bot->{error} with a handcrafted error.
-    * Fix test for emailing
-    * Fix test for uploading (optional test requirements: GD, Data::Random)
+  - Edits may be marked as major once again
+  - Don't use an invalid undefined assertion by default
+  - Fix tests for logging in (now requires credentials provided in
+    PWPUsername and PWPPassword environment variables)
+  - Fix page diff test
+  - Fix the expandtemplates test
+  - Fix the page history test
+  - Make fetching a patrol token fail-fast. If the account cannot get a patrol
+    token, instead of attempting to patrol (and getting a badtoken error), return
+    false and set $bot->{error} with a handcrafted error.
+  - Fix test for emailing
+  - Fix test for uploading (optional test requirements: GD, Data::Random)
 
 v3.4.2    2011-08-26
-    * Silence spurious warnings in the test suite
-    * Use HTTP GET so some requests are cacheable (Thanks to Jools Wills)
-    * Add support for file uploads via API (Thanks to Jools Wills)
-    * Patrolling edits now fetches the patrol token manually, and should work
-    * Add support for querying a user's usergroups, and infrastructure to support changing
-      usergroups with the Admin plugin
-    * get_pages now handles namespace aliases dynamically, and should work on all wikis
+  - Silence spurious warnings in the test suite
+  - Use HTTP GET so some requests are cacheable (Thanks to Jools Wills)
+  - Add support for file uploads via API (Thanks to Jools Wills)
+  - Patrolling edits now fetches the patrol token manually, and should work
+  - Add support for querying a user's usergroups, and infrastructure to support changing
+    usergroups with the Admin plugin
+  - get_pages now handles namespace aliases dynamically, and should work on all wikis
 
 3.4.0     2011-06-19
-    * Packaging updates & changes from last 2 alphas
+  - Packaging updates & changes from last 2 alphas
 
 3.3.1_2   2011-06-04
-    * set_highlimits, which had no effect and was deprecated, has been removed.
-    * Deprecated aliases for MediaWiki::Bot were removed.
-    * global_image_usage() now supports queries of http://www.mediawiki.org/wiki/GlobalUsage
+  - set_highlimits, which had no effect and was deprecated, has been removed.
+  - Deprecated aliases for MediaWiki::Bot were removed.
+  - global_image_usage() now supports queries of http://www.mediawiki.org/wiki/GlobalUsage
 
 3.3.1_1   2011-05-08
-    * Dependencies for HTTPS fixed
-    * Old, unnecessary dependencies removed
-    * Calling test_image_exists() with an arrayref of images now returns results
-      in the correct order.
+  - Dependencies for HTTPS fixed
+  - Old, unnecessary dependencies removed
+  - Calling test_image_exists() with an arrayref of images now returns results
+    in the correct order.
 
 3.3.1     2011-04-23
-    * Deprecation warnings now respect whether deprecation warnings are turned on
+  - Deprecation warnings now respect whether deprecation warnings are turned on
 
 3.3.0 2011-04-22
-    * NOTE: PWP and perlwikipedia are officially deprecated, and *will* be removed in a future release
-    * Added deprecation warnings to PWP/perlwikipedia aliases, as well as methods/call styles retained
-      only for backwards compatibility, and which might be removed in future releases.
-    * General cleanup of documentation
-    * get_pages_in_namespace() can now properly retrieve all results
-    * recent_edit_to_page() now returns what it was documented to return (both timestamp and username)
-    * Require a more recent version of MediaWiki::API
-    * Resolve permissions error in contributions()
-    * Make contributions() return data as documented
+  - NOTE: PWP and perlwikipedia are officially deprecated, and *will* be removed in a future release
+  - Added deprecation warnings to PWP/perlwikipedia aliases, as well as methods/call styles retained
+    only for backwards compatibility, and which might be removed in future releases.
+  - General cleanup of documentation
+  - get_pages_in_namespace() can now properly retrieve all results
+  - recent_edit_to_page() now returns what it was documented to return (both timestamp and username)
+  - Require a more recent version of MediaWiki::API
+  - Resolve permissions error in contributions()
+  - Make contributions() return data as documented
 
 3.2.7 2011-01-24
-    * get_allusers() can now filter by usergroup, and accepts an options hashref for greater versatility.
-    * Test suite now uses test.wikipedia.org
-    * Don't wait forever if the wiki doesn't respond
+  - get_allusers() can now filter by usergroup, and accepts an options hashref for greater versatility.
+  - Test suite now uses test.wikipedia.org
+  - Don't wait forever if the wiki doesn't respond
 
 3.2.6 2010-10-28
-    * recentchanges() now filters by namespace and returns all available data, including rcid; see Pod for details.
-    * get_pages_in_category() now requests the maximum number of results; this resolves a major performance issue when getting the contents of large categories.
-    * The same performance issue (or potential issue) was resolved in many other methods.
+  - recentchanges() now filters by namespace and returns all available data, including
+    rcid; see Pod for details.
+  - get_pages_in_category() now requests the maximum number of results; this resolves a
+    major performance issue when getting the contents of large categories.
+  - The same performance issue (or potential issue) was resolved in many other methods.
 
 3.2.4 2010-09-06
-    * Removed dependency on WWW::Mechanize
-    * revert() was broken by refactoring; this error has been fixed
+  - Removed dependency on WWW::Mechanize
+  - revert() was broken by refactoring; this error has been fixed
 
 3.2.0 2010-08-17
-    * BREAKING CHANGE: The constructor now returns false when auto-login fails
-    * Some cached data is now invalidated when set_wiki() is called
-    * Setting a useragent now works
-    * is_g_blocked() checks if an IP/range is currently blocked, as well as what the address is
-    * was_g_blocked() checks if an IP/range was ever globally blocked
-    * "Loaded Plugin X" messages were removed
-    * INSTALL has slightly better instructions
-    * is_protected() checks whether a page is protected or not
-    * It is now possible to get all results from get_pages_in_category() by setting max to zero in the options hashref
-    * get_all_pages_in_category() now has protection against infinite recursion due to category loops
-    * get_pages() now actually accepts an arrayref of pages, as documented.
-    * get_(all_)pages_in_category now have consistent input parsing
-    * misc/Login.pl was removed
-    * Handling of null path to api.php was fixed
-    * Useragent format now follows the RFC
-    * Performance of login() was improved by about 30%
-    * Calls to list-based methods which use a callback hook now return true for error-checking. Calls which don't use a callback are unchanged.
-    * links_to_image() was renamed to image_usage() and now uses the API and has new features. The old name is retained for backward compatibility.
-    * login() can now do SUL; see POD for details
-    * test_image_exists() sometimes returned undef when it shouldn't have; this was fixed.
-    * The test suite was made more robust
-    * SUL on secure.wikimedia.org is useless, and is now disabled
-    * test_image_exists() now accepts an arrayref of images
-    * Two levels of debug output are now available. 1 is failure notification; 2 is internal operations.
-    * top_edits() and contributions() offer two ways to get user contributions. See Pod for details.
-    * Support for LDAP login was added thanks to a patch by philippe.cade
-    * Protocol, host, and path are now retained when a call to set_wiki() doesn't specify one of them.
+  - BREAKING CHANGE: The constructor now returns false when auto-login fails
+  - Some cached data is now invalidated when set_wiki() is called
+  - Setting a useragent now works
+  - is_g_blocked() checks if an IP/range is currently blocked, as well as what the address is
+  - was_g_blocked() checks if an IP/range was ever globally blocked
+  - "Loaded Plugin X" messages were removed
+  - INSTALL has slightly better instructions
+  - is_protected() checks whether a page is protected or not
+  - It is now possible to get all results from get_pages_in_category() by setting max to zero in the options hashref
+  - get_all_pages_in_category() now has protection against infinite recursion due to category loops
+  - get_pages() now actually accepts an arrayref of pages, as documented.
+  - get_(all_)pages_in_category now have consistent input parsing
+  - misc/Login.pl was removed
+  - Handling of null path to api.php was fixed
+  - Useragent format now follows the RFC
+  - Performance of login() was improved by about 30%
+  - Calls to list-based methods which use a callback hook now return true for error-checking.
+    Calls which don't use a callback are unchanged.
+  - links_to_image() was renamed to image_usage() and now uses the API and has new features.
+    The old name is retained for backward compatibility.
+  - login() can now do SUL; see POD for details
+  - test_image_exists() sometimes returned undef when it shouldn't have; this was fixed.
+  - The test suite was made more robust
+  - SUL on secure.wikimedia.org is useless, and is now disabled
+  - test_image_exists() now accepts an arrayref of images
+  - Two levels of debug output are now available. 1 is failure notification; 2 is internal operations.
+  - top_edits() and contributions() offer two ways to get user contributions. See Pod for details.
+  - Support for LDAP login was added thanks to a patch by philippe.cade
+  - Protocol, host, and path are now retained when a call to set_wiki() doesn't specify one of them.
 
 3.1.0 2010-06-05
-    * BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure returned is changed. See POD for details.
-    * get_pages_in_category() and get_all_pages_in_category() now work properly for non-English wikis (issue 42).
-    * Moving pages is now supported (issue 43).
-    * diff() now supports basic diffing.
-    * prefixindex() now supports listing pages with a common prefix
-    * edit() can now do section editing.
-    * Another alias was added: perlwikipedia
-    * Searching is now supported by search()
-    * Methods like linksearch(), get_pages_in_category(), and list_transcludes() now perform only one query by default. Pass max => 5 (or whatever)
-      to do more queries. Note that this controls the number of queries, not the number of results fetched per query. See POD for details
-    * get_log() was added to support the basics of searching the log.
-    * Support for basic auth was added (issue 68).
-    * Support for GlobalBlocking queries was added.
+  - BREAKING CHANGE: update_rc() now accepts a hashref of options, and the hash structure
+    returned is changed. See POD for details.
+  - get_pages_in_category() and get_all_pages_in_category() now work properly for non-English wikis (issue 42).
+  - Moving pages is now supported (issue 43).
+  - diff() now supports basic diffing.
+  - prefixindex() now supports listing pages with a common prefix
+  - edit() can now do section editing.
+  - Another alias was added: perlwikipedia
+  - Searching is now supported by search()
+  - Methods like linksearch(), get_pages_in_category(), and list_transcludes() now perform
+    only one query by default. Pass max => 5 (or whatever) to do more queries. Note that this
+    controls the number of queries, not the number of results fetched per query. See POD for details.
+  - get_log() was added to support the basics of searching the log.
+  - Support for basic auth was added (issue 68).
+  - Support for GlobalBlocking queries was added.
 
 3.0.0 2010-05-30
-    * BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return ""; nonexistent pages return undef.
-      These both evaluate to false; you can differentiate between them with defined(). get_id() now returns undef instead of
-      2 when there is no pageid (page is nonexistent or title is invalid).
-    * BREAKING CHANGE: All subs return undef when they encounter an error that is passed off to _handle_api_error(). Error
-      details are still available in $bot->{'error'}.
-    * BREAKING CHANGE: linksearch() now uses keys 'url' and 'title' like the API does. This is to avoid confusion when using
-      a callback hook, which is now exposed to callers. linksearch() now uses the API.
-    * BREAKING CHANGE: login()'s return values are reversed, and properly documented. Returns true for success; false for failure:
-      $bot->login($user, $pass) or die "Login failed\n"; # This is in accord with Perl standards
-    * BREAKING CHANGE: what_links_here() no longer handles transclusions. To get transclusions, use list_transclusions(). Also,
-      key names are now 'title' and 'redirect' (defined when the page is a redirect; undefined otherwise).
-    * Codebase underwent spring cleaning.
-    * Default useragent now includes the version number.
-    * Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.
-    * Crypt::SSLeay is now correctly listed as a prerequisite,
-    * is_blocked() replaces test_blocked(), and now uses the API. test_blocked() remains for backwards compatibility,
-    * was_blocked() replaces test_block_hist(), and now uses the API. test_block_hist() remains for backwards compatibility.
-    * $summary is now optional for undelete(); a generic reason will be used if ommitted. undelete() also uses API now.
-    * edit() now uses an md5 hash to ensure data integrity.
-    * set_highlimits() can now be used to *not* use highlimits.
-    * revert() now uses the API.
-    * get_last() now uses the API.
-    * undo() now uses the API, and is documented accurately.
-    * logout() was added.
-    * purge_page() now uses the API and returns the number of pages successfully purged, which may be useful for the caller's error-checking.
-    * New methods were added to query WMF's sitematrix, and convert between db name (enwikibooks) to the domain name (en.wikibooks.org):
-      db_to_domain() and domain_to_db().
-    * Admin functions were moved into the plugin MediaWiki::Bot::Plugin::Admin, which is auto-loaded if present.
-    * The constructor now does more for script authors. It sets the wiki, logs in, and does some autoconfiguration. See updated POD for details.
-    * edit() now accepts a hashref of options. See updated POD for details.
-    * expandtemplates() now uses the API.
+  - BREAKING CHANGE: get_text() now returns the page's wikitext. Blank pages return "";
+    nonexistent pages return undef. These both evaluate to false; you can differentiate
+    between them with defined(). get_id() now returns undef instead of 2 when there is
+    no pageid (page is nonexistent or title is invalid).
+  - BREAKING CHANGE: All subs return undef when they encounter an error that is passed
+    off to _handle_api_error(). Error details are still available in $bot->{'error'}.
+  - BREAKING CHANGE: linksearch() now uses keys 'url' and 'title' like the API does. This
+    is to avoid confusion when using a callback hook, which is now exposed to callers.
+    linksearch() now uses the API.
+  - BREAKING CHANGE: login()'s return values are reversed, and properly documented.
+    Returns true for success; false for failure:
+        $bot->login($user, $pass) or die "Login failed\n"; # This is in accord with Perl standards
+  - BREAKING CHANGE: what_links_here() no longer handles transclusions. To get
+    transclusions, use list_transclusions(). Also, key names are now 'title' and 'redirect'
+    (defined when the page is a redirect; undefined otherwise).
+  - Codebase underwent spring cleaning.
+  - Default useragent now includes the version number.
+  - Functionality which still uses index.php no longer fails on non-English wikis. Patch by piotr.kubowicz.
+  - Crypt::SSLeay is now correctly listed as a prerequisite,
+  - is_blocked() replaces test_blocked(), and now uses the API.
+    test_blocked() remains for backwards compatibility
+  - was_blocked() replaces test_block_hist(), and now uses the API.
+    test_block_hist() remains for backwards compatibility.
+  - $summary is now optional for undelete(); a generic reason will be used if ommitted.
+    undelete() also uses API now.
+  - edit() now uses an md5 hash to ensure data integrity.
+  - set_highlimits() can now be used to *not* use highlimits.
+  - revert() now uses the API.
+  - get_last() now uses the API.
+  - undo() now uses the API, and is documented accurately.
+  - logout() was added.
+  - purge_page() now uses the API and returns the number of pages successfully purged,
+    which may be useful for the caller's error-checking.
+  - New methods were added to query WMF's sitematrix, and convert between db name (enwikibooks)
+    to the domain name (en.wikibooks.org): db_to_domain() and domain_to_db().
+  - Admin functions were moved into the plugin MediaWiki::Bot::Plugin::Admin,
+    which is auto-loaded if present.
+  - The constructor now does more for script authors. It sets the wiki, logs in, and does
+    some autoconfiguration. See updated POD for details.
+  - edit() now accepts a hashref of options. See updated POD for details.
+  - expandtemplates() now uses the API.
 
 2.3.0 2009-05-23
-    * Get_pages now makes sense when following namespace aliases. The title you give is the title you get back. Aliases are not expanded. Patch by
-      Stefan Petrea.
-    * Unicode test will now take a bit longer but hopefully avoid any errors that shouldn't be there
+  - Get_pages now makes sense when following namespace aliases. The title you give
+    is the title you get back. Aliases are not expanded. Patch by Stefan Petrea.
+  - Unicode test will now take a bit longer but hopefully avoid any errors that shouldn't be there
 
 2.2.3 2009-05-05
-    * RELEASE-NOTES renamed to Changes
-    * Test suite now outputs a message when there is an expected error to be printed to terminal
-    * Some debugging code removed
-    * Simplify Unicode tests, now only run editing tests if not blocked
-    * More specific error detection in test 11 (get_pages_in_namespace)
-    * More verbose error handling in all code
-    * Add unblock capability
+  - RELEASE-NOTES renamed to Changes
+  - Test suite now outputs a message when there is an expected error to be printed to terminal
+  - Some debugging code removed
+  - Simplify Unicode tests, now only run editing tests if not blocked
+  - More specific error detection in test 11 (get_pages_in_namespace)
+  - More verbose error handling in all code
+  - Add unblock capability
 
 2.1.1 2009-02-24
-    * Additions of sub unblock, some test changes
-    * Error checking is about to be updated. If an error occurs, any subs will return -1*the integer error number. See the updated documentation in
-      2.2.0.
+  - Additions of sub unblock, some test changes
+  - Error checking is about to be updated. If an error occurs, any subs will return -1*the
+    integer error number. See the updated documentation in 2.2.0.
 
 2.1.0 2009-02-03
-    * Some more unicode changes
-    * If unicode doesn't work, TELL ME
+  - Some more unicode changes
+  - If unicode doesn't work, TELL ME
 
 2.0.1 2009-01-26
-    * Removed some redundant error messages
+  - Removed some redundant error messages
 
 2.0.0 2008-12-30
-    * I was going to make this 1.5.3, but then I realized I shouldn't hide something this big behind a sub-minor release. For reasons of having the
-      module included in the module list on CPAN, making everything be a bit neater, and for all-around happiness, I've moved Perlwikipedia into
-      the preexisting MediaWiki:: namespace. The module is now called MediaWiki::Bot.
-    * You can also now use "PWP" instead of "MediaWiki::Bot" in your code. The distribution on CPAN and in the svn repo includes an alias.
-    * Plugins are now loaded automatically if installed. This means you don't have to do as much arcane magic. The plugins will be listed under
-      MediaWiki::Bot::Plugin:: in CPAN and are not currently in svn. If you have a task that you would like to make into a plugin and publish on
-      CPAN, please get in touch with me at DCOLLINS@cpan.org
-    * Added the ImageTester plugin to CPAN. Purpose is to analyze and tag copyrighted images which do not follow en.wikipedia's policies
-    * Added the CUP plugin to CPAN as a basic example of what a plugin does. This is used by the bot that will run the WikiCup stats, and these
-      methods can be called just like any other methods in the main module
+  - I was going to make this 1.5.3, but then I realized I shouldn't hide something this
+    big behind a sub-minor release. For reasons of having the module included in the
+    module list on CPAN, making everything be a bit neater, and for all-around happiness,
+    I've moved Perlwikipedia into the preexisting MediaWiki:: namespace. The module is
+    now called MediaWiki::Bot.
+  - You can also now use "PWP" instead of "MediaWiki::Bot" in your code. The distribution
+    on CPAN and in the svn repo includes an alias.
+  - Plugins are now loaded automatically if installed. This means you don't have to do as
+    much arcane magic. The plugins will be listed under MediaWiki::Bot::Plugin:: in CPAN
+    and are not currently in svn. If you have a task that you would like to make into a
+    plugin and publish on CPAN, please get in touch with me at DCOLLINS@cpan.org
+  - Added the ImageTester plugin to CPAN. Purpose is to analyze and tag copyrighted images
+    which do not follow en.wikipedia's policies
+  - Added the CUP plugin to CPAN as a basic example of what a plugin does. This is used
+    by the bot that will run the WikiCup stats, and these methods can be called just
+    like any other methods in the main module
 
 1.5.2 2008-12-27
-    * Add support for 'plugins' which add additional features to MediaWiki::Bot. See MediaWiki::Bot::Plugin::ImageTester on CPAN for an example.
-    * Loosened requirements for test_image_exists to determine that an image is on commons: the missing key is not always present.
+  - Add support for 'plugins' which add additional features to MediaWiki::Bot.
+    See MediaWiki::Bot::Plugin::ImageTester on CPAN for an example.
+  - Loosened requirements for test_image_exists to determine that an image is on
+    commons: the missing key is not always present.
 
 1.5.1 2008-12-21
-    * Fixed the bug where logins wouldn't transfer from API to wiki again, now part of test 01.
-    * Added tests for AssertEdit, maxlag, get_allusers, get_pages
-    * Added sub set_highlimits for api queries, since PWP can't tell if you're a bot
-    * Sub test_image_exists can now tell if an image page exists but has no image. Also uses API.
-    * Added defaults for protection, now uses API. In-house tests exist for protection and deletion.
-    * Some variable normalizing in tests.
-    * Added testing environment variables: PWPMakeTestSetWikiHost, PWPMakeTestSetWikiDir
-    * Reenabled tests for get_namespace_names, get_pages_in_namespace
-    * Some fixes for potential race conditions on database replication for tests, should not be necessary in real production code
+  - Fixed the bug where logins wouldn't transfer from API to wiki again, now part of test 01.
+  - Added tests for AssertEdit, maxlag, get_allusers, get_pages
+  - Added sub set_highlimits for api queries, since PWP can't tell if you're a bot
+  - Sub test_image_exists can now tell if an image page exists but has no image. Also uses API.
+  - Added defaults for protection, now uses API. In-house tests exist for protection and deletion.
+  - Some variable normalizing in tests.
+  - Added testing environment variables: PWPMakeTestSetWikiHost, PWPMakeTestSetWikiDir
+  - Reenabled tests for get_namespace_names, get_pages_in_namespace
+  - Some fixes for potential race conditions on database replication for tests,
+    should not be necessary in real production code
 
 1.5.0 2008-12-08
-    * Added a sub get_pages(), which accepts a list of pages and gets each page's text in one go and returns a hash. Much faster than get_text()
-      for more than one page.
-    * Switched sub protect over to API, cascading works now
-    * Add a few more tests
+  - Added a sub get_pages(), which accepts a list of pages and gets each page's
+    text in one go and returns a hash. Much faster than get_text() for more than one page.
+  - Switched sub protect over to API, cascading works now
+  - Add a few more tests
 
 1.4.2 2008-12-07
-    * Apparently I accidentally removed get_allusers? Fixed that.
-    * Some CPAN testers have been reporting a failure to make the test edit in t/02_edit.t so I added a call to Data::Dumper.
+  - Apparently I accidentally removed get_allusers? Fixed that.
+  - Some CPAN testers have been reporting a failure to make the test edit in
+    t/02_edit.t so I added a call to Data::Dumper.
 
 1.4.1 2008-11-27
-    * Remove my tsting code from sub login, now using an updated version of MediaWiki::API to handle cookies properly. MediaWiki::API 0.20 or
-      higher now required.
+  - Remove my tsting code from sub login, now using an updated version of
+    MediaWiki::API to handle cookies properly. MediaWiki::API 0.20 or higher now required.
 
 1.4.0 2008-11-18
-    * Fix a bug in get_allusers() by bosborne
-    * Fix a bug which made some methods, such as delete_old_image, attempt to execute logged-out because the method used to transfer cookies from
-      the API useragent, which does the logging in, to the MediaWiki::Bot useragent, which does the other stuff, was not functional. This bug
-      only affected non-api methods and has been fixed through a nasty hack, which I hope can be made cleaner in the coming weeks.
+  - Fix a bug in get_allusers() by bosborne
+  - Fix a bug which made some methods, such as delete_old_image, attempt to
+    execute logged-out because the method used to transfer cookies from the API
+    useragent, which does the logging in, to the MediaWiki::Bot useragent, which
+    does the other stuff, was not functional. This bug only affected non-api
+    methods and has been fixed through a nasty hack, which I hope can be made
+    cleaner in the coming weeks.
 
 1.3.8 2008-11-16
-    * New method: get_allusers($limit) by bosborne
-    * That bug I fixed in 1.3.7? I fixed it again. For real this time.
-    * Using 'retries' instead of 'max retries' config variable for MediaWiki::API HTTP errors
+  - New method: get_allusers($limit) by bosborne
+  - That bug I fixed in 1.3.7? I fixed it again. For real this time.
+  - Using 'retries' instead of 'max retries' config variable for MediaWiki::API HTTP errors
 
 1.3.7 2008-11-11
-    * Minor bugfix in one of the tests.
+  - Minor bugfix in one of the tests.
 
 1.3.6 2008-10-27
-    * Added maxlag compatibility. (Thanks to the developers of MediaWiki::API for their implementation) The settings are as follows:
-        * Maxlag parameter: Dafault 5 seconds, can be configured when creating the object
-        * Delay: 1 second
-        * Retries: Until success
-    * Make test 98 fail gracefully on platforms without the test suite
-    * Fix some really weird spacing in the Makefile.PL
-    * The other maxlag options, along with lots of other defaults, will probably be modifiable in 1.4 with a sort of config sub. This will allow
-      the custom configuration of options for WWW::Mechanize and MediaWiki::API, so you don't need to go sourcediving or remember the order for the
-      parameters to the constructor.
-    * Since wiki.xyrael.net is down, tests 1, 8, 10, 11
+  - Added maxlag compatibility. (Thanks to the developers of MediaWiki::API for
+    their implementation) The settings are as follows:
+      - Maxlag parameter: Dafault 5 seconds, can be configured when creating the object
+      - Delay: 1 second
+      - Retries: Until success
+  - Make test 98 fail gracefully on platforms without the test suite
+  - Fix some really weird spacing in the Makefile.PL
+  - The other maxlag options, along with lots of other defaults, will probably
+    be modifiable in 1.4 with a sort of config sub. This will allow the custom
+    configuration of options for WWW::Mechanize and MediaWiki::API, so you don't
+    need to go sourcediving or remember the order for the parameters to the constructor.
+  - Since wiki.xyrael.net is down, tests 1, 8, 10, 11
 
 1.3.5 2008-10-04
-    * Allowing cascade protection now. This may or may not work, since there are some changes being made to the protection API.
-    * Anonymous editing should work. If you still can not use this framework to edit, I need to be contacted. To this end, I've enabled an editing
-      test, hopefully cpan-testers sends me good results :)
-    * Fix a stupid mistake I made regarding the names of certain parameters to get_history
+  - Allowing cascade protection now. This may or may not work, since there
+    are some changes being made to the protection API.
+  - Anonymous editing should work. If you still can not use this framework
+    to edit, I need to be contacted. To this end, I've enabled an editing test,
+    hopefully cpan-testers sends me good results :)
+  - Fix a stupid mistake I made regarding the names of certain parameters to get_history
 
 1.3.4 2008-09-11
-    * Some triage after the first CPAN test results came in:
-    * Appearantly, get_pages_in_category was running test file 08, test 2, very slowly because I was loading a 1000+ page category in sets of 10
-      pages at a time. This has been remedied, the limit is now 500.
-    * Cannot reproduce a bug in get_namespace_names and another in count_contributions - so instead, if we get weird results, we run the sub again.
-    * There is a bug in get_history which was causing weird errors on some test machines. I've switched it to use MediaWiki::API.
+  - Some triage after the first CPAN test results came in:
+  - Appearantly, get_pages_in_category was running test file 08, test 2, very
+    slowly because I was loading a 1000+ page category in sets of 10 pages at a time.
+    This has been remedied, the limit is now 500.
+  - Cannot reproduce a bug in get_namespace_names and another in count_contributions -
+    so instead, if we get weird results, we run the sub again.
+  - There is a bug in get_history which was causing weird errors on some test machines.
+    I've switched it to use MediaWiki::API.
 
 1.3.3 2008-09-10
-    * get_pages_in_category now uses the API
-    * Test 8 has been modified to test nested categories
-    * Test 7 is now faster, but still effective
-    * Bug checking added on edit for anon edit bug
-    * Bots now use the bot flag when editing, as was done before switching to API editing
-    * Regarding anonymous editing: MediaWiki bug 15420 has been marked as FIXED by Roan Kattouw. Waiting for that to be scapped so I can test it
-      and enable the editing tests.
-    * Before I updated get_pages_in_category, it seemed to have some encoding errors: returning escape sequences where it shouldn't. I'll be
-      looking into its status on that front.
+  - get_pages_in_category now uses the API
+  - Test 8 has been modified to test nested categories
+  - Test 7 is now faster, but still effective
+  - Bug checking added on edit for anon edit bug
+  - Bots now use the bot flag when editing, as was done before switching to API editing
+  - Regarding anonymous editing: MediaWiki bug 15420 has been marked as FIXED
+    by Roan Kattouw. Waiting for that to be scapped so I can test it and enable the editing tests.
+  - Before I updated get_pages_in_category, it seemed to have some encoding errors:
+    returning escape sequences where it shouldn't. I'll be looking into its status on that front.
 
 1.3.2 2008-08-30
-    * Now logging in via API if password is supplied
-    * Fixed an encoding issue in page saving
-    * Anonymous editing is currently broken. This is an upstream issue which I am working to resolve
+  - Now logging in via API if password is supplied
+  - Fixed an encoding issue in page saving
+  - Anonymous editing is currently broken. This is an upstream issue which I am working to resolve
 
 1.3.1 2008-08-28
-    * Maintenance: update manifest, readme
-    * More MediaWiki::API: blocking, deleting, get_text
-    * Add localization for MediaWiki::API. This is important...
-    * Update tests to test for loading of sections of pages
-    * AssertEdit assertaions can now be passed as 'bot' OR as '&assert=bot'
-    * MediaWiki::API didn't localise with set_wiki()
-    * Unicode issues with MediaWiki::API editing fixed
-    * Fix one warning in edit() - undefined value in string eq near line 252
+  - Maintenance: update manifest, readme
+  - More MediaWiki::API: blocking, deleting, get_text
+  - Add localization for MediaWiki::API. This is important...
+  - Update tests to test for loading of sections of pages
+  - AssertEdit assertaions can now be passed as 'bot' OR as '&assert=bot'
+  - MediaWiki::API didn't localise with set_wiki()
+  - Unicode issues with MediaWiki::API editing fixed
+  - Fix one warning in edit() - undefined value in string eq near line 252
 
 1.3 2008-08-27
-    * Convert over to use MediaWiki::API
+  - Convert over to use MediaWiki::API
 
 1.01 2007
-    * Standardized all functions to return 1 and set $object->{errstr} in the event of an error
-    * get_history and other _get_api-based functions will now properly escape utf8 characters in the query
-    * Fixed memory leak issues with WWW::Mechanize
+  - Standardized all functions to return 1 and set $object->{errstr} in the event of an error
+  - get_history and other _get_api-based functions will now properly escape utf8 characters in the query
+  - Fixed memory leak issues with WWW::Mechanize
 
 0.1  2007-08-25
-    * original version
+  - original version
