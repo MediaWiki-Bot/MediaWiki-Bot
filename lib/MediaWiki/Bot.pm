@@ -976,7 +976,7 @@ sub get_pages {
 
 =head2 get_image
 
-    $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
+    $buffer = $bot->get_image('File:Foo.jpg', {width=>256, height=>256});
 
 Download an image from a wiki. This is derived from a similar function in
 L<MediaWiki::API>. This one allows the image to be scaled down by passing a hashref
@@ -986,7 +986,7 @@ It returns raw data in the original format. You may simply spew it to a file, or
 process it directly with a library such as L<Imager>.
 
     use File::Slurp qw(write_file);
-    my $img_data = $bot->get_image('File::Foo.jpg');
+    my $img_data = $bot->get_image('File:Foo.jpg');
     write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
 
 Images are scaled proportionally. (height/width) will remain
