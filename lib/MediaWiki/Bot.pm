@@ -1904,7 +1904,7 @@ sub global_image_usage {
         $hash->{gucontinue}    = $cont if $cont;
 
         my $res = $self->{api}->api($hash);
-        return $self->_handle_api_error() and last unless $res;
+        return $self->_handle_api_error() unless $res;
 
         $cont = $res->{'query-continue'}->{globalusage}->{gucontinue};
         warn "gucontinue: $cont\n" if $cont and $self->{debug} > 1;

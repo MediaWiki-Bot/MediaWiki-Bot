@@ -4,6 +4,7 @@ Changelog for {{$dist->name}}
   - Don't fail due to new Module::Pluggable warnings
   - Ensure t/48-get_image.t has JPEG support
   - Corrected documentation for get_image (GH#54, thanks sanxiago!)
+  - Correct a precedence issue uncovered by new warnings in perl v5.19.4
 
 5.005006  2013-04-07
   - Plan t/40-upload.t properly [GH#50]
