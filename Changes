@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+5.005007  2013-11-27
   - Don't fail due to new Module::Pluggable warnings
   - Ensure t/48-get_image.t has JPEG support
   - Corrected documentation for get_image (GH#54, thanks sanxiago!)

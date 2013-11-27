@@ -26,7 +26,7 @@ my %module_build_args = (
     "patch and bug report contributors"
   ],
   "dist_name" => "MediaWiki-Bot",
-  "dist_version" => "5.005006",
+  "dist_version" => "5.005007",
   "license" => "gpl",
   "module_name" => "MediaWiki::Bot",
   "recommends" => {},
@@ -47,28 +47,32 @@ my %module_build_args = (
   },
   "script_files" => [],
   "test_requires" => {
-    "File::Find" => 0,
     "File::Spec" => 0,
-    "File::Temp" => 0,
+    "IO::Handle" => 0,
+    "IPC::Open3" => 0,
+    "List::MoreUtils" => 0,
     "Test::More" => "0.96",
-    "Test::NoWarnings" => 0,
     "Test::Warn" => 0,
     "utf8" => 0
   }
 );
 
 
+my %fallback_build_requires = (
+  "File::Spec" => 0,
+  "IO::Handle" => 0,
+  "IPC::Open3" => 0,
+  "List::MoreUtils" => 0,
+  "Module::Build" => "0.3601",
+  "Test::More" => "0.96",
+  "Test::Warn" => 0,
+  "utf8" => 0
+);
+
+
 unless ( eval { Module::Build->VERSION(0.4004) } ) {
-  my $tr = delete $module_build_args{test_requires};
-  my $br = $module_build_args{build_requires};
-  for my $mod ( keys %$tr ) {
-    if ( exists $br->{$mod} ) {
-      $br->{$mod} = $tr->{$mod} if $tr->{$mod} > $br->{$mod};
-    }
-    else {
-      $br->{$mod} = $tr->{$mod};
-    }
-  }
+  delete $module_build_args{test_requires};
+  $module_build_args{build_requires} = \%fallback_build_requires;
 }
 
 my $build = Module::Build->new(%module_build_args);

@@ -3,7 +3,7 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 5.005006
+    version 5.005007
 
 SYNOPSIS
         use MediaWiki::Bot;
@@ -275,7 +275,7 @@ METHODS
         }
 
   get_image
-        $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
+        $buffer = $bot->get_image('File:Foo.jpg', {width=>256, height=>256});
 
     Download an image from a wiki. This is derived from a similar function
     in MediaWiki::API. This one allows the image to be scaled down by
@@ -285,7 +285,7 @@ METHODS
     file, or process it directly with a library such as Imager.
 
         use File::Slurp qw(write_file);
-        my $img_data = $bot->get_image('File::Foo.jpg');
+        my $img_data = $bot->get_image('File:Foo.jpg');
         write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
 
     Images are scaled proportionally. (height/width) will remain constant,
@@ -480,6 +480,15 @@ METHODS
     Returns an array containing the names of all pages in the specified
     category (include the Category: prefix), including sub-categories. The
     $options_hashref is described fully in "Options hashref".
+
+  get_all_categories
+    Returns an array containing the names of all categories.
+
+        my @categories = $bot->get_all_categories();
+        print "The categories are:\n@categories\n";
+
+    Use "{ max => 0 }" to get all results. The default number of categories
+    returned is 10, the maximum allowed is 500.
 
   linksearch
     Runs a linksearch on the specified $link and returns an array containing
@@ -1035,12 +1044,12 @@ AVAILABILITY
 
 SOURCE
     The development version is on github at
-    <http://github.com/MediaWiki-Bot/MediaWiki-Bot> and may be cloned from
-    <git://github.com/MediaWiki-Bot/MediaWiki-Bot.git>
+    <http://github.com/doherty/MediaWiki-Bot> and may be cloned from
+    <git://github.com/doherty/MediaWiki-Bot.git>
 
 BUGS AND LIMITATIONS
     You can make new bug reports, and view existing ones, through the web
-    interface at <https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues>.
+    interface at <http://rt.cpan.org>.
 
 AUTHORS
     *   Dan Collins <dcollins@cpan.org>

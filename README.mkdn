@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 5.005006
+version 5.005007
 
 # SYNOPSIS
 
@@ -144,7 +144,7 @@ meta, commons, incubator, and wikispecies.
 ### Basic authentication
 
 If you need to supply basic auth credentials, pass a hashref of data as
-described by [LWP::UserAgent](http://search.cpan.org/perldoc?LWP::UserAgent):
+described by [LWP::UserAgent](https://metacpan.org/pod/LWP::UserAgent):
 
     $bot->login({
         username    => $username,
@@ -233,7 +233,7 @@ $section\_number - if defined, returns the text of that section.
 A blank page will return wikitext of "" (which evaluates to false in Perl,
 but is defined); a nonexistent page will return undef (which also evaluates
 to false in Perl, but is obviously undefined). You can distinguish between
-blank and nonexistent pages by using [defined](http://search.cpan.org/perldoc?perlfunc#defined):
+blank and nonexistent pages by using [defined](https://metacpan.org/pod/perlfunc#defined):
 
     my $wikitext = $bot->get_text('Page title');
     print "Wikitext: $wikitext\n" if defined $wikitext;
@@ -260,17 +260,17 @@ aliases.
 
 ## get\_image
 
-    $buffer = $bot->get_image('File::Foo.jpg', {width=>256, height=>256});
+    $buffer = $bot->get_image('File:Foo.jpg', {width=>256, height=>256});
 
 Download an image from a wiki. This is derived from a similar function in
-[MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API). This one allows the image to be scaled down by passing a hashref
+[MediaWiki::API](https://metacpan.org/pod/MediaWiki::API). This one allows the image to be scaled down by passing a hashref
 with height & width parameters.
 
 It returns raw data in the original format. You may simply spew it to a file, or
-process it directly with a library such as [Imager](http://search.cpan.org/perldoc?Imager).
+process it directly with a library such as [Imager](https://metacpan.org/pod/Imager).
 
     use File::Slurp qw(write_file);
-    my $img_data = $bot->get_image('File::Foo.jpg');
+    my $img_data = $bot->get_image('File:Foo.jpg');
     write_file( 'Foo.jpg', {binmode => ':raw'}, \$img_data );
 
 Images are scaled proportionally. (height/width) will remain
@@ -297,7 +297,7 @@ Reverts the specified $revid, with an edit summary of $summary, using the undo
 function. To undo all revisions from $revid up to but not including this one,
 set $after to another revid. If not set, just undo the one revision ($revid).
 
-See [http://www.mediawiki.org/wiki/API:Edit\#Parameters](http://www.mediawiki.org/wiki/API:Edit\#Parameters).
+See [http://www.mediawiki.org/wiki/API:Edit#Parameters](http://www.mediawiki.org/wiki/API:Edit#Parameters).
 
 ## get\_last
 
@@ -352,7 +352,7 @@ specify several; default is the main namespace
 - _show_ - itself a hashref where the key is a category and the value is
 a boolean. If true, the category will be included; if false, excluded. The
 categories are kinds of edits: minor, bot, anon, redirect, patrolled. See
-"rcshow" at [http://www.mediawiki.org/wiki/API:Recentchanges\#Parameters](http://www.mediawiki.org/wiki/API:Recentchanges\#Parameters).
+"rcshow" at [http://www.mediawiki.org/wiki/API:Recentchanges#Parameters](http://www.mediawiki.org/wiki/API:Recentchanges#Parameters).
 
 An ["Options hashref"](#Options hashref) can be used as the second parameter:
 
@@ -414,7 +414,7 @@ A typical query:
     }
 
 Transclusions are no longer handled by what\_links\_here() - use
-["list\_transclusions"](#list\_transclusions) instead.
+["list_transclusions"](#list_transclusions) instead.
 
 ## list\_transclusions
 
@@ -424,7 +424,7 @@ Other parameters are:
 
 - One of: all (default), redirects, or nonredirects
 - A namespace number to search (pass an arrayref to search in multiple namespaces).
-- $options\_hashref as described by [MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API):
+- $options\_hashref as described by [MediaWiki::API](https://metacpan.org/pod/MediaWiki::API):
 
     Set max to limit the number of queries performed.
 
@@ -464,6 +464,16 @@ Use `{ max => 0 }` to get all results.
 Returns an array containing the names of __all__ pages in the specified category
 (include the Category: prefix), including sub-categories. The $options\_hashref
 is described fully in ["Options hashref"](#Options hashref).
+
+## get\_all\_categories
+
+Returns an array containing the names of all categories.
+
+    my @categories = $bot->get_all_categories();
+    print "The categories are:\n@categories\n";
+
+Use `{ max => 0 }` to get all results. The default number
+of categories returned is 10, the maximum allowed is 500.
 
 ## linksearch
 
@@ -584,7 +594,7 @@ out local uses of the image.
 
 ## links\_to\_image
 
-A backward-compatible call to ["image\_usage"](#image\_usage). You can provide only the image
+A backward-compatible call to ["image_usage"](#image_usage). You can provide only the image
 title.
 
 __This method is deprecated__, and will emit deprecation warnings.
@@ -597,7 +607,7 @@ Checks if a user is currently blocked.
 
 ## test\_blocked
 
-Retained for backwards compatibility. Use ["is\_blocked"](#is\_blocked) for clarity.
+Retained for backwards compatibility. Use ["is_blocked"](#is_blocked) for clarity.
 
 __This method is deprecated__, and will emit deprecation warnings.
 
@@ -698,7 +708,7 @@ Returns whether $user has ever been blocked.
 
 ## test\_block\_hist
 
-Retained for backwards compatibility. Use ["was\_blocked"](#was\_blocked) for clarity.
+Retained for backwards compatibility. Use ["was_blocked"](#was_blocked) for clarity.
 
 __This method is deprecated__, and will emit deprecation warnings.
 
@@ -741,7 +751,7 @@ You can pass an arrayref to do bulk lookup:
 
     my $db = $bot->domain_to_db($domain_name);
 
-As you might expect, does the opposite of ["domain\_to\_db"](#domain\_to\_db): Converts a domain
+As you might expect, does the opposite of ["domain_to_db"](#domain_to_db): Converts a domain
 name (meta.wikimedia.org) into a database/wiki name (metawiki).
 
 ## diff
@@ -892,7 +902,7 @@ You can also pass an arrayref of page titles to do bulk queries:
 
 ## is\_protected
 
-This is a synonym for ["get\_protection"](#get\_protection), which should be used in preference.
+This is a synonym for ["get_protection"](#get_protection), which should be used in preference.
 
 __This method is deprecated__, and will emit deprecation warnings.
 
@@ -915,7 +925,7 @@ will send the same email (subject and body) to all users.
 ## top\_edits
 
 Returns an array of the page titles where the $user is the latest editor. The
-second parameter is the familiar [$options\_hashref](#linksearch).
+second parameter is the familiar [$options_hashref](#linksearch).
 
     my @pages = $bot->top_edits("Mike.lifeguard", {max => 5});
     foreach my $page (@pages) {
@@ -972,7 +982,7 @@ Returns a list of the usergroups a user is in:
 
 ## Options hashref
 
-This is passed through to the lower-level interface [MediaWiki::API](http://search.cpan.org/perldoc?MediaWiki::API), and is
+This is passed through to the lower-level interface [MediaWiki::API](https://metacpan.org/pod/MediaWiki::API), and is
 fully documented there.
 
 The hashref can have 3 keys:
@@ -998,7 +1008,7 @@ The hashref can have 3 keys:
     automatically by the API call. If your parameters are already in UTF-8 this will
     be detected and the encoding will be skipped. If your parameters for some reason
     contain UTF-8 data but no UTF-8 flag is set (i.e. you did not use the
-    `use [utf8](http://search.cpan.org/perldoc?utf8);` pragma) you should prevent re-encoding by passing an option
+    `use [utf8](https://metacpan.org/pod/utf8);` pragma) you should prevent re-encoding by passing an option
     `skip_encoding => 1`. For example:
 
         $category ="Cat\x{e9}gorie:moyen_fran\x{e7}ais"; # latin1 string
@@ -1029,13 +1039,13 @@ site near you, or see [https://metacpan.org/module/MediaWiki::Bot/](https://meta
 
 # SOURCE
 
-The development version is on github at [http://github.com/MediaWiki-Bot/MediaWiki-Bot](http://github.com/MediaWiki-Bot/MediaWiki-Bot)
-and may be cloned from [git://github.com/MediaWiki-Bot/MediaWiki-Bot.git](git://github.com/MediaWiki-Bot/MediaWiki-Bot.git)
+The development version is on github at [http://github.com/doherty/MediaWiki-Bot](http://github.com/doherty/MediaWiki-Bot)
+and may be cloned from [git://github.com/doherty/MediaWiki-Bot.git](git://github.com/doherty/MediaWiki-Bot.git)
 
 # BUGS AND LIMITATIONS
 
 You can make new bug reports, and view existing ones, through the
-web interface at [https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues](https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues).
+web interface at [http://rt.cpan.org](http://rt.cpan.org).
 
 # AUTHORS
 
