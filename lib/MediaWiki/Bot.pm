@@ -755,8 +755,9 @@ sub move {
         to     => $to,
         reason => $reason,
     };
-    $hash->{movetalk}   = $opts->{movetalk}   if defined($opts->{movetalk});
-    $hash->{noredirect} = $opts->{noredirect} if defined($opts->{noredirect});
+    $hash->{movetalk}     = $opts->{movetalk}     if defined($opts->{movetalk});
+    $hash->{noredirect}   = $opts->{noredirect}   if defined($opts->{noredirect});
+    $hash->{movesubpages} = $opts->{movesubpages} if defined($opts->{movesubpages});
 
     my $res = $self->{api}->edit($hash);
     return $self->_handle_api_error() unless $res;
