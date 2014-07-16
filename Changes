@@ -2,6 +2,7 @@ Changelog for {{$dist->name}}
 
 {{$NEXT}}
   - Move subpages correctly when requested [GH#55 - labster]
+  - Use new prop paramter in expandtemplates [GH#58, thanks fhocutt]
 
 5.005007  2013-11-27
   - Don't fail due to new Module::Pluggable warnings

@@ -10,9 +10,12 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-my $text = '<tt><nowiki>{{</nowiki>[[Template:tlxtest|tlxtest]]<nowiki>}}</nowiki></tt>';
-is($bot->expandtemplates(undef, '{{tlxtest|tlxtest}}'), $text, '[[Template:Tlxtest]] expanded OK');
+is
+    $bot->expandtemplates(undef, '{{tlxtest|tlxtest}}') =>
+    '<tt><nowiki>{{</nowiki>[[Template:tlxtest|tlxtest]]<nowiki>}}</nowiki></tt>',
+    '[[Template:Tlxtest]] expanded OK';
 
-my $main_page = $bot->get_text('Main Page');
-my $expanded  = $bot->expandtemplates('Main Page');
-isnt($main_page, $expanded, 'Wikitext != expanded text');
+isnt
+    $bot->get_text('Main Page') =>
+    $bot->expandtemplates('Main Page'),
+    'Wikitext != expanded text';

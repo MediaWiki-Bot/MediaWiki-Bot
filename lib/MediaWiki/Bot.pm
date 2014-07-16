@@ -2365,13 +2365,16 @@ sub expandtemplates {
 
     my $hash = {
         action => 'expandtemplates',
+        prop   => 'wikitext',
         ( $page ? (title  => $page) : ()),
         text   => $text,
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
 
-    return $res->{expandtemplates}->{'*'};
+    return exists $res->{expandtemplates}->{'*'}
+        ? $res->{expandtemplates}->{'*'}
+        : $res->{expandtemplates}->{wikitext};
 }
 
 =head2 get_allusers
