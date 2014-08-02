@@ -551,10 +551,7 @@ cookies.
 sub logout {
     my $self = shift;
 
-    my $hash = {
-        action => 'logout',
-    };
-    $self->{api}->api($hash);
+    $self->{api}->api({ action => 'logout' });
     return RET_TRUE;
 }
 
@@ -1523,12 +1520,8 @@ sub get_pages_in_category {
     my $res = $self->{api}->list($hash, $options);
     return RET_TRUE if not ref $res; # Not a hashref when using callback
     return $self->_handle_api_error() unless $res;
-    my @pages;
-    foreach my $hash (@$res) {
-        my $title = $hash->{title};
-        push @pages, $title;
-    }
-    return @pages;
+
+    return map { $_->{title} } @$res;
 }
 
 =head2 get_all_pages_in_category
@@ -1609,12 +1602,7 @@ sub get_all_categories {
     my $res = $self->{api}->api($query);
     return $self->_handle_api_error() unless $res;
 
-    my @categories;
-    foreach my $category ( @{$res->{'query'}->{'allcategories'}} ) {
-        my $title = $category->{'*'};
-        push @categories, $title;
-    }
-    return @categories;
+    return map { $_->{'*'} } @{ $res->{'query'}->{'allcategories'} };
 }
 
 =head2 linksearch
@@ -1690,13 +1678,12 @@ sub linksearch {
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
     return RET_TRUE if not ref $res; # When using a callback hook, this won't be a reference
-    my @links;
-    foreach my $hashref (@$res) {
-        my $url  = $hashref->{'url'};
-        my $page = $hashref->{'title'};
-        push(@links, { url => $url, title => $page });
-    }
-    return @links;
+
+    return map {{
+        url   => $_->{url},
+        title => $_->{title},
+    }} @$res;
+
 }
 
 =head2 purge_page
@@ -1778,11 +1765,8 @@ sub get_namespace_names {
             siprop => 'namespaces',
     });
     return $self->_handle_api_error() unless $res;
-    my %return;
-    foreach my $id (keys %{ $res->{query}->{namespaces} }) {
-        $return{$id} = $res->{query}->{namespaces}->{$id}->{'*'};
-    }
-    return %return;
+    return map { $_ => $res->{query}->{namespaces}->{$_}->{'*'} }
+        keys %{ $res->{query}->{namespaces} };
 }
 
 =head2 image_usage
@@ -1864,13 +1848,8 @@ sub image_usage {
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
     return RET_TRUE if not ref $res; # When using a callback hook, this won't be a reference
-    my @pages;
-    foreach my $hashref (@$res) {
-        my $title = $hashref->{title};
-        push(@pages, $title);
-    }
 
-    return @pages;
+    return map { $_->{title} } @$res;
 }
 
 =head2 global_image_usage($image, $results, $filterlocal)
@@ -1978,8 +1957,7 @@ sub is_blocked {
         return RET_FALSE;
     }
     else {
-        warn "At most, only one block should match this query, but the API response contains more than that.";
-        return RET_TRUE;
+        confess "This query should return at most one result, but the API returned more than that.";
     }
 }
 
@@ -2274,8 +2252,6 @@ sub get_users {
     my $rvstartid = shift;
     my $direction = shift;
 
-    my @return;
-
     if ($limit > 50) {
         $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
         carp $self->{errstr};
@@ -2295,12 +2271,7 @@ sub get_users {
     return $self->_handle_api_error() unless $res;
 
     my ($id) = keys %{ $res->{query}->{pages} };
-    my $array = $res->{query}->{pages}->{$id}->{revisions};
-    foreach (@{$array}) {
-        push @return, $_->{user};
-    }
-
-    return @return;
+    return map { $_->{user} } @{$res->{query}->{pages}->{$id}->{revisions}};
 }
 
 =head2 was_blocked
@@ -2418,11 +2389,7 @@ sub get_allusers {
     return $self->_handle_api_error() unless $res;
     return RET_TRUE if not ref $res; # Not a ref when using callback
 
-    my @return;
-    for my $ref (@{ $res }) {
-        push @return, $ref->{name};
-    }
-    return @return;
+    return map { $_->{name} } @$res;
 }
 
 =head2 db_to_domain
@@ -2640,14 +2607,10 @@ sub prefixindex {
 
     return $self->_handle_api_error() unless $res;
     return RET_TRUE if not ref $res; # Not a ref when using callback hook
-    my @pages;
-    foreach my $hashref (@$res) {
-        my $title    = $hashref->{title};
-        my $redirect = defined($hashref->{redirect});
-        push @pages, { title => $title, redirect => $redirect };
-    }
 
-    return @pages;
+    return map {
+        { title => $_->{title}, redirect => defined $_->{redirect} }
+    } @$res;
 }
 
 =head2 search
@@ -2712,13 +2675,8 @@ sub search {
     my $res = $self->{api}->list($hash, $options);
     return $self->_handle_api_error() unless $res;
     return RET_TRUE if not ref $res; # Not a ref when used with callback
-    my @pages;
-    foreach my $result (@$res) {
-        my $title = $result->{title};
-        push @pages, $title;
-    }
 
-    return @pages;
+    return map { $_->{title} } @$res;
 }
 
 =head2 get_log
@@ -3150,12 +3108,10 @@ sub top_edits {
     return $self->_handle_api_error() unless $res;
     return RET_TRUE if not ref $res; # Not a ref when using callback
 
-    my @titles;
-    foreach my $page (@$res) {
-        push @titles, $page->{title} if exists($page->{top});
-    }
-
-    return @titles;
+    return
+        map { $_->{title} }
+        grep { exists $_->{top} }
+        @$res;
 }
 
 =head2 contributions
@@ -3348,7 +3304,7 @@ sub _handle_api_error {
         . $self->{api}->{error}->{code}
         . ': '
         . $self->{api}->{error}->{details} if $self->{debug};
-     $self->{error} =
+    $self->{error} =
         (defined $error and ref $error eq 'HASH' and exists $error->{code} and exists $error->{details})
         ? $error
         : $self->{api}->{error};
@@ -3386,7 +3342,7 @@ sub _do_autoconfig {
         uiprop => 'rights|groups',
     };
     my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
+    return $self->_handle_api_error() unless  $res;
     return $self->_handle_api_error() unless  $res->{query};
     return $self->_handle_api_error() unless  $res->{query}->{userinfo};
     return $self->_handle_api_error() unless  $res->{query}->{userinfo}->{name};
@@ -3407,7 +3363,7 @@ sub _do_autoconfig {
         }
     }
 
-    my @groups = @{ $res->{query}->{userinfo}->{groups} || [] }; # anon arrayref in case there are no groups
+    my @groups = @{ $res->{query}->{userinfo}->{groups} || [] }; # athere may be no groups
     my $is_sysop = 0;
     foreach my $group (@groups) {
         if ($group eq 'sysop') {
