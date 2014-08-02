@@ -12,7 +12,7 @@ plan $username && $password
     : ( skip_all => q{I can't log in without credentials} );
 
 my $bot = MediaWiki::Bot->new({
-    agent   => "MediaWiki::Bot tests ($t)",
+    agent   => "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)",
     host    => 'test.wikipedia.org',
     login_data => { username => $username, password => $password },
 });

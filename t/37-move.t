@@ -11,7 +11,7 @@ my $password = $ENV{'PWPPassword'};
 SKIP: {
     skip('No account credentials provided in %ENV', 3) unless defined $username and defined $password;
 
-    my $agent = "MediaWiki::Bot tests ($t)";
+    my $agent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
     my $bot = MediaWiki::Bot->new({
         agent   => $agent,
         host    => 'test.wikipedia.org',

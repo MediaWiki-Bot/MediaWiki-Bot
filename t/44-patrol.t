@@ -12,7 +12,7 @@ plan skip_all => 'Login with patrol rights required'
     unless $host and $username and defined $password;
 
 my $bot = MediaWiki::Bot->new({
-    agent => "MediaWiki::Bot tests ($t)",
+    agent => "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)",
     login_data => {
         username => $username,
         password => $password,

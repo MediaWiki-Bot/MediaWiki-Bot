@@ -40,13 +40,16 @@ END
     }
 }
 
-my $bot   = new_ok('MediaWiki::Bot'); # outside subtest b/c reused later
-
 # Some deeper diagnostics
 my $useragent   = 'MediaWiki::Bot tests (00-init.t)';
 my $host        = '127.0.0.1';
 my $assert      = 'bot';
 my $operator    = 'MediaWiki::Bot tester';
+
+my $bot   = new_ok('MediaWiki::Bot'=> [{
+    # agent => $useragent,
+    operator => $operator
+}]); # outside subtest b/c reused later
 
 subtest 'diag-one' => sub {
     plan tests => 5;
@@ -61,7 +64,7 @@ subtest 'diag-one' => sub {
     is($test_one->{assert},                     $assert,                'Specified assert set orrectly');
     is($test_one->{operator},                   $operator,              'Specified operator set correctly');
     is($test_one->{api}->{config}->{api_url},   "http://$host/api.php", 'api.php with null path is OK'); # Issue 111: Null $path value returns "w"
-    like($bot->{api}->{ua}->agent(),            qr{^MediaWiki::Bot/(v?[[:digit:]._]+|dev)$}, 'Useragent built correctly');
+    like($bot->{api}->{ua}->agent(),            qr{^Perl MediaWiki::Bot/(v?[[:digit:]._]+|dev) \Q(https://metacpan.org/MediaWiki::Bot; [[User:$operator]]}, 'Useragent built correctly');
 };
 
 subtest 'diag-two' => sub {
@@ -78,7 +81,8 @@ subtest 'diag-two' => sub {
 subtest 'no assert' => sub {
     plan tests => 1;
     my $no_assert_bot = MediaWiki::Bot->new({
-        host    => $host,
+        host     => $host,
+        operator => $operator,
     });
     ok( not exists $bot->{assert} ) or diag explain $bot;
 };

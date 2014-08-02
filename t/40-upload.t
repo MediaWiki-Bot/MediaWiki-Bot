@@ -13,7 +13,7 @@ plan $username && $password
     : (skip_all => 'upload test requires login with upload permission');
 
 my $bot = MediaWiki::Bot->new({
-    agent   => "MediaWiki::Bot tests ($t)",
+    agent   => "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)",
     host    => 'test.wikipedia.org',
     login_data => { username => $username, password => $password },
 });

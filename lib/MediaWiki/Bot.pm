@@ -41,7 +41,8 @@ with the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
 =head2 new
 
     my $bot = MediaWiki::Bot({
-        host    => 'en.wikipedia.org',
+        host     => 'en.wikipedia.org',
+        operator => 'Mike.lifeguard',
     });
 
 Calling C<< MediaWiki::Bot->new() >> will create a new MediaWiki::Bot object. The
@@ -51,7 +52,10 @@ only parameter is a hashref with keys:
 
 =item *
 
-I<agent> sets a custom useragent
+I<agent> sets a custom useragent. It is recommended to use C<operator>
+instead, which is all we need to do the right thing for you. If you really
+want to do it yourself, see L<https://meta.wikimedia.org/wiki/User-agent_policy>
+for guidance on what information must be included.
 
 =item *
 
@@ -61,11 +65,10 @@ Refer to L<http://mediawiki.org/wiki/Extension:AssertEdit>.
 
 =item *
 
-I<operator> allows the bot to send you a message when it fails an assert
-
-In addition, it will be integrated into the default useragent (which may not be
-used if you set agent yourself). The message will tell you that $useragent is
-logged out, so use a descriptive one if you set it.
+I<operator> allows the bot to send you a message when it fails an assert. This
+is also the recommended way to customize the user agent string, which is
+required by the Wikimedia Foundation. A warning will be emitted if you omit
+this.
 
 =item *
 
@@ -103,8 +106,11 @@ For example:
     my $bot = MediaWiki::Bot->new({
         assert      => 'bot',
         protocol    => 'https',
-        host        => 'secure.wikimedia.org',
-        path        => 'wikipedia/meta/w',
+        host        => 'en.wikimedia.org',
+        agent       => sprintf(
+            'PerlWikiBot/%s (https://metacpan.org/MediaWiki::Bot; User:Mike.lifeguard)',
+            MediaWiki::Bot->VERSION
+        ),
         login_data  => { username => "Mike's bot account", password => "password" },
     });
 
@@ -157,12 +163,19 @@ sub new {
     $assert   =~ s/[&?]assert=// if $assert; # Strip out param part, leaving just the value
     $operator =~ s/^User://i     if $operator;
 
-    # Set defaults
-    unless ($agent) {
-        $agent  = 'MediaWiki::Bot/' . (defined __PACKAGE__->VERSION
-            ? __PACKAGE__->VERSION
-            : 'dev');
-        $agent .= " (User:$operator)" if $operator;
+    if (not $agent and not $operator) {
+        carp q{You should provide either a customized user agent string }
+            . q{(see https://meta.wikimedia.org/wiki/User-agent_policy) }
+            . q{or provide your username as `operator'.};
+    }
+    elsif (not $agent and $operator) {
+        $operator =~ s{^User:}{};
+        $agent = sprintf(
+            'Perl MediaWiki::Bot/%s (%s; [[User:%s]])',
+            (defined __PACKAGE__->VERSION ? __PACKAGE__->VERSION : 'dev'),
+            'https://metacpan.org/MediaWiki::Bot',
+            $operator
+        );
     }
 
     my $self = bless({}, $package);

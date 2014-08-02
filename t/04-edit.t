@@ -13,7 +13,7 @@ if (defined($username) and defined($password)) {
 }
 plan tests => ($login_data ? 4 : 2);
 
-my $agent = "MediaWiki::Bot tests ($t)";
+my $agent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
 
 my $bot = MediaWiki::Bot->new({
     agent      => $agent,
@@ -48,7 +48,7 @@ SKIP: {
 
     like $bot->get_text($title, $status->{edit}->{newrevid}) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
         'Did section editing successfully'
-        or diag explain { status => $status };
+        or diag explain { status => $status, error => $bot->{error} };
 
     if ($login_data) {
         my @hist = $bot->get_history($title, 2);

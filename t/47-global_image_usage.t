@@ -6,7 +6,7 @@ use MediaWiki::Bot;
 my $t = __FILE__;
 
 my $bot = MediaWiki::Bot->new({
-    agent   => "MediaWiki::Bot tests ($t)",
+    agent   => "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)",
     host    => 'commons.wikimedia.org',
 });
 

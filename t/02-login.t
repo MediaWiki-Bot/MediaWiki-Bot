@@ -14,7 +14,7 @@ plan defined $username
 unlink ".mediawiki-bot-$username-cookies"
     if $username and -e ".mediawiki-bot-$username-cookies";
 
-my $useragent = "MediaWiki::Bot tests ($t)";
+my $useragent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
 my $host = 'test.wikipedia.org';
 
 subtest 'one wiki' => sub {

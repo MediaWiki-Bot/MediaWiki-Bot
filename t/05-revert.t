@@ -12,7 +12,7 @@ if (defined($username) and defined($password)) {
     $login_data = { username => $username, password => $password };
 }
 
-my $agent = "MediaWiki::Bot tests ($t)";
+my $agent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
 my $bot   = MediaWiki::Bot->new({
     agent       => $agent,
     login_data  => $login_data,
