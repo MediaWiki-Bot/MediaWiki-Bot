@@ -16,4 +16,4 @@ if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
 
 # 127.0.4.4 is almost certainly not blocked right now
 my $result = $bot->is_g_blocked('127.0.4.4');
-is($result, 0, 'current global blocks');
+ok(!$result, 'current global blocks');

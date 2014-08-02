@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Test::More tests => 2;
 
-use MediaWiki::Bot;
+use MediaWiki::Bot qw(:constants);
 my $t = __FILE__;
 
 my $username = $ENV{'PWPUsername'};
@@ -25,7 +25,7 @@ subtest revert => sub {
     my @history = $bot->get_history($title, 20);
     my $oldrevid = $history[ int( rand() * 20 ) ]->{revid};
     my $res = $bot->revert($title, $oldrevid, $agent);
-    plan defined $bot->{error}->{code} && $bot->{error}->{code} == 3
+    plan defined $bot->{error}->{code} && ($bot->{error}->{code} == ERR_API or $bot->{error}->{code} == ERR_CAPTCHA)
         ? (skip_all => q{Can't use editing tests: } . $bot->{error}->{details})
         : (tests => 1);
 
@@ -36,7 +36,7 @@ subtest revert => sub {
 subtest undo => sub {
     my @history = $bot->get_history($title, 2);
     my $res = $bot->undo($title, $history[0]->{revid});
-    plan defined $bot->{error}->{code} && $bot->{error}->{code} == 3
+    plan defined $bot->{error}->{code} && ($bot->{error}->{code} == ERR_API or $bot->{error}->{code} == ERR_CAPTCHA)
         ? (skip_all => q{Can't use editing tests: } . $bot->{error}->{details})
         : (tests => 1);
 

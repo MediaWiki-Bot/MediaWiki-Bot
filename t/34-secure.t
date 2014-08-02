@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Test::More tests => 1;
 
-use MediaWiki::Bot;
+use MediaWiki::Bot qw(:constants);
 my $t = __FILE__;
 
 my $username = $ENV{'PWPUsername'};
@@ -28,8 +28,9 @@ my $status = $bot->edit({
     summary => $agent,
 });
 SKIP: {
-    skip 'You are blocked, cannot use editing tests', 1 if
-        defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
+    skip 'You are blocked, cannot use editing tests', 1
+        if defined $bot->{error}->{code}
+        and ($bot->{error}->{code} == ERR_API or $bot->{error}->{code} == ERR_CAPTCHA);
 
     my $is = $bot->get_text($page);
     is($is, $rand, 'Edited via secure server successfully');

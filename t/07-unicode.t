@@ -13,7 +13,7 @@ BEGIN {
     binmode STDERR,                     ':encoding(UTF-8)';
 }
 
-use MediaWiki::Bot;
+use MediaWiki::Bot qw(:constants);
 my $t = __FILE__;
 
 my $username = $ENV{'PWPUsername'};
@@ -55,8 +55,9 @@ subtest 'write' => sub {
     });
 
     SKIP: {
-        skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 4 if
-            defined $bot->{error}->{code} and $bot->{error}->{code} == 3;
+        skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 4
+            if defined $bot->{error}->{code}
+            and ($bot->{error}->{code} == ERR_API or $bot->{error}->{code} == ERR_CAPTCHA);
 
         is $bot->get_text("$base/2", $status->{edit}->{newrevid}) => "$rand\n$string",
             "Successfully edited $base/2";

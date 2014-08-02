@@ -5,6 +5,8 @@ Changelog for {{$dist->name}}
   - Use new prop paramter in expandtemplates [GH#58, thanks fhocutt]
   - Warn if neither operator nor a UA string were given [gh-61]
   - Show a good example of customizing the UA string [gh-66]
+  - Use symbolic constants instead of magic numbers, and add
+    MediaWiki::Bot::Constants so developers can use them too [gh-59]
 
 5.005007  2013-11-27
   - Don't fail due to new Module::Pluggable warnings
