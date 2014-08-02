@@ -677,9 +677,22 @@ sub edit {
         ( $is_minor ? (minor => 1)          : (notminor => 1)),
     };
 
+    ### Actually do the edit
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
+
     if ($res->{edit}->{result} && $res->{edit}->{result} eq 'Failure') {
+        # https://www.mediawiki.org/wiki/API:Edit#CAPTCHAs_and_extension_errors
+        # You need to solve the CAPTCHA, then retry the request with the ID in
+        # this error response and the solution.
+        if (exists $res->{edit}->{captcha}) {
+            carp "Encountered a CAPTCHA";
+            $self->_handle_api_error({
+                code => ERR_CAPTCHA,
+                details => $res->{edit}->{captcha}
+            });
+        }
+
         if ($self->{operator}) {
             my $optalk = $self->get_text('User talk:' . $self->{operator});
             if (defined($optalk)) {
