@@ -3517,9 +3517,18 @@ sub _get_ns_alias_data {
         siprop  => 'namespacealiases|namespaces',
     });
 
-    foreach my $entry (@{ $ns_res->{query}->{namespacealiases} }) { # what a mess D:
-        $self->{ns_alias_data}->{ $entry->{'*'} } = $ns_res->{query}->{namespaces}->{ $entry->{id} }->{'*'};
-    }
+    my %ns_alias_data =
+        map {   # Map namespace alias names like "WP" to the canonical namespace name
+                # from the "namespaces" part of the response
+            $_->{ns_alias} => $ns_res->{query}->{namespaces}->{ $_->{ns_number} }->{canonical}
+        }
+        map {   # Map namespace alias names (from the "namespacealiases" part of the response)
+                # like "WP" to the namespace number (usd to look up canonical data in the
+                # "namespaces" part of the response)
+            { ns_alias => $_->{'*'}, ns_number => $_->{id} }
+        } @{ $ns_res->{query}->{namespacealiases} };
+
+    $self->{ns_alias_data} = \%ns_alias_data;
     return $self->{ns_alias_data};
 }
 
