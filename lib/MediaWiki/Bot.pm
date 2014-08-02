@@ -2852,9 +2852,9 @@ sub was_locked {
     # This query should always go to Meta
     unless (
         $self->{api}->{config}->{api_url} =~ m,
-            http://meta.wikimedia.org/w/api.php
+            \Qhttp://meta.wikimedia.org/w/api.php\E
                 |
-            https://secure.wikimedia.org/wikipedia/meta/w/api.php
+            \Qhttps://secure.wikimedia.org/wikipedia/meta/w/api.php\E
         ,x    # /x flag is pretty awesome :)
         )
     {
