@@ -1,0 +1,6 @@
+--rules=seq=t/02-login.t
+--rules=seq=t/04-edit.t
+--rules=seq=t/05-revert.t
+--rules=seq=t/07-unicode.t
+--rules=seq=t/34-secure.t
+--rules=par=**
