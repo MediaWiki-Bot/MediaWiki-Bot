@@ -731,45 +731,15 @@ sub edit {
         # You need to solve the CAPTCHA, then retry the request with the ID in
         # this error response and the solution.
         if (exists $res->{edit}->{captcha}) {
-            carp "Encountered a CAPTCHA";
-            $self->_handle_api_error({
+            return $self->_handle_api_error({
                 code => ERR_CAPTCHA,
-                details => $res->{edit}->{captcha}
+                details => 'captcharequired: This action requires that a CAPTCHA be solved',
+                captcha => $res->{edit}->{captcha},
             });
         }
-
-        if ($self->{operator}) {
-            my $optalk = $self->get_text('User talk:' . $self->{operator});
-            if (defined($optalk)) {
-                carp "Sending warning!" if $self->{debug};
-                if ($self->{'username'}) {
-                    $self->edit(
-                        page     => "User talk:$self->{'operator'}",
-                        text     => $optalk
-                                    . "\n\n==Error with $self->{'username'}==\n"
-                                    . "$self->{'username'} needs to be logged in! ~~~~",
-                        summary  => 'bot issue',
-                        is_minor => 0,
-                        assert   => '',
-                    );
-                    croak "$self->{'username'} got logged out" if $self->{debug};
-                }
-                else { # The bot wasn't ever supposed to be logged in
-                    $self->edit(
-                        page     => "User talk:$self->{'operator'}",
-                        text     => $optalk
-                                    . "\n\n==Error with your bot==\n"
-                                    . "Your bot encountered an error. ~~~~",
-                        summary  => 'bot issue',
-                        is_minor => 0,
-                        assert   => '',
-                    );
-                    croak "Bot encountered an error while editing" if $self->{debug};
-                }
-            }
-        }
-        return;
+        return $self->_handle_api_error();
     }
+
     return $res;
 }
 
