@@ -43,10 +43,11 @@ SKIP: {
         text    => $rand2,
         section => 'new',
         summary => $agent,
-    }) or diag explain $bot->{error};
+    });
     skip 'Cannot use editing tests: ' . $bot->{error}->{details}, 1
         if defined $bot->{error}->{code}
         and ($bot->{error}->{code} == ERR_API or $bot->{error}->{code} == ERR_CAPTCHA);
+    diag explain $bot->{error} unless $status;
 
     like $bot->get_text($title, $status->{edit}->{newrevid}) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
         'Did section editing successfully'

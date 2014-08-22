@@ -608,6 +608,39 @@ You can also call this as:
 
 B<This form is deprecated>, and will emit deprecation warnings.
 
+=head3 CAPTCHAs
+
+If a L<https://en.wikipedia.org/wiki/CAPTCHA|CAPTCHA> is encountered, the
+call to C<edit> will return false, with the error code set to C<ERR_CAPTCHA>
+and the details informing you that solving a CAPTCHA is required for this
+action. The information you need to actually solve the captcha (for example
+the URL for the image) is given in C<< $bot->{error}->{captcha} >> as a
+hash reference. You will want to grab the keys 'url' (a relative URL to
+the image) and 'id' (the ID of the CAPTCHA). Once you have solved the
+CAPTCHA (presumably by interacting with a human), retry the edit, adding
+C<captcha_id> and C<captcha_solution> parameters:
+
+    my $edit_status = $bot->edit({page => 'Main Page', text => 'got your nose'});
+    if (not $edit_status) {
+        if ($bot->{error}->{code} == ERR_CAPTCHA) {
+            my @captcha_uri = split /\Q?/, $bot->{error}{captcha}{url}, 2;
+            my $image = URI->new(sprintf '%s://%s%s?%s' =>
+                $bot->{protocol}, $bot->{host}, $captcha_uri[0], $captcha_uri[1],
+            );
+
+            require Term::ReadLine;
+            my $term = Term::ReadLine->new('Solve the captcha');
+            $term->ornaments(0);
+            my $answer = $term->readline("Please solve $image and type the answer: ");
+
+            # Add new CAPTCHA params to the edit we're attempting
+            $edit->{captcha_id} = $bot->{error}->{captcha}->{id};
+            $edit->{captcha_solution} = $answer;
+            $status = $bot->edit($edit);
+        }
+    }
+
+
 =cut
 
 sub edit {
@@ -619,6 +652,8 @@ sub edit {
     my $assert;
     my $markasbot;
     my $section;
+    my $captcha_id;
+    my $captcha_solution;
 
     if (ref $_[0] eq 'HASH') {
         $page      = $_[0]->{page};
@@ -628,6 +663,8 @@ sub edit {
         $assert    = $_[0]->{assert};
         $markasbot = $_[0]->{markasbot};
         $section   = $_[0]->{section};
+        $captcha_id         = $_[0]->{captcha_id};
+        $captcha_solution   = $_[0]->{captcha_solution};
     }
     else {
         warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
@@ -652,6 +689,12 @@ sub edit {
     $is_minor  = 1 unless defined($is_minor);
     $markasbot = 1 unless defined($markasbot);
 
+    # Clear any captcha data that might remain from a previous edit attempt
+    delete $self->{error}->{captcha};
+    carp 'Need both captcha_id and captcha_solution when editing with a solved CAPTCHA'
+        if (defined $captcha_id and not defined $captcha_solution)
+        or (defined $captcha_solution and not defined $captcha_id);
+
     my ($edittoken, $lastedit, $tokentime) = $self->_get_edittoken($page);
     return $self->_handle_api_error() unless $edittoken;
 
@@ -675,6 +718,8 @@ sub edit {
         ( $section  ? (section => $section) : ()),
         ( $assert   ? (assert => $assert)   : ()),
         ( $is_minor ? (minor => 1)          : (notminor => 1)),
+        ( $captcha_id ? (captchaid => $captcha_id) : ()),
+        ( $captcha_solution ? (captchaword => $captcha_solution) : ()),
     };
 
     ### Actually do the edit
@@ -3310,8 +3355,10 @@ sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimes
 }
 
 sub _handle_api_error {
-    my $self = shift;
+    my $self  = shift;
     my $error = shift;
+
+    $self->{error} = {};
 
     carp 'Error code '
         . $self->{api}->{error}->{code}
