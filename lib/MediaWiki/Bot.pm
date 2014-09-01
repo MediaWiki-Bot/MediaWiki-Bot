@@ -3012,26 +3012,7 @@ sub patrol {
         return @return;
     }
     else {
-        my $token_res = $self->{api}->api({
-            action  => 'query',
-            list    => 'recentchanges',
-            rctoken => 'patrol',
-            rclimit => 1,
-        });
-        return $self->_handle_api_error() unless $token_res;
-        if (exists $token_res->{warnings} and
-            $token_res->{warnings}->{recentchanges}->{'*'} eq q{Action 'patrol' is not allowed for the current user})
-        {
-            $self->{error} = {
-                code    => 3,
-                details => 'permissiondenied: ' . $token_res->{warnings}->{recentchanges}->{'*'},
-                stacktrace => 'permissiondenied: ' . $token_res->{warnings}->{recentchanges}->{'*'}
-                    . ' at ' . __FILE__ . ' line ' . __LINE__,
-            };
-            return undef;
-        }
-        my $token = $token_res->{query}->{recentchanges}->[0]->{patroltoken};
-
+        my ($token) = $self->_get_edittoken('patrol');
         my $res = $self->{api}->api({
             action  => 'patrol',
             rcid    => $rcid,
@@ -3076,7 +3057,7 @@ sub email {
         $user =~ s/^$user_ns_name://;
     }
 
-    my ($token) = $self->_get_edittoken();
+    my ($token) = $self->_get_edittoken;
     my $res = $self->{api}->api({
         action  => 'emailuser',
         target  => $user,
@@ -3305,23 +3286,26 @@ sub usergroups {
 # Internal use #
 ################
 
-sub _get_edittoken { # Actually returns ($edittoken, $basetimestamp, $starttimestamp)
+sub _get_edittoken { # Actually returns ($token, $base_timestamp, $start_timestamp)
     my $self = shift;
     my $page = shift || 'Main Page';
-    my $type = shift || 'edit';
+    my $type = shift || 'csrf';
 
     my $res = $self->{api}->api({
         action  => 'query',
+        meta => 'siteinfo|tokens',
         titles  => $page,
-        prop    => 'info|revisions',
-        intoken => $type,
+        prop    => 'revisions',
+        rvprop  => 'timestamp',
+        type => $type,
     }) or return $self->_handle_api_error();
 
-    my $data           = ( %{ $res->{query}->{pages} })[1];
-    my $edittoken      = $data->{edittoken};
-    my $tokentimestamp = $data->{starttimestamp};
-    my $basetimestamp  = $data->{revisions}[0]->{timestamp};
-    return ($edittoken, $basetimestamp, $tokentimestamp);
+    my $data            = ( %{ $res->{query}->{pages} })[1];
+    my $base_timestamp  = $data->{revisions}[0]->{timestamp};
+    my $start_timestamp = $res->{query}->{general}->{time};
+    my $token           = $res->{query}->{tokens}->{"${type}token"};
+
+    return ($token, $base_timestamp, $start_timestamp);
 }
 
 sub _handle_api_error {

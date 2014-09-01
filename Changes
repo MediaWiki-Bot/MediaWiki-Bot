@@ -9,6 +9,7 @@ Changelog for {{$dist->name}}
     MediaWiki::Bot::Constants so developers can use them too [gh-59]
   - Support solving CAPTCHAs [gh-2]
   - Remove automatic editing of the bot operator's talk page [gh-68]
+  - Use new method for getting tokens
 
 5.005007  2013-11-27
   - Don't fail due to new Module::Pluggable warnings

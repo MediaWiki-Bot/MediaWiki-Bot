@@ -24,7 +24,7 @@ my $bot = MediaWiki::Bot->new({
 my $tests_run = 0;
 {
     my @rc = grep { defined $_->{rcid} and $_->{type} eq 'edit' }
-        $bot->recentchanges(0, 20);
+        $bot->recentchanges(0, 5);
 
     foreach my $change (@rc) {
         my $success = $bot->patrol($change->{rcid});
@@ -36,14 +36,15 @@ my $tests_run = 0;
             last;
         }
         else {
-            ok $success, 'Patrolled OK';
+            ok $success, 'Patrolled OK'
+                or diag explain { res => $success, err => $bot->{error} };
             $tests_run++;
         }
     }
 }
 
 {
-    my @rc = $bot->recentchanges(0, 20, { hook => \&mysub });
+    my @rc = $bot->recentchanges(0, 5, { hook => \&mysub });
 
     sub mysub {
         my ($res) = @_;
@@ -58,7 +59,8 @@ my $tests_run = 0;
                 last;
             }
             else {
-                ok $success, 'Patrolled the page OK';
+                ok $success, 'Patrolled the page OK'
+                    or diag explain { res => $res, err => $bot->{error} };
                 $tests_run++;
             }
         }
