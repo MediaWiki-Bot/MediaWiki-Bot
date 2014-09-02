@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+5.006000  2014-09-01
   - Move subpages correctly when requested [GH#55 - labster]
   - Use new prop paramter in expandtemplates [GH#58, thanks fhocutt]
   - Warn if neither operator nor a UA string were given [gh-61]

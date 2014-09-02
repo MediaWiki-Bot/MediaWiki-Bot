@@ -3,10 +3,10 @@ NAME
     MediaWiki wikis
 
 VERSION
-    version 5.005007
+    version 5.006000
 
 SYNOPSIS
-        use MediaWiki::Bot;
+        use MediaWiki::Bot qw(:constants);
 
         my $bot = MediaWiki::Bot->new({
             assert      => 'bot',
@@ -25,13 +25,18 @@ DESCRIPTION
 METHODS
   new
         my $bot = MediaWiki::Bot({
-            host    => 'en.wikipedia.org',
+            host     => 'en.wikipedia.org',
+            operator => 'Mike.lifeguard',
         });
 
     Calling "MediaWiki::Bot->new()" will create a new MediaWiki::Bot object.
     The only parameter is a hashref with keys:
 
-    *   *agent* sets a custom useragent
+    *   *agent* sets a custom useragent. It is recommended to use "operator"
+        instead, which is all we need to do the right thing for you. If you
+        really want to do it yourself, see
+        <https://meta.wikimedia.org/wiki/User-agent_policy> for guidance on
+        what information must be included.
 
     *   *assert* sets a parameter for the AssertEdit extension (commonly
         'bot')
@@ -39,12 +44,9 @@ METHODS
         Refer to <http://mediawiki.org/wiki/Extension:AssertEdit>.
 
     *   *operator* allows the bot to send you a message when it fails an
-        assert
-
-        In addition, it will be integrated into the default useragent (which
-        may not be used if you set agent yourself). The message will tell
-        you that $useragent is logged out, so use a descriptive one if you
-        set it.
+        assert. This is also the recommended way to customize the user agent
+        string, which is required by the Wikimedia Foundation. A warning
+        will be emitted if you omit this.
 
     *   *maxlag* allows you to set the maxlag parameter (default is the
         recommended 5s).
@@ -71,8 +73,11 @@ METHODS
         my $bot = MediaWiki::Bot->new({
             assert      => 'bot',
             protocol    => 'https',
-            host        => 'secure.wikimedia.org',
-            path        => 'wikipedia/meta/w',
+            host        => 'en.wikimedia.org',
+            agent       => sprintf(
+                'PerlWikiBot/%s (https://metacpan.org/MediaWiki::Bot; User:Mike.lifeguard)',
+                MediaWiki::Bot->VERSION
+            ),
             login_data  => { username => "Mike's bot account", password => "password" },
         });
 
@@ -206,6 +211,38 @@ METHODS
         $bot->edit($page, $text, $summary, $is_minor, $assert, $markasbot);
 
     This form is deprecated, and will emit deprecation warnings.
+
+   CAPTCHAs
+    If a <https://en.wikipedia.org/wiki/CAPTCHA|CAPTCHA> is encountered, the
+    call to "edit" will return false, with the error code set to
+    "ERR_CAPTCHA" and the details informing you that solving a CAPTCHA is
+    required for this action. The information you need to actually solve the
+    captcha (for example the URL for the image) is given in
+    "$bot->{error}->{captcha}" as a hash reference. You will want to grab
+    the keys 'url' (a relative URL to the image) and 'id' (the ID of the
+    CAPTCHA). Once you have solved the CAPTCHA (presumably by interacting
+    with a human), retry the edit, adding "captcha_id" and
+    "captcha_solution" parameters:
+
+        my $edit_status = $bot->edit({page => 'Main Page', text => 'got your nose'});
+        if (not $edit_status) {
+            if ($bot->{error}->{code} == ERR_CAPTCHA) {
+                my @captcha_uri = split /\Q?/, $bot->{error}{captcha}{url}, 2;
+                my $image = URI->new(sprintf '%s://%s%s?%s' =>
+                    $bot->{protocol}, $bot->{host}, $captcha_uri[0], $captcha_uri[1],
+                );
+
+                require Term::ReadLine;
+                my $term = Term::ReadLine->new('Solve the captcha');
+                $term->ornaments(0);
+                my $answer = $term->readline("Please solve $image and type the answer: ");
+
+                # Add new CAPTCHA params to the edit we're attempting
+                $edit->{captcha_id} = $bot->{error}->{captcha}->{id};
+                $edit->{captcha_solution} = $answer;
+                $status = $bot->edit($edit);
+            }
+        }
 
   move
         $bot->move($from_title, $to_title, $reason, $options_hashref);
@@ -627,29 +664,31 @@ METHODS
   test_image_exists
     Checks if an image exists at $page.
 
-    *   0 means "Nothing there"
+    *   FILE_NONEXISTENT (0) means "Nothing there"
 
-    *   1 means "Yes, an image exists locally"
+    *   FILE_LOCAL (1) means "Yes, an image exists locally"
 
-    *   2 means "Yes, an image exists on Commons
+    *   FILE_SHARED (2) means "Yes, an image exists on Commons
         <http://commons.wikimedia.org>"
 
-    *   3 means "No image exists, but there is text on the page"
+    *   FILE_PAGE_TEXT_ONLY (3) means "No image exists, but there is text on
+        the page"
 
     If you pass in an arrayref of images, you'll get out an arrayref of
     results.
 
+        use MediaWiki::Bot::Constants;
         my $exists = $bot->test_image_exists('File:Albert Einstein Head.jpg');
-        if ($exists == 0) {
+        if ($exists == FILE_NONEXISTENT) {
             print "Doesn't exist\n";
         }
-        elsif ($exists == 1) {
+        elsif ($exists == FILE_LOCAL) {
             print "Exists locally\n";
         }
-        elsif ($exists == 2) {
+        elsif ($exists == FILE_SHARED) {
             print "Exists on Commons\n";
         }
-        elsif ($exists == 3) {
+        elsif ($exists == FILE_PAGE_TEXT_ONLY) {
             print "Page exists, but no image\n";
         }
 
@@ -1034,6 +1073,11 @@ ERROR HANDLING
     error data is stored in "$bot->{error}->{code}" and
     "$bot->{error}->{details}".
 
+    Error codes are provided as constants in MediaWiki::Bot::Constants, and
+    can also be imported through this module:
+
+        use MediaWiki::Bot qw(:constants);
+
 AVAILABILITY
     The project homepage is <https://metacpan.org/module/MediaWiki::Bot>.
 
@@ -1073,7 +1117,7 @@ AUTHORS
     *   patch and bug report contributors
 
 COPYRIGHT AND LICENSE
-    This software is Copyright (c) 2013 by the MediaWiki::Bot team
+    This software is Copyright (c) 2014 by the MediaWiki::Bot team
     <perlwikibot@googlegroups.com>.
 
     This is free software, licensed under:
