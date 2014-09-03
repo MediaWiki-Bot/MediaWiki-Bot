@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+  - Get github metadata from the MediaWiki-Bot organization's repo [gh-69]
 
 5.006000  2014-09-01
   - Move subpages correctly when requested [GH#55 - labster]
