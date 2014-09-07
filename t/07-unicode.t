@@ -18,18 +18,15 @@ BEGIN {
 use MediaWiki::Bot qw(:constants);
 my $t = __FILE__;
 
-my $username = $ENV{'PWPUsername'};
-my $password = $ENV{'PWPPassword'};
-my $login_data;
-if (defined($username) and defined($password)) {
-    $login_data = { username => $username, password => $password };
-}
-
 my $agent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
 my $bot   = MediaWiki::Bot->new({
     agent      => $agent,
-    login_data => $login_data,
     host       => 'test.wikipedia.org',
+    protocol   => 'https',
+    ( $ENV{PWPUsername} && $ENV{PWPPassword}
+        ? (login_data => { username => $ENV{PWPUsername}, password => $ENV{PWPPassword} })
+        : ()
+    ),
 });
 
 my $base   = 'User:Mike.lifeguard/07-unicode.t';

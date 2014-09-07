@@ -278,7 +278,7 @@ sub set_wiki {
     }
 
     # Set defaults
-    $protocol = $self->{protocol} || 'http'             unless defined($protocol);
+    $protocol = $self->{protocol} || 'https'            unless defined($protocol);
     $host     = $self->{host}     || 'en.wikipedia.org' unless defined($host);
     $path     = $self->{path}     || 'w'                unless defined($path);
 
@@ -402,6 +402,11 @@ sub login {
         $do_sul     = 0;
     }
     $self->{username} = $username;    # Remember who we are
+
+    carp "Logging in over plain HTTP is a bad idea, we would be sending secrets"
+        . " (passwords or cookies) in plaintext over an insecure connection."
+        . " To protect against eavesdroppers, set protocol => 'https'"
+        unless $self->{protocol} eq 'https';
 
     # Handle basic auth first, if needed
     if ($basic_auth) {

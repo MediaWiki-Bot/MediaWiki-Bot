@@ -18,6 +18,7 @@ my $bot = MediaWiki::Bot->new({
     agent   => "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)",
     host    => 'test.wikipedia.org',
     login_data => { username => $username, password => $password },
+    protocol => 'https',
 });
 
 my $tiny_png_filename = File::Spec->catfile(qw/t tiny.png/);

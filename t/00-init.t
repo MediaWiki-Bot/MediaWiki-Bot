@@ -63,7 +63,7 @@ subtest 'diag-one' => sub {
     is($test_one->{api}->{ua}->agent(),         $useragent,             'Specified useragent set correctly');
     is($test_one->{assert},                     $assert,                'Specified assert set orrectly');
     is($test_one->{operator},                   $operator,              'Specified operator set correctly');
-    is($test_one->{api}->{config}->{api_url},   "http://$host/api.php", 'api.php with null path is OK'); # Issue 111: Null $path value returns "w"
+    is($test_one->{api}->{config}->{api_url},   "https://$host/api.php",'api.php with null path is OK'); # Issue 111: Null $path value returns "w"
     like($bot->{api}->{ua}->agent(),            qr{^Perl MediaWiki::Bot/(v?[[:digit:]._]+|dev) \Q(https://metacpan.org/MediaWiki::Bot; [[User:$operator]]}, 'Useragent built correctly');
 };
 
@@ -74,7 +74,7 @@ subtest 'diag-two' => sub {
         path        => undef,
         operator    => $operator,
     });
-    is(  $test_two->{api}->{config}->{api_url}, 'http://127.0.0.1/w/api.php',   'api.php with undef path is OK');
+    is(  $test_two->{api}->{config}->{api_url}, 'https://127.0.0.1/w/api.php',  'api.php with undef path is OK');
     like($test_two->{api}->{ua}->agent(),       qr/\Q$operator\E/,              'operator appears in the useragent');
 };
 

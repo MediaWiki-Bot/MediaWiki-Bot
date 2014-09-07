@@ -20,6 +20,7 @@ my $bot = MediaWiki::Bot->new({
         do_sul => 0,
     },
     host => $host,
+    protocol => 'https',
 });
 
 my $tests_run = 0;

@@ -4,6 +4,7 @@ Changelog for {{$dist->name}}
   - Get github metadata from the MediaWiki-Bot organization's repo [gh-69]
   - Use Test::RequiresInternet to make sure we can reach the wikis we test against
   - Mark flaky tests as extended
+  - Use HTTPS by default and warn if ever trying to log in over HTTP
 
 5.006000  2014-09-01
   - Move subpages correctly when requested [GH#55 - labster]

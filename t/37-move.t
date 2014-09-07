@@ -6,17 +6,16 @@ use Test::More tests => 3;
 use MediaWiki::Bot;
 my $t = __FILE__;
 
-my $username = $ENV{'PWPUsername'};
-my $password = $ENV{'PWPPassword'};
-
 SKIP: {
-    skip('No account credentials provided in %ENV', 3) unless defined $username and defined $password;
+    skip('No account credentials provided in %ENV', 3)
+        unless $ENV{PWPUsername} and $ENV{PWPPassword};
 
     my $agent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
     my $bot = MediaWiki::Bot->new({
         agent   => $agent,
         host    => 'test.wikipedia.org',
-        login_data => { username => $username, password => $password },
+        login_data => { username => $ENV{PWPUsername}, password => $ENV{PWPPassword} },
+        protocol => 'https',
     });
     my $res = $bot->{api}->api({
         action => 'query',

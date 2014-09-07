@@ -7,20 +7,17 @@ use Test::More;
 use MediaWiki::Bot qw(:constants);
 my $t = __FILE__;
 
-my $username = $ENV{'PWPUsername'};
-my $password = $ENV{'PWPPassword'};
-my $login_data;
-if (defined($username) and defined($password)) {
-    $login_data = { username => $username, password => $password };
-}
-plan tests => ($login_data ? 4 : 2);
+plan tests => ($ENV{PWPUsername} && $ENV{PWPPassword} ? 4 : 2);
 
 my $agent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
-
 my $bot = MediaWiki::Bot->new({
-    agent      => $agent,
-    login_data => $login_data,
-    host       => 'test.wikipedia.org',
+    agent       => $agent,
+    host        => 'test.wikipedia.org',
+    protocol    => 'https',
+    ( $ENV{PWPUsername} && $ENV{PWPPassword}
+        ? ( login_data => { username => $ENV{PWPUsername}, password => $ENV{PWPPassword} } )
+        : ()
+    ),
 });
 
 my $title  = 'User:Mike.lifeguard/04-edit.t';
@@ -55,7 +52,7 @@ SKIP: {
         'Did section editing successfully'
         or diag explain { status => $status, error => $bot->{error} };
 
-    if ($login_data) {
+    if ($ENV{PWPUsername} and $ENV{PWPPassword}) {
         my @hist = $bot->get_history($title, 2);
         ok $hist[1]->{minor}, 'Minor edit' or diag explain \@hist;
 

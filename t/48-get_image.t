@@ -10,17 +10,9 @@ plan eval q{ use Imager; use Imager::File::JPEG; 1 }
     ? (tests => 3)
     : (skip_all => q{Imager & Imager::File::JPEG required});
 
-my $username = $ENV{'PWPUsername'};
-my $password = $ENV{'PWPPassword'};
-my $login_data;
-if (defined($username) and defined($password)) {
-    $login_data = { username => $username, password => $password };
-}
-
 my $bot = MediaWiki::Bot->new({
-    agent   => "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)",
-    host    => 'test.wikipedia.org',
-    login_data => $login_data,
+    agent    => "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)",
+    host     => 'test.wikipedia.org',
 });
 
 my $image_name = 'File:Albert_Einstein_Head.jpg';
