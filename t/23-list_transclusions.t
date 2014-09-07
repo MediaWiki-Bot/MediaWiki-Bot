@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 my @pages = $bot->list_transclusions('Template:Tlx', 'nonredirects', undef, {max=>1});
 
 ok(     defined($pages[0]),                                 'Something was returned');

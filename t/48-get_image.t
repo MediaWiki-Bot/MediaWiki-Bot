@@ -22,9 +22,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
     login_data => $login_data,
 });
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
 
 my $image_name = 'File:Albert_Einstein_Head.jpg';
 subtest 'no width, no height' => sub {

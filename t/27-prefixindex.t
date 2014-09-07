@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 my @pages = $bot->prefixindex('User:Mike.lifeguard/27-prefixindex.t');
 
 is(scalar @pages, 3, 'Correct number of pages');

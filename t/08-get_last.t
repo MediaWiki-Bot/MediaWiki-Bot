@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 cmp_ok($bot->get_last('User:Mike.lifeguard/06-get history.t', 'Not a real editor'),
     '>', 0,     'Find the last revision');
 

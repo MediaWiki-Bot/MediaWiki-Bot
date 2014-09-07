@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 my $revid = $bot->get_last(q{User:Mike.lifeguard/doesn't exist}); # Leaves out the username, a required param
 
 ok(defined($bot->{error}),                              'The error data is there');

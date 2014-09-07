@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 my $result = $bot->last_active('Mike.lifeguard');
 like($result, qr/20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, 'last active');
 is($bot->last_active('User:Mike.lifeguard'), $result, 'Same result with User: prefix');

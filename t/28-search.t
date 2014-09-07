@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 my @pages = $bot->search('Main Page');
 isa_ok(\@pages, 'ARRAY', 'Right return type');
 is($pages[0], 'Main Page', 'Found [[Main Page]]');

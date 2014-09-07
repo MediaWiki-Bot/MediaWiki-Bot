@@ -11,9 +11,5 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 cmp_ok($bot->count_contributions('Mike.lifeguard'),                  '>', 10,   q{Count Mike's contribs});
 is($bot->count_contributions('Non-existent username!! (hopefully)'), undef,     q{Count a nonexistent user's contribs});

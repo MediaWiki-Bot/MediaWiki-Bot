@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 {   # db->domain
     my @wikis = ('enwiktionary', 'bat-smgwiki', 'nonexistentwiki', 'meta', 'otrs-wiki', 'aawiki');
     my $ought = [

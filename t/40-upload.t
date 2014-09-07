@@ -19,9 +19,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'test.wikipedia.org',
     login_data => { username => $username, password => $password },
 });
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
 
 my $tiny_png_filename = File::Spec->catfile(qw/t tiny.png/);
 END { unlink $tiny_png_filename if $tiny_png_filename && -e $tiny_png_filename }

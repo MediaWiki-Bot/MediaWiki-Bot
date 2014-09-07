@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'en.wikipedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 subtest 'basic' => sub {
     my $tests_run = 0;
 

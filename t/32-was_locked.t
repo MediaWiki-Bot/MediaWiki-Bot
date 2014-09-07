@@ -11,10 +11,6 @@ my $bot = MediaWiki::Bot->new({
     host    => 'meta.wikimedia.org',
 });
 
-if(defined($ENV{'PWPMakeTestSetWikiHost'})) {
-    $bot->set_wiki($ENV{'PWPMakeTestSetWikiHost'}, $ENV{'PWPMakeTestSetWikiDir'});
-}
-
 # Hasn't been locked (yet)
 my $result = $bot->was_locked('Jimbo Wales');
 ok(!$result, 'lock history');
