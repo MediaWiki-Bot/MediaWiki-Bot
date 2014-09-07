@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use Test::RequiresInternet 'test.wikipedia.org' => 80;
 use Test::More tests => 2;
+use Test::Is qw(extended);
 
 use MediaWiki::Bot qw(:constants);
 my $t = __FILE__;

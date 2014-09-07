@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use Test::Is qw(extended);
 use Test::RequiresInternet 'test.wikipedia.org' => 80;
 use Test::More;
 
