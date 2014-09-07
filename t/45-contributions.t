@@ -1,6 +1,8 @@
 use strict;
 use warnings;
+use Test::RequiresInternet 'test.wikipedia.org' => 80;
 use Test::More 0.96 tests => 3;
+
 use MediaWiki::Bot;
 
 my $t = __FILE__;

@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use utf8;
+use Test::RequiresInternet 'test.wikipedia.org' => 80;
 use Test::More 0.94 tests => 2;
 
 BEGIN {

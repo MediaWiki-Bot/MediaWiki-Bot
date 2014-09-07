@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use Test::RequiresInternet 'test.wikipedia.org' => 80, 'test.wikipedia.org' => 443;
 use Test::More 0.96;
 use Test::Warn;
 

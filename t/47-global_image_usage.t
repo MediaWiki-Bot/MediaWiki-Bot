@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use Test::RequiresInternet 'commons.wikimedia.org' => 80;
 use Test::More tests => 3;
 
 use MediaWiki::Bot;
