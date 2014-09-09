@@ -42,11 +42,13 @@ my %WriteMakefileArgs = (
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
     "List::MoreUtils" => 0,
+    "Test::Is" => 0,
     "Test::More" => "0.96",
+    "Test::RequiresInternet" => 0,
     "Test::Warn" => 0,
     "utf8" => 0
   },
-  "VERSION" => "5.006000",
+  "VERSION" => "5.006001",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -70,7 +72,9 @@ my %FallbackPrereqs = (
   "MediaWiki::API" => "0.36",
   "Module::Build" => "0.28",
   "Module::Pluggable" => 0,
+  "Test::Is" => 0,
   "Test::More" => "0.96",
+  "Test::RequiresInternet" => 0,
   "Test::Warn" => 0,
   "strict" => 0,
   "utf8" => 0,
