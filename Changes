@@ -2,6 +2,9 @@ Changelog for {{$dist->name}}
 
 {{$NEXT}}
 
+5.006002  2014-09-08
+  - Re-release 5.006001 to fix a packaging error
+
 5.006001  2014-09-08
   - Get github metadata from the MediaWiki-Bot organization's repo [gh-69]
   - Use Test::RequiresInternet to make sure we can reach the wikis we test against

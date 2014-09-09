@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 5.006001
+version 5.006002
 
 # SYNOPSIS
 
@@ -1208,13 +1208,13 @@ site near you, or see [https://metacpan.org/module/MediaWiki::Bot/](https://meta
 
 # SOURCE
 
-The development version is on github at [http://github.com/doherty/MediaWiki-Bot](http://github.com/doherty/MediaWiki-Bot)
-and may be cloned from [git://github.com/doherty/MediaWiki-Bot.git](git://github.com/doherty/MediaWiki-Bot.git)
+The development version is on github at [http://github.com/MediaWiki-Bot/MediaWiki-Bot](http://github.com/MediaWiki-Bot/MediaWiki-Bot)
+and may be cloned from [git://github.com/MediaWiki-Bot/MediaWiki-Bot.git](git://github.com/MediaWiki-Bot/MediaWiki-Bot.git)
 
 # BUGS AND LIMITATIONS
 
 You can make new bug reports, and view existing ones, through the
-web interface at [http://rt.cpan.org](http://rt.cpan.org).
+web interface at [https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues](https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues).
 
 # AUTHORS
 
