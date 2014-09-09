@@ -126,9 +126,9 @@ For backward compatibility, you can specify up to three parameters:
 B<This form is deprecated> will never do auto-login or autoconfiguration, and emits
 deprecation warnings.
 
-=over 4
-
 For further reading:
+
+=over 4
 
 =item *
 
@@ -646,7 +646,7 @@ B<This form is deprecated>, and will emit deprecation warnings.
 
 =head3 CAPTCHAs
 
-If a L<https://en.wikipedia.org/wiki/CAPTCHA|CAPTCHA> is encountered, the
+If a L<CAPTCHA|https://en.wikipedia.org/wiki/CAPTCHA> is encountered, the
 call to C<edit> will return false, with the error code set to C<ERR_CAPTCHA>
 and the details informing you that solving a CAPTCHA is required for this
 action. The information you need to actually solve the captcha (for example
@@ -679,6 +679,7 @@ C<captcha_id> and C<captcha_solution> parameters:
 B<References:> L<Editing pages|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Editing-pages>,
 L<API:Edit|https://www.mediawiki.org/wiki/API:Edit>,
 L<API:Tokens|https://www.mediawiki.org/wiki/API:Tokens>
+
 =cut
 
 sub edit {
@@ -1084,6 +1085,7 @@ image will never be scaled to greater dimensions. You can scale it yourself;
 having the wiki do it is just lazy & selfish.
 
 B<References:> L<API:Properties#imageinfo|https://www.mediawiki.org/wiki/API:Properties#imageinfo_.2F_ii>
+
 =cut
 
 sub get_image{
@@ -2915,7 +2917,7 @@ return is a scalar of an IP/range if found (evaluates to true in boolean
 context); undef otherwise (evaluates false in boolean context). Pass in a
 single IP or CIDR range.
 
-B<References:> L<Extension:GlobalBlocking/API|https://www.mediawiki.org/wiki/Extension:GlobalBlocking/API>
+B<References:> L<Extension:GlobalBlocking|https://www.mediawiki.org/wiki/Extension:GlobalBlocking/API>
 
 =cut
 
