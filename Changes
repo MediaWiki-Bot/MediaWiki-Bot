@@ -1,6 +1,7 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+  - Documentation tweaks
 
 5.006002  2014-09-08
   - Re-release 5.006001 to fix a packaging error
