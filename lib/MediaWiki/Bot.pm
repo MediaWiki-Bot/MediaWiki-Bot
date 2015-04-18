@@ -3542,7 +3542,7 @@ sub _do_autoconfig {
 
     my @rights            = @{ $res->{query}->{userinfo}->{rights} || [] };
     my $has_bot           = 0;
-    my $default_assert    = 'user';                                           # At a *minimum*, the bot should be logged in.
+    my $default_assert    = 'user'; # At a *minimum*, the bot should be logged in.
     foreach my $right (@rights) {
         if ($right eq 'bot') {
             $has_bot        = 1;
@@ -3550,7 +3550,7 @@ sub _do_autoconfig {
         }
     }
 
-    my @groups = @{ $res->{query}->{userinfo}->{groups} || [] }; # athere may be no groups
+    my @groups = @{ $res->{query}->{userinfo}->{groups} || [] }; # there may be no groups
     my $is_sysop = 0;
     foreach my $group (@groups) {
         if ($group eq 'sysop') {
