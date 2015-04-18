@@ -2089,7 +2089,7 @@ sub is_blocked {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
 
-    my $number = scalar @{ $res->{query}->{blocks} };    # The number of blocks returned
+    my $number = scalar @{ $res->{query}->{blocks} }; # The number of blocks returned
     if ($number == 1) {
         return RET_TRUE;
     }
