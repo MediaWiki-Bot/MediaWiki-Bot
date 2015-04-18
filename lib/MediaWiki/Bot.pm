@@ -656,7 +656,8 @@ the image) and 'id' (the ID of the CAPTCHA). Once you have solved the
 CAPTCHA (presumably by interacting with a human), retry the edit, adding
 C<captcha_id> and C<captcha_solution> parameters:
 
-    my $edit_status = $bot->edit({page => 'Main Page', text => 'got your nose'});
+    my $edit = {page => 'Main Page', text => 'got your nose'};
+    my $edit_status = $bot->edit($edit);
     if (not $edit_status) {
         if ($bot->{error}->{code} == ERR_CAPTCHA) {
             my @captcha_uri = split /\Q?/, $bot->{error}{captcha}{url}, 2;
