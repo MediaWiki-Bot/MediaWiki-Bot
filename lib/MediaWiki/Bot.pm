@@ -1291,14 +1291,22 @@ The first parameter is a hashref with the following keys:
 
 =over 4
 
-=item I<ns> - the namespace number, or an arrayref of numbers to
+=item *
+
+I<ns> - the namespace number, or an arrayref of numbers to
 specify several; default is the main namespace
 
-=item I<limit> - the number of rows to fetch; default is 50
+=item *
 
-=item I<user> - only list changes by this user
+I<limit> - the number of rows to fetch; default is 50
 
-=item I<show> - itself a hashref where the key is a category and the value is
+=item *
+
+I<user> - only list changes by this user
+
+=item *
+
+I<show> - itself a hashref where the key is a category and the value is
 a boolean. If true, the category will be included; if false, excluded. The
 categories are kinds of edits: minor, bot, anon, redirect, patrolled. See
 "rcshow" at L<http://www.mediawiki.org/wiki/API:Recentchanges#Parameters>.
@@ -1326,21 +1334,37 @@ The hashref returned might contain the following keys:
 
 =over 4
 
-=item I<ns> - the namespace number
+=item *
 
-=item I<revid>
+I<ns> - the namespace number
 
-=item I<old_revid>
+=item *
 
-=item I<timestamp>
+I<revid>
 
-=item I<rcid> - can be used with L</patrol>
+=item *
 
-=item I<pageid>
+I<old_revid>
 
-=item I<type> - one of edit, new, log (there may be others)
+=item *
 
-=item I<title>
+I<timestamp>
+
+=item *
+
+I<rcid> - can be used with L</patrol>
+
+=item *
+
+I<pageid>
+
+=item *
+
+I<type> - one of edit, new, log (there may be others)
+
+=item *
+
+I<title>
 
 =back
 
@@ -2099,19 +2123,19 @@ Checks if an image exists at $page.
 
 =item *
 
-FILE_NONEXISTENT (0) means "Nothing there"
+C<FILE_NONEXISTENT> (0) means "Nothing there"
 
 =item *
 
-FILE_LOCAL (1) means "Yes, an image exists locally"
+C<FILE_LOCAL> (1) means "Yes, an image exists locally"
 
 =item *
 
-FILE_SHARED (2) means "Yes, an image exists on L<Commons|http://commons.wikimedia.org>"
+C<FILE_SHARED> (2) means "Yes, an image exists on L<Commons|http://commons.wikimedia.org>"
 
 =item *
 
-FILE_PAGE_TEXT_ONLY (3) means "No image exists, but there is text on the page"
+C<FILE_PAGE_TEXT_ONLY> (3) means "No image exists, but there is text on the page"
 
 =back
 
