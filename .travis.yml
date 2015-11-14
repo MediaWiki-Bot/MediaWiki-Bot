@@ -2,7 +2,6 @@ language: perl
 before_install:
   - "git config --global github.user travis"
   - "cpanm -n Dist::Zilla::PluginBundle::Author::DOHERTY || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
-  - "sudo apt-get install libgd2-xpm-dev"
   - "cpanm -n $( dzil authordeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
 install: "cpanm $( dzil listdeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
 script: "./.travis.sh"
@@ -19,3 +18,12 @@ notifications:
         template:
             - "Build %{build_number} on %{branch} (%{commit} by %{author}): %{message} %{build_url}"
 env: AUTHOR_TESTING=1 RELEASE_TESTING=1 AUTOMATED_TESTING=1 EXTENDED_TESTING=1
+sudo: false
+branches:
+    only:
+        - master
+        - dev
+addons:
+    apt:
+        packages:
+            - libgd2-xpm-dev
