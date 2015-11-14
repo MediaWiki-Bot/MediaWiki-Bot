@@ -4,7 +4,7 @@ before_install:
   - "cpanm -n Dist::Zilla::PluginBundle::Author::DOHERTY || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
   - "cpanm -n $( dzil authordeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
 install: "cpanm $( dzil listdeps 2>/dev/null ) || curl -F p=@$HOME/.cpanm/build.log http://p.hashbang.ca"
-script: "./.travis.sh"
+script: perl Build.PL && ./Build test && prove -bj4
 notifications:
     email:
         recipients:
