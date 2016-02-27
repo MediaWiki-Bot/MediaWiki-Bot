@@ -29,7 +29,8 @@ my $ought = [
             'title' => 'Main Page',
             'type' => 'delete',
             'logid' => 3672,
-            logpage => 0,
+            'logpage' => 0,
+            'params' => {},
           },
           {
             'ns' => 0,
@@ -41,7 +42,8 @@ my $ought = [
             'title' => 'Main Page',
             'type' => 'delete',
             'logid' => 3671,
-            logpage => 0,
+            'logpage' => 0,
+            'params' => {},
           }
         ];
 
