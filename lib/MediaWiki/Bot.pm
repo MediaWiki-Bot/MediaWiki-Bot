@@ -2588,15 +2588,17 @@ sub db_to_domain {
     if (ref $wiki eq 'ARRAY') {
         my @return;
         foreach my $w (@$wiki) {
-            $wiki =~ s/_p$//;    # Strip off a _p suffix, if present
+            $wiki =~ s/_p$//;                               # Strip off a _p suffix, if present
             my $domain = $self->{sitematrix}->{$w} || undef;
+            $domain =~ s/^https\:\/\/// if (defined $domain); # Strip off a https:// prefix, if present
             push(@return, $domain);
         }
         return \@return;
     }
     else {
-        $wiki =~ s/_p$//;        # Strip off a _p suffix, if present
+        $wiki =~ s/_p$//;                                   # Strip off a _p suffix, if present
         my $domain = $self->{sitematrix}->{$wiki} || undef;
+        $domain =~ s/^https\:\/\/// if (defined $domain);   # Strip off a https:// prefix, if present
         return $domain;
     }
 }
@@ -2623,12 +2625,14 @@ sub domain_to_db {
     if (ref $wiki eq 'ARRAY') {
         my @return;
         foreach my $w (@$wiki) {
+            $w = "https://".$w if ($w !~ /^https\:\//); # Prepend a https:// prefix, if not present
             my $db = $self->{sitematrix}->{$w} || undef;
             push(@return, $db);
         }
         return \@return;
     }
     else {
+        $wiki = "https://".$wiki if ($wiki !~ /^https\:\//); # Prepend a https:// prefix, if not present
         my $db = $self->{sitematrix}->{$wiki} || undef;
         return $db;
     }
