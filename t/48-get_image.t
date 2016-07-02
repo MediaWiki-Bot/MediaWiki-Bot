@@ -15,7 +15,7 @@ my $bot = MediaWiki::Bot->new({
     host     => 'test.wikipedia.org',
 });
 
-my $image_name = 'File:Wiki.png';
+my $image_name = 'File:Albert_Einstein_Head.jpg';
 subtest 'no width, no height' => sub {
     plan tests => 4;
     my $data = $bot->get_image($image_name);
@@ -26,13 +26,13 @@ subtest 'no width, no height' => sub {
     ok $did_read, 'retrieved nonscaled data is an image'
         or diag $img->errstr;
 
-    is $img->getwidth(),  135, 'nonscaled img has w 135';
-    is $img->getheight(), 155, 'nonscaled img has h 155';
+    is $img->getwidth(),  3250, 'nonscaled img has w 3,250';
+    is $img->getheight(), 4333, 'nonscaled img has h 4,333';
 };
 
 subtest 'supply a width' => sub {
     plan tests => 3;
-    my $data = $bot->get_image($image_name, {width => 16});
+    my $data = $bot->get_image($image_name, {width => 12});
     ok $data, 'wscaled image retrieved';
 
     my $img = Imager->new;
@@ -40,7 +40,7 @@ subtest 'supply a width' => sub {
     ok $did_read, 'retrieved wscaled data is an image.'
         or diag $img->errstr;
 
-    is $img->getwidth(),  16, 'wscaled img has w 16';
+    is $img->getwidth(),  12, 'wscaled img has w 12';
 };
 
 #supply a width & a not-to-scale height. These
@@ -48,7 +48,7 @@ subtest 'supply a width' => sub {
 # and scale should be proportional.
 subtest 'supply a width and a not-to-scale height' => sub {
     plan tests => 4;
-    my $data = $bot->get_image($image_name, {width => 100, height => 100});
+    my $data = $bot->get_image($image_name, {width => 200, height => 200});
     ok $data, 'whscaled image retrieved';
 
     my $img = Imager->new;
@@ -56,6 +56,6 @@ subtest 'supply a width and a not-to-scale height' => sub {
     ok $did_read, 'retrieved whscaled data is an image.'
         or diag $img->errstr;
 
-    cmp_ok $img->getwidth(),  '<=', 100, '100 height is max';
-    cmp_ok $img->getheight(), '<=', 100, '100 width is max';
+    cmp_ok $img->getwidth(),  '<=', 200, '200 height is max';
+    cmp_ok $img->getheight(), '<=', 200, '200 width is max';
 };
