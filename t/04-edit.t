@@ -7,7 +7,7 @@ use Test::More;
 use MediaWiki::Bot qw(:constants);
 my $t = __FILE__;
 
-plan tests => ($ENV{PWPUsername} && $ENV{PWPPassword} ? 4 : 2);
+plan tests => ($ENV{PWPUsername} && $ENV{PWPPassword} ? 3 : 2);
 
 my $agent = "MediaWiki::Bot tests (https://metacpan.org/MediaWiki::Bot; $t)";
 my $bot = MediaWiki::Bot->new({
@@ -20,8 +20,10 @@ my $bot = MediaWiki::Bot->new({
     ),
 });
 
+my $rand  = rand();
+my $rand2 = rand();
+
 my $title  = 'User:Mike.lifeguard/04-edit.t';
-my $rand   = rand();
 my $status = $bot->edit({
     page => $title,
     text => $rand,
@@ -36,7 +38,6 @@ SKIP: {
 
     is $bot->get_text($title, $status->{newrevid}) => $rand, 'Did whole-page editing successfully';
 
-    my $rand2 = rand();
     $status = $bot->edit({
         page    => $title,
         text    => $rand2,
@@ -51,19 +52,23 @@ SKIP: {
     like $bot->get_text($title, $status->{edit}->{newrevid}) => qr{== \Q$agent\E ==\n\n\Q$rand2\E},
         'Did section editing successfully'
         or diag explain { status => $status, error => $bot->{error} };
+}
 
-    if ($ENV{PWPUsername} and $ENV{PWPPassword}) {
-        my @hist = $bot->get_history($title, 2);
-        ok $hist[1]->{minor}, 'Minor edit' or diag explain \@hist;
+subtest 'check history' => sub {
+    my $do_history_test = $ENV{PWPUsername} && $ENV{PWPPassword} &&
+        !($bot->{error}->{code} == ERR_API or $bot->{error}->{code} == ERR_CAPTCHA);
+    plan ($do_history_test ? (tests => 2) : (skip_all => "previous test didn't run"));
 
-        $status = $bot->edit({
-            page    => $title,
-            text    => $rand2.$rand,
-            summary => $agent . ' (major)',
-            minor   => 0,
-        });
-        @hist = $bot->get_history($title, 1);
-        ok !$hist[0]->{minor}, 'Not a minor edit'
-            or diag explain { hist => \@hist, status => $status };
-    }
+    my @hist = $bot->get_history($title, 2);
+    ok $hist[1]->{minor}, 'Minor edit' or diag explain \@hist;
+
+    $status = $bot->edit({
+        page    => $title,
+        text    => $rand2.$rand,
+        summary => $agent . ' (major)',
+        minor   => 0,
+    });
+    @hist = $bot->get_history($title, 1);
+    ok !$hist[0]->{minor}, 'Not a minor edit'
+        or diag explain { hist => \@hist, status => $status };
 }
