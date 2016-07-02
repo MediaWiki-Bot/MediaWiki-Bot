@@ -401,6 +401,23 @@ described by L<LWP::UserAgent>:
                         }
     }) or die "Couldn't log in";
 
+=head3 Bot passwords
+
+C<MediaWiki::Bot> doesn't yet support the more complicated (but more secure)
+oAuth login flow for bots. Instead, we support a simpler "bot password", which
+is a generated password connected to a (possibly-reduced) set of on-wiki
+privileges, and IP ranges from which it can be used.
+
+To create one, visit C<Special:BotPasswords> on the wiki. Enter a label for
+the password, then select the privileges you want to use with that password.
+This set should be as restricted as possible; most bots only edit existing
+pages. Keeping the set of privileges as restricted as possible limits the
+possible damage if the password were ever compromised.
+
+Submit the form, and you'll be given a new "username" that looks like
+"AccountUsername@bot_password_label", and a generated bot password.
+To log in, provide those to C<MediaWiki::Bot> verbatim.
+
 B<References:> L<API:Login|https://www.mediawiki.org/wiki/API:Login>,
 L<Logging in|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Logging-in>
 
@@ -430,7 +447,10 @@ sub login {
         $autoconfig = 0;
         $do_sul     = 0;
     }
-    $self->{username} = $username;    # Remember who we are
+
+    # strip off the "@bot_password_label" suffix, if any
+    $self->{username} = (split /@/, $username, 2)[0]; # normal human-readable username
+    $self->{login_username} = $username; # to be used for login (includes "@bot_password_label")
 
     carp "Logging in over plain HTTP is a bad idea, we would be sending secrets"
         . " (passwords or cookies) in plaintext over an insecure connection."
@@ -477,31 +497,30 @@ sub login {
         return;
     }
 
-    my $res = $self->{api}->api({
-        action      => 'login',
-        lgname      => $username,
-        lgpassword  => $password,
-        lgdomain    => $lgdomain
-    }) or return $self->_handle_api_error();
-    $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
-    $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
+    my $res;
+    RETRY: for (1..2) {
+        # Fetch a login token
+        $res = $self->{api}->api({
+            action  => 'query',
+            meta    => 'tokens',
+            type    => 'login',
+        }) or return $self->_handle_api_error();
+        my $token = $res->{query}->{tokens}->{logintoken};
 
-    return $self->_handle_api_error() unless $res->{login};
-    return $self->_handle_api_error() unless $res->{login}->{result};
-
-    if ($res->{login}->{result} eq 'NeedToken') {
-        my $token = $res->{login}->{token};
+        # Do the login
         $res = $self->{api}->api({
             action      => 'login',
-            lgname      => $username,
+            lgname      => $self->{login_username},
             lgpassword  => $password,
             lgdomain    => $lgdomain,
             lgtoken     => $token,
         }) or return $self->_handle_api_error();
 
-        $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
-        $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
-    }
+        last RETRY if $res->{login}->{result} eq 'Success';
+    };
+
+    $self->{api}->{ua}->{cookie_jar}->extract_cookies($self->{api}->{response});
+    $self->{api}->{ua}->{cookie_jar}->save($cookies) if (-w($cookies) or -w('.'));
 
     if ($res->{login}->{result} eq 'Success') {
         if ($res->{login}->{lgusername} eq $self->{username}) {
@@ -510,12 +529,10 @@ sub login {
         }
     }
 
-    return (
-        (defined($res->{login}->{lgusername})) and
-        (defined($res->{login}->{result})) and
-        ($res->{login}->{lgusername} eq $self->{username}) and
-        ($res->{login}->{result} eq 'Success')
-    );
+    return ((defined($res->{login}->{lgusername})) and
+            (defined($res->{login}->{result})) and
+            ($res->{login}->{lgusername} eq $self->{username}) and
+            ($res->{login}->{result} eq 'Success'));
 }
 
 sub _do_sul {
@@ -525,7 +542,7 @@ sub _do_sul {
     my $host     = $self->{host};
     my $path     = $self->{path};
     my $protocol = $self->{protocol};
-    my $username = $self->{username};
+    my $username = $self->{login_username};
 
     $self->{debug} = 0;             # Turn off debugging for these internal calls
     my @logins;                     # Keep track of our successes
