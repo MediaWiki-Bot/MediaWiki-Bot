@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 5.006002
+version 5.006003
 
 # SYNOPSIS
 
@@ -169,6 +169,23 @@ described by [LWP::UserAgent](https://metacpan.org/pod/LWP::UserAgent):
                         }
     }) or die "Couldn't log in";
 
+### Bot passwords
+
+`MediaWiki::Bot` doesn't yet support the more complicated (but more secure)
+oAuth login flow for bots. Instead, we support a simpler "bot password", which
+is a generated password connected to a (possibly-reduced) set of on-wiki
+privileges, and IP ranges from which it can be used.
+
+To create one, visit `Special:BotPasswords` on the wiki. Enter a label for
+the password, then select the privileges you want to use with that password.
+This set should be as restricted as possible; most bots only edit existing
+pages. Keeping the set of privileges as restricted as possible limits the
+possible damage if the password were ever compromised.
+
+Submit the form, and you'll be given a new "username" that looks like
+"AccountUsername@bot\_password\_label", and a generated bot password.
+To log in, provide those to `MediaWiki::Bot` verbatim.
+
 **References:** [API:Login](https://www.mediawiki.org/wiki/API:Login),
 [Logging in](https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Logging-in)
 
@@ -222,7 +239,8 @@ the image) and 'id' (the ID of the CAPTCHA). Once you have solved the
 CAPTCHA (presumably by interacting with a human), retry the edit, adding
 `captcha_id` and `captcha_solution` parameters:
 
-    my $edit_status = $bot->edit({page => 'Main Page', text => 'got your nose'});
+    my $edit = {page => 'Main Page', text => 'got your nose'};
+    my $edit_status = $bot->edit($edit);
     if (not $edit_status) {
         if ($bot->{error}->{code} == ERR_CAPTCHA) {
             my @captcha_uri = split /\Q?/, $bot->{error}{captcha}{url}, 2;
@@ -718,10 +736,10 @@ Retained for backwards compatibility. Use ["is\_blocked"](#is_blocked) for clari
 
 Checks if an image exists at $page.
 
-- FILE\_NONEXISTENT (0) means "Nothing there"
-- FILE\_LOCAL (1) means "Yes, an image exists locally"
-- FILE\_SHARED (2) means "Yes, an image exists on [Commons](http://commons.wikimedia.org)"
-- FILE\_PAGE\_TEXT\_ONLY (3) means "No image exists, but there is text on the page"
+- `FILE_NONEXISTENT` (0) means "Nothing there"
+- `FILE_LOCAL` (1) means "Yes, an image exists locally"
+- `FILE_SHARED` (2) means "Yes, an image exists on [Commons](http://commons.wikimedia.org)"
+- `FILE_PAGE_TEXT_ONLY` (3) means "No image exists, but there is text on the page"
 
 If you pass in an arrayref of images, you'll get out an arrayref of
 results.
@@ -1231,7 +1249,7 @@ web interface at [https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues](https:/
 
 # COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2014 by the MediaWiki::Bot team <perlwikibot@googlegroups.com>.
+This software is Copyright (c) 2016 by the MediaWiki::Bot team <perlwikibot@googlegroups.com>.
 
 This is free software, licensed under:
 

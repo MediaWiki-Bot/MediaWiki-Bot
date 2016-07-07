@@ -1,6 +1,8 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+
+5.006003  2016-07-06
   - Changed the file the test suite used to test fetching images
   - Documentation tweaks
 

@@ -1,72 +1,69 @@
-NAME
-    MediaWiki::Bot - a high-level bot framework for interacting with
-    MediaWiki wikis
-
-VERSION
-    version 5.006002
-
 SYNOPSIS
-        use MediaWiki::Bot qw(:constants);
 
+        use MediaWiki::Bot qw(:constants);
+    
         my $bot = MediaWiki::Bot->new({
             assert      => 'bot',
             host        => 'de.wikimedia.org',
             login_data  => { username => "Mike's bot account", password => "password" },
         });
-
+    
         my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
         print "Reverting to $revid\n" if defined($revid);
         $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
 
 DESCRIPTION
+
     MediaWiki::Bot is a framework that can be used to write bots which
-    interface with the MediaWiki API (<http://en.wikipedia.org/w/api.php>).
+    interface with the MediaWiki API (http://en.wikipedia.org/w/api.php).
 
 METHODS
-  new
+
+ new
+
         my $bot = MediaWiki::Bot({
             host     => 'en.wikipedia.org',
             operator => 'Mike.lifeguard',
         });
 
-    Calling "MediaWiki::Bot->new()" will create a new MediaWiki::Bot object.
+    Calling MediaWiki::Bot->new() will create a new MediaWiki::Bot object.
     The only parameter is a hashref with keys:
 
-    *   *agent* sets a custom useragent. It is recommended to use "operator"
-        instead, which is all we need to do the right thing for you. If you
-        really want to do it yourself, see
-        <https://meta.wikimedia.org/wiki/User-agent_policy> for guidance on
-        what information must be included.
+      * agent sets a custom useragent. It is recommended to use operator
+      instead, which is all we need to do the right thing for you. If you
+      really want to do it yourself, see
+      https://meta.wikimedia.org/wiki/User-agent_policy for guidance on
+      what information must be included.
 
-    *   *assert* sets a parameter for the AssertEdit extension (commonly
-        'bot')
+      * assert sets a parameter for the AssertEdit extension (commonly
+      'bot')
 
-        Refer to <http://mediawiki.org/wiki/Extension:AssertEdit>.
+      Refer to http://mediawiki.org/wiki/Extension:AssertEdit.
 
-    *   *operator* allows the bot to send you a message when it fails an
-        assert. This is also the recommended way to customize the user agent
-        string, which is required by the Wikimedia Foundation. A warning
-        will be emitted if you omit this.
+      * operator allows the bot to send you a message when it fails an
+      assert. This is also the recommended way to customize the user agent
+      string, which is required by the Wikimedia Foundation. A warning will
+      be emitted if you omit this.
 
-    *   *maxlag* allows you to set the maxlag parameter (default is the
-        recommended 5s).
+      * maxlag allows you to set the maxlag parameter (default is the
+      recommended 5s).
 
-        Please refer to the MediaWiki documentation prior to changing this
-        from the default.
+      Please refer to the MediaWiki documentation prior to changing this
+      from the default.
 
-    *   *protocol* allows you to specify 'http' or 'https' (default is
-        'http')
+      * protocol allows you to specify 'http' or 'https' (default is
+      'http')
 
-    *   *host* sets the domain name of the wiki to connect to
+      * host sets the domain name of the wiki to connect to
 
-    *   *path* sets the path to api.php (with no leading or trailing slash)
+      * path sets the path to api.php (with no leading or trailing slash)
 
-    *   *login_data* is a hashref of credentials to pass to "login".
+      * login_data is a hashref of credentials to pass to "login".
 
-    *   *debug* - whether to provide debug output.
+      * debug - whether to provide debug output.
 
-        1 provides only error messages; 2 provides further detail on
-        internal operations.
+      1 provides only error messages; 2 provides further detail on internal
+      operations.
 
     For example:
 
@@ -90,32 +87,30 @@ METHODS
 
     For further reading:
 
-    *   MediaWiki::Bot wiki
-        <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki>
+      * MediaWiki::Bot wiki
+      <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki>
 
-    *   <Installing "MediaWiki::Bot"
-        <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Install>>
+      * <Installing MediaWiki::Bot
+      <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Install>>
 
-    *   Creating a new bot
-        <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Creating-a-new-
-        bot>
+      * Creating a new bot
+      <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Creating-a-new-bot>
 
-    *   Setting the wiki
-        <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Setting-the-wik
-        i>
+      * Setting the wiki
+      <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Setting-the-wiki>
 
-    *   Where is api.php
-        <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Where-is-api.ph
-        p>
+      * Where is api.php
+      <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Where-is-api.php>
 
-  set_wiki
+ set_wiki
+
     Set what wiki to use. The parameter is a hashref with keys:
 
-    *   *host* - the domain name
+      * host - the domain name
 
-    *   *path* - the part of the path before api.php (usually 'w')
+      * path - the part of the path before api.php (usually 'w')
 
-    *   *protocol* is either 'http' or 'https'.
+      * protocol is either 'http' or 'https'.
 
     If you don't set any parameter, it's previous value is used. If it has
     never been set, the default settings are 'http', 'en.wikipedia.org' and
@@ -135,15 +130,16 @@ METHODS
 
     This form is deprecated, and will emit deprecation warnings.
 
-  login
-    This method takes a hashref with keys *username* and *password* at a
+ login
+
+    This method takes a hashref with keys username and password at a
     minimum. See "Single User Login" and "Basic authentication" for
     additional options.
 
-    Logs the use $username in, optionally using $password. First, an attempt
-    will be made to use cookies to log in. If this fails, an attempt will be
-    made to use the password provided to log in, if any. If the login was
-    successful, returns true; false otherwise.
+    Logs the use $username in, optionally using $password. First, an
+    attempt will be made to use cookies to log in. If this fails, an
+    attempt will be made to use the password provided to log in, if any. If
+    the login was successful, returns true; false otherwise.
 
         $bot->login({
             username => $username,
@@ -153,12 +149,12 @@ METHODS
     Once logged in, attempt to do some simple auto-configuration. At
     present, this consists of:
 
-    *   Warning if the account doesn't have the bot flag, and isn't a sysop
-        account.
+      * Warning if the account doesn't have the bot flag, and isn't a sysop
+      account.
 
-    *   Setting an appropriate default assert.
+      * Setting an appropriate default assert.
 
-    You can skip this autoconfiguration by passing "autoconfig => 0"
+    You can skip this autoconfiguration by passing autoconfig => 0
 
     For backward compatibility, you can call this as
 
@@ -167,16 +163,18 @@ METHODS
     This form is deprecated, and will emit deprecation warnings. It will
     never do autoconfiguration or SUL login.
 
-   Single User Login
-    On WMF wikis, "do_sul" specifies whether to log in on all projects. The
+  Single User Login
+
+    On WMF wikis, do_sul specifies whether to log in on all projects. The
     default is false. But even when false, you still get a CentralAuth
     cookie for, and are thus logged in on, all languages of a given domain
-    ("*.wikipedia.org", for example). When set, a login is done on each WMF
+    (*.wikipedia.org, for example). When set, a login is done on each WMF
     domain so you are logged in on all ~800 content wikis. Since
-    "*.wikimedia.org" is not possible, we explicitly include meta, commons,
+    *.wikimedia.org is not possible, we explicitly include meta, commons,
     incubator, and wikispecies.
 
-   Basic authentication
+  Basic authentication
+
     If you need to supply basic auth credentials, pass a hashref of data as
     described by LWP::UserAgent:
 
@@ -190,11 +188,31 @@ METHODS
                             }
         }) or die "Couldn't log in";
 
+  Bot passwords
+
+    MediaWiki::Bot doesn't yet support the more complicated (but more
+    secure) oAuth login flow for bots. Instead, we support a simpler "bot
+    password", which is a generated password connected to a
+    (possibly-reduced) set of on-wiki privileges, and IP ranges from which
+    it can be used.
+
+    To create one, visit Special:BotPasswords on the wiki. Enter a label
+    for the password, then select the privileges you want to use with that
+    password. This set should be as restricted as possible; most bots only
+    edit existing pages. Keeping the set of privileges as restricted as
+    possible limits the possible damage if the password were ever
+    compromised.
+
+    Submit the form, and you'll be given a new "username" that looks like
+    "AccountUsername@bot_password_label", and a generated bot password. To
+    log in, provide those to MediaWiki::Bot verbatim.
+
     References: API:Login <https://www.mediawiki.org/wiki/API:Login>,
     Logging in
     <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Logging-in>
 
-  logout
+ logout
+
         $bot->logout();
 
     The logout method logs the bot out of the wiki. This invalidates all
@@ -202,7 +220,8 @@ METHODS
 
     References: API:Logging out <https://www.mediawiki.org/wiki/API:Logout>
 
-  edit
+ edit
+
         my $text = $bot->get_text('My page');
         $text .= "\n\n* More text\n";
         $bot->edit({
@@ -214,21 +233,21 @@ METHODS
 
     This method edits a wiki page, and takes a hashref of data with keys:
 
-    *   *page* - the page title to edit
+      * page - the page title to edit
 
-    *   *text* - the page text to write
+      * text - the page text to write
 
-    *   *summary* - an edit summary
+      * summary - an edit summary
 
-    *   *minor* - whether to mark the edit as minor or not (boolean)
+      * minor - whether to mark the edit as minor or not (boolean)
 
-    *   *bot* - whether to mark the edit as a bot edit (boolean)
+      * bot - whether to mark the edit as a bot edit (boolean)
 
-    *   *assertion* - usually 'bot', but see
-        <http://mediawiki.org/wiki/Extension:AssertEdit>.
+      * assertion - usually 'bot', but see
+      http://mediawiki.org/wiki/Extension:AssertEdit.
 
-    *   *section* - edit a single section (identified by number) instead of
-        the whole page
+      * section - edit a single section (identified by number) instead of
+      the whole page
 
     An MD5 hash is sent to guard against data corruption while in transit.
 
@@ -238,31 +257,33 @@ METHODS
 
     This form is deprecated, and will emit deprecation warnings.
 
-   CAPTCHAs
-    If a CAPTCHA <https://en.wikipedia.org/wiki/CAPTCHA> is encountered, the
-    call to "edit" will return false, with the error code set to
-    "ERR_CAPTCHA" and the details informing you that solving a CAPTCHA is
-    required for this action. The information you need to actually solve the
-    captcha (for example the URL for the image) is given in
-    "$bot->{error}->{captcha}" as a hash reference. You will want to grab
-    the keys 'url' (a relative URL to the image) and 'id' (the ID of the
-    CAPTCHA). Once you have solved the CAPTCHA (presumably by interacting
-    with a human), retry the edit, adding "captcha_id" and
-    "captcha_solution" parameters:
+  CAPTCHAs
 
-        my $edit_status = $bot->edit({page => 'Main Page', text => 'got your nose'});
+    If a CAPTCHA <https://en.wikipedia.org/wiki/CAPTCHA> is encountered,
+    the call to edit will return false, with the error code set to
+    ERR_CAPTCHA and the details informing you that solving a CAPTCHA is
+    required for this action. The information you need to actually solve
+    the captcha (for example the URL for the image) is given in
+    $bot->{error}->{captcha} as a hash reference. You will want to grab the
+    keys 'url' (a relative URL to the image) and 'id' (the ID of the
+    CAPTCHA). Once you have solved the CAPTCHA (presumably by interacting
+    with a human), retry the edit, adding captcha_id and captcha_solution
+    parameters:
+
+        my $edit = {page => 'Main Page', text => 'got your nose'};
+        my $edit_status = $bot->edit($edit);
         if (not $edit_status) {
             if ($bot->{error}->{code} == ERR_CAPTCHA) {
                 my @captcha_uri = split /\Q?/, $bot->{error}{captcha}{url}, 2;
                 my $image = URI->new(sprintf '%s://%s%s?%s' =>
                     $bot->{protocol}, $bot->{host}, $captcha_uri[0], $captcha_uri[1],
                 );
-
+    
                 require Term::ReadLine;
                 my $term = Term::ReadLine->new('Solve the captcha');
                 $term->ornaments(0);
                 my $answer = $term->readline("Please solve $image and type the answer: ");
-
+    
                 # Add new CAPTCHA params to the edit we're attempting
                 $edit->{captcha_id} = $bot->{error}->{captcha}->{id};
                 $edit->{captcha_solution} = $answer;
@@ -275,7 +296,8 @@ METHODS
     API:Edit <https://www.mediawiki.org/wiki/API:Edit>, API:Tokens
     <https://www.mediawiki.org/wiki/API:Tokens>
 
-  move
+ move
+
         $bot->move($from_title, $to_title, $reason, $options_hashref);
 
     This moves a wiki page.
@@ -283,16 +305,16 @@ METHODS
     If you wish to specify more options (like whether to suppress creation
     of a redirect), use $options_hashref, which has keys:
 
-    *   *movetalk* specifies whether to attempt to the talk page.
+      * movetalk specifies whether to attempt to the talk page.
 
-    *   *noredirect* specifies whether to suppress creation of a redirect.
+      * noredirect specifies whether to suppress creation of a redirect.
 
-    *   *movesubpages* specifies whether to move subpages, if applicable.
+      * movesubpages specifies whether to move subpages, if applicable.
 
-    *   *watch* and *unwatch* add or remove the page and the redirect from
-        your watchlist.
+      * watch and unwatch add or remove the page and the redirect from your
+      watchlist.
 
-    *   *ignorewarnings* ignores warnings.
+      * ignorewarnings ignores warnings.
 
         my @pages = ("Humor", "Rumor");
         foreach my $page (@pages) {
@@ -303,7 +325,8 @@ METHODS
 
     References: API:Move <https://www.mediawiki.org/wiki/API:Move>
 
-  get_history
+ get_history
+
         my @hist = $bot->get_history($title, $limit, $revid, $direction);
 
     Returns an array containing the history of the specified $page_title,
@@ -313,14 +336,16 @@ METHODS
     minor, timestamp_date, and timestamp_time.
 
     References: Getting page history
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-histor
-    y>, API:Properties#revisions
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
+    API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-  get_text
+ get_text
+
     Returns an the wikitext of the specified $page_title. The second
-    parameter is $revid - if defined, returns the text of that revision; the
-    third is $section_number - if defined, returns the text of that section.
+    parameter is $revid - if defined, returns the text of that revision;
+    the third is $section_number - if defined, returns the text of that
+    section.
 
     A blank page will return wikitext of "" (which evaluates to false in
     Perl, but is defined); a nonexistent page will return undef (which also
@@ -331,11 +356,12 @@ METHODS
         print "Wikitext: $wikitext\n" if defined $wikitext;
 
     References: Fetching page text
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>
-    , API:Properties#revisions
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
+    API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-  get_id
+ get_id
+
     Returns the id of the specified $page_title. Returns undef if page does
     not exist.
 
@@ -345,7 +371,8 @@ METHODS
     Revisions: API:Properties#info
     <https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
 
-  get_pages
+ get_pages
+
     Returns the text of the specified pages in a hashref. Content of undef
     means page does not exist. Also handles redirects or article names that
     use namespace aliases.
@@ -358,11 +385,12 @@ METHODS
         }
 
     References: Fetching page text
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>
-    , API:Properties#revisions
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
+    API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-  get_image
+ get_image
+
         $buffer = $bot->get_image('File:Foo.jpg', { width=>256, height=>256 });
 
     Download an image from a wiki. This is derived from a similar function
@@ -386,7 +414,8 @@ METHODS
     References: API:Properties#imageinfo
     <https://www.mediawiki.org/wiki/API:Properties#imageinfo_.2F_ii>
 
-  revert
+ revert
+
     Reverts the specified $page_title to $revid, with an edit summary of
     $summary. A default edit summary will be used if $summary is omitted.
 
@@ -396,7 +425,8 @@ METHODS
 
     References: API:Edit <https://www.mediawiki.org/wiki/API:Edit>
 
-  undo
+ undo
+
         $bot->undo($title, $revid, $summary, $after);
 
     Reverts the specified $revid, with an edit summary of $summary, using
@@ -406,10 +436,11 @@ METHODS
 
     References: API:Edit <https://www.mediawiki.org/wiki/API:Edit>
 
-  get_last
-    Returns the revid of the last revision to $page not made by $user. undef
-    is returned if no result was found, as would be the case if the page is
-    deleted.
+ get_last
+
+    Returns the revid of the last revision to $page not made by $user.
+    undef is returned if no result was found, as would be the case if the
+    page is deleted.
 
         my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
         if defined($revid) {
@@ -420,14 +451,15 @@ METHODS
     References: API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-  update_rc
+ update_rc
+
     This method is deprecated, and will emit deprecation warnings. Replace
-    calls to "update_rc()" with calls to the newer "recentchanges()", which
+    calls to update_rc() with calls to the newer recentchanges(), which
     returns all available data, including rcid.
 
-    Returns an array containing the $limit most recent changes to the wiki's
-    *main namespace*. The array contains hashrefs with keys title, revid,
-    old_revid, and timestamp.
+    Returns an array containing the $limit most recent changes to the
+    wiki's main namespace. The array contains hashrefs with keys title,
+    revid, old_revid, and timestamp.
 
         my @rc = $bot->update_rc(5);
         foreach my $hashref (@rc) {
@@ -448,20 +480,24 @@ METHODS
             }
         }
 
-  recentchanges($wiki_hashref, $options_hashref)
+ recentchanges($wiki_hashref, $options_hashref)
+
     Returns an array of hashrefs containing recentchanges data.
 
     The first parameter is a hashref with the following keys:
 
-    *ns* - the namespace number, or an arrayref of numbers to specify
-    several; default is the main namespace
-    *limit* - the number of rows to fetch; default is 50
-    *user* - only list changes by this user
-    *show* - itself a hashref where the key is a category and the value is a
-    boolean. If true, the category will be included; if false, excluded. The
-    categories are kinds of edits: minor, bot, anon, redirect, patrolled.
-    See "rcshow" at
-    <http://www.mediawiki.org/wiki/API:Recentchanges#Parameters>.
+      * ns - the namespace number, or an arrayref of numbers to specify
+      several; default is the main namespace
+
+      * limit - the number of rows to fetch; default is 50
+
+      * user - only list changes by this user
+
+      * show - itself a hashref where the key is a category and the value
+      is a boolean. If true, the category will be included; if false,
+      excluded. The categories are kinds of edits: minor, bot, anon,
+      redirect, patrolled. See "rcshow" at
+      http://www.mediawiki.org/wiki/API:Recentchanges#Parameters.
 
     An "Options hashref" can be used as the second parameter:
 
@@ -469,7 +505,7 @@ METHODS
         foreach my $hashref (@rc) {
             print $hashref->{title} . "\n";
         }
-
+    
         # Or, use a callback for incremental processing:
         $bot->recentchanges({ ns => [0,1], limit => 500 }, { hook => \&mysub });
         sub mysub {
@@ -482,14 +518,21 @@ METHODS
 
     The hashref returned might contain the following keys:
 
-    *ns* - the namespace number
-    *revid*
-    *old_revid*
-    *timestamp*
-    *rcid* - can be used with "patrol"
-    *pageid*
-    *type* - one of edit, new, log (there may be others)
-    *title*
+      * ns - the namespace number
+
+      * revid
+
+      * old_revid
+
+      * timestamp
+
+      * rcid - can be used with "patrol"
+
+      * pageid
+
+      * type - one of edit, new, log (there may be others)
+
+      * title
 
     For backwards compatibility, the previous method signature is still
     supported:
@@ -499,17 +542,18 @@ METHODS
     References: API:Recentchanges
     <https://www.mediawiki.org/wiki/API:Recentchanges>
 
-  what_links_here
+ what_links_here
+
     Returns an array containing a list of all pages linking to $page.
 
     Additional optional parameters are:
 
-    *   One of: all (default), redirects, or nonredirects.
+      * One of: all (default), redirects, or nonredirects.
 
-    *   A namespace number to search (pass an arrayref to search in multiple
-        namespaces)
+      * A namespace number to search (pass an arrayref to search in
+      multiple namespaces)
 
-    *   An "Options hashref".
+      * An "Options hashref".
 
     A typical query:
 
@@ -531,27 +575,28 @@ METHODS
     "list_transclusions" instead.
 
     References: Listing incoming links
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-incoming-li
-    nks>, API:Backlinks <https://www.mediawiki.org/wiki/API:Backlinks>
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-incoming-links>,
+    API:Backlinks <https://www.mediawiki.org/wiki/API:Backlinks>
 
-  list_transclusions
+ list_transclusions
+
     Returns an array containing a list of all pages transcluding $page.
 
     Other parameters are:
 
-    *   One of: all (default), redirects, or nonredirects
+      * One of: all (default), redirects, or nonredirects
 
-    *   A namespace number to search (pass an arrayref to search in multiple
-        namespaces).
+      * A namespace number to search (pass an arrayref to search in
+      multiple namespaces).
 
-    *   $options_hashref as described by MediaWiki::API:
+      * $options_hashref as described by MediaWiki::API:
 
-        Set max to limit the number of queries performed.
+      Set max to limit the number of queries performed.
 
-        Set hook to a subroutine reference to use a callback hook for
-        incremental processing.
+      Set hook to a subroutine reference to use a callback hook for
+      incremental processing.
 
-        Refer to the section on "linksearch" for examples.
+      Refer to the section on "linksearch" for examples.
 
     A typical query:
 
@@ -567,10 +612,11 @@ METHODS
         }
 
     References: Listing transclusions
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-transclusio
-    ns> API:Embeddedin <https://www.mediawiki.org/wiki/API:Embeddedin>
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-transclusions>
+    API:Embeddedin <https://www.mediawiki.org/wiki/API:Embeddedin>
 
-  get_pages_in_category
+ get_pages_in_category
+
     Returns an array containing the names of all pages in the specified
     category (include the Category: prefix). Does not recurse into
     sub-categories.
@@ -578,15 +624,16 @@ METHODS
         my @pages = $bot->get_pages_in_category('Category:People on stamps of Gabon');
         print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
 
-    The options hashref is as described in "Options hashref". Use "{ max =>
-    0 }" to get all results.
+    The options hashref is as described in "Options hashref". Use { max =>
+    0 } to get all results.
 
     References: Listing category contents
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-co
-    ntents>, API:Categorymembers
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-contents>,
+    API:Categorymembers
     <https://www.mediawiki.org/wiki/API:Categorymembers>
 
-  get_all_pages_in_category
+ get_all_pages_in_category
+
         my @pages = $bot->get_all_pages_in_category($category, $options_hashref);
 
     Returns an array containing the names of all pages in the specified
@@ -594,67 +641,71 @@ METHODS
     $options_hashref is described fully in "Options hashref".
 
     References: Listing category contents
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-co
-    ntents>, API:Categorymembers
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-contents>,
+    API:Categorymembers
     <https://www.mediawiki.org/wiki/API:Categorymembers>
 
-  get_all_categories
+ get_all_categories
+
     Returns an array containing the names of all categories.
 
         my @categories = $bot->get_all_categories();
         print "The categories are:\n@categories\n";
 
-    Use "{ max => 0 }" to get all results. The default number of categories
+    Use { max => 0 } to get all results. The default number of categories
     returned is 10, the maximum allowed is 500.
 
     References: API:Allcategories
     <https://www.mediawiki.org/wiki/API:Allcategories>
 
-  linksearch
-    Runs a linksearch on the specified $link and returns an array containing
-    anonymous hashes with keys 'url' for the outbound URL, and 'title' for
-    the page the link is on.
+ linksearch
+
+    Runs a linksearch on the specified $link and returns an array
+    containing anonymous hashes with keys 'url' for the outbound URL, and
+    'title' for the page the link is on.
 
     Additional parameters are:
 
-    *   A namespace number to search (pass an arrayref to search in multiple
-        namespaces).
+      * A namespace number to search (pass an arrayref to search in
+      multiple namespaces).
 
-    *   You can search by $protocol (http is default).
+      * You can search by $protocol (http is default).
 
-    *   $options_hashref is fully documented in "Options hashref":
+      * $options_hashref is fully documented in "Options hashref":
 
-        Set *max* in $options to get more than one query's worth of results:
+      Set max in $options to get more than one query's worth of results:
 
-            my $options = { max => 10, }; # I only want some results
-            my @links = $bot->linksearch("slashdot.org", 1, undef, $options);
-            foreach my $hash (@links) {
-                my $url = $hash->{'url'};
-                my $page = $hash->{'title'};
-                print "$page: $url\n";
-            }
+          my $options = { max => 10, }; # I only want some results
+          my @links = $bot->linksearch("slashdot.org", 1, undef, $options);
+          foreach my $hash (@links) {
+              my $url = $hash->{'url'};
+              my $page = $hash->{'title'};
+              print "$page: $url\n";
+          }
 
-        Set *hook* to a subroutine reference to use a callback hook for
-        incremental processing:
+      Set hook to a subroutine reference to use a callback hook for
+      incremental processing:
 
-            my $options = { hook => \&mysub, }; # I want to do incremental processing
-            $bot->linksearch("slashdot.org", 1, undef, $options);
-            sub mysub {
-                my ($res) = @_;
-                foreach my $hashref (@$res) {
-                    my $url  = $hashref->{'url'};
-                    my $page = $hashref->{'title'};
-                    print "$page: $url\n";
-                }
-            }
+          my $options = { hook => \&mysub, }; # I want to do incremental processing
+          $bot->linksearch("slashdot.org", 1, undef, $options);
+          sub mysub {
+              my ($res) = @_;
+              foreach my $hashref (@$res) {
+                  my $url  = $hashref->{'url'};
+                  my $page = $hashref->{'title'};
+                  print "$page: $url\n";
+              }
+          }
 
     References: Finding external links
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Finding-external-li
-    nks>, API:Exturlusage <https://www.mediawiki.org/wiki/API:Exturlusage>
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Finding-external-links>,
+    API:Exturlusage <https://www.mediawiki.org/wiki/API:Exturlusage>
 
-  purge_page
-    Purges the server cache of the specified $page. Returns true on success;
-    false on failure. Pass an array reference to purge multiple pages.
+ purge_page
+
+    Purges the server cache of the specified $page. Returns true on
+    success; false on failure. Pass an array reference to purge multiple
+    pages.
 
     If you really care, a true return value is the number of pages
     successfully purged. You could check that it is the same as the number
@@ -663,10 +714,10 @@ METHODS
 
         my @to_purge = ('Main Page', 'A', 'B', 'C', 'Very unlikely to exist');
         my $size = scalar @to_purge;
-
+    
         print "all-at-once:\n";
         my $success = $bot->purge_page(\@to_purge);
-
+    
         if ($success == $size) {
             print "@to_purge: OK ($success/$size)\n";
         }
@@ -676,7 +727,7 @@ METHODS
                 . join(', ', @to_purge)
                 . ")\n";
         }
-
+    
         # OR
         print "\n\none-at-a-time:\n";
         foreach my $page (@to_purge) {
@@ -685,10 +736,11 @@ METHODS
         }
 
     References: Purging the server cache
-    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Purging-the-server-
-    cache>, API:Purge <https://www.mediawiki.org/wiki/API:Purge>
+    <https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Purging-the-server-cache>,
+    API:Purge <https://www.mediawiki.org/wiki/API:Purge>
 
-  get_namespace_names
+ get_namespace_names
+
         my %namespace_names = $bot->get_namespace_names();
 
     Returns a hash linking the namespace id, such as 1, to its named
@@ -697,19 +749,20 @@ METHODS
     References: API:Meta#siteinfo
     <https://www.mediawiki.org/wiki/API:Meta#siteinfo_.2F_si>
 
-  image_usage
-    Gets a list of pages which include a certain $image. Include the "File:"
-    namespace prefix to avoid incurring an extra round-trip (which will also
-    emit a deprecation warnings).
+ image_usage
+
+    Gets a list of pages which include a certain $image. Include the File:
+    namespace prefix to avoid incurring an extra round-trip (which will
+    also emit a deprecation warnings).
 
     Additional parameters are:
 
-    *   A namespace number to fetch results from (or an arrayref of multiple
-        namespace numbers)
+      * A namespace number to fetch results from (or an arrayref of
+      multiple namespace numbers)
 
-    *   One of all, redirect, or nonredirects.
+      * One of all, redirect, or nonredirects.
 
-    *   $options is a hashref as described in the section for "linksearch".
+      * $options is a hashref as described in the section for "linksearch".
 
         my @pages = $bot->image_usage("File:Albert Einstein Head.jpg");
 
@@ -730,7 +783,8 @@ METHODS
     References: API:Imageusage
     <https://www.mediawiki.org/wiki/API:Imageusage>
 
-  global_image_usage($image, $results, $filterlocal)
+ global_image_usage($image, $results, $filterlocal)
+
     Returns an array of hashrefs of data about pages which use the given
     image.
 
@@ -738,43 +792,47 @@ METHODS
 
     The keys in each hashref are title, url, and wiki. $results is the
     maximum number of results that will be returned (not the maximum number
-    of requests that will be sent, like "max" in the "Options hashref"); the
+    of requests that will be sent, like max in the "Options hashref"); the
     default is to attempt to fetch 500 (set to 0 to get all results).
     $filterlocal will filter out local uses of the image.
 
     References: Extension:GlobalUsage#API
     <https://www.mediawiki.org/wiki/Extension:GlobalUsage#API>
 
-  links_to_image
+ links_to_image
+
     A backward-compatible call to "image_usage". You can provide only the
     image title.
 
     This method is deprecated, and will emit deprecation warnings.
 
-  is_blocked
+ is_blocked
+
         my $blocked = $bot->is_blocked('User:Mike.lifeguard');
 
     Checks if a user is currently blocked.
 
     References: API:Blocks <https://www.mediawiki.org/wiki/API:Blocks>
 
-  test_blocked
+ test_blocked
+
     Retained for backwards compatibility. Use "is_blocked" for clarity.
 
     This method is deprecated, and will emit deprecation warnings.
 
-  test_image_exists
+ test_image_exists
+
     Checks if an image exists at $page.
 
-    *   FILE_NONEXISTENT (0) means "Nothing there"
+      * FILE_NONEXISTENT (0) means "Nothing there"
 
-    *   FILE_LOCAL (1) means "Yes, an image exists locally"
+      * FILE_LOCAL (1) means "Yes, an image exists locally"
 
-    *   FILE_SHARED (2) means "Yes, an image exists on Commons
-        <http://commons.wikimedia.org>"
+      * FILE_SHARED (2) means "Yes, an image exists on Commons
+      <http://commons.wikimedia.org>"
 
-    *   FILE_PAGE_TEXT_ONLY (3) means "No image exists, but there is text on
-        the page"
+      * FILE_PAGE_TEXT_ONLY (3) means "No image exists, but there is text
+      on the page"
 
     If you pass in an arrayref of images, you'll get out an arrayref of
     results.
@@ -797,7 +855,8 @@ METHODS
     References: API:Properties#imageinfo
     <https://www.mediawiki.org/wiki/API:Properties#imageinfo_.2F_ii>
 
-  get_pages_in_namespace
+ get_pages_in_namespace
+
         $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
 
     Returns an array containing the names of all pages in the specified
@@ -805,8 +864,8 @@ METHODS
 
     Setting $page_limit is optional, and specifies how many items to
     retrieve at once. Setting this to 'max' is recommended, and this is the
-    default if omitted. If $page_limit is over 500, it will be rounded up to
-    the next multiple of 500. If $page_limit is set higher than you are
+    default if omitted. If $page_limit is over 500, it will be rounded up
+    to the next multiple of 500. If $page_limit is set higher than you are
     allowed to use, it will silently be reduced. Consider setting key 'max'
     in the "Options hashref" to retrieve multiple sets of results:
 
@@ -815,14 +874,16 @@ METHODS
 
     References: API:Allpages <https://www.mediawiki.org/wiki/API:Allpages>
 
-  count_contributions
+ count_contributions
+
         my $count = $bot->count_contributions($user);
 
     Uses the API to count $user's contributions.
 
     References: API:Users <https://www.mediawiki.org/wiki/API:Users>
 
-  timed_count_contributions
+ timed_count_contributions
+
         ($timed_edits_count, $total_count) = $bot->timed_count_contributions($user, $days);
 
     Uses the API to count $user's contributions in last number of $days and
@@ -839,22 +900,25 @@ METHODS
 
         my $total = $bot->count_contributions($user);
 
-    and use timed_count_contributions only in scalar context, but that would
-    mean one more call to server (meaning more server load) of which you are
-    excused as timed_count_contributions returns array with two parameters.
+    and use timed_count_contributions only in scalar context, but that
+    would mean one more call to server (meaning more server load) of which
+    you are excused as timed_count_contributions returns array with two
+    parameters.
 
     References: Extension:UserDailyContribs
     <https://www.mediawiki.org/wiki/Extension:UserDailyContribs>
 
-  last_active
+ last_active
+
         my $latest_timestamp = $bot->last_active($user);
 
-    Returns the last active time of $user in "YYYY-MM-DDTHH:MM:SSZ".
+    Returns the last active time of $user in YYYY-MM-DDTHH:MM:SSZ.
 
     References: API:Usercontribs
     <https://www.mediawiki.org/wiki/API:Usercontribs>
 
-  recent_edit_to_page
+ recent_edit_to_page
+
          my ($timestamp, $user) = $bot->recent_edit_to_page($title);
 
     Returns timestamp and username for most recent (top) edit to $page.
@@ -862,7 +926,8 @@ METHODS
     References: API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-  get_users
+ get_users
+
         my @recent_editors = $bot->get_users($title, $limit, $revid, $direction);
 
     Gets the most recent editors to $page, up to $limit, starting from
@@ -871,21 +936,25 @@ METHODS
     References: API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-  was_blocked
+ was_blocked
+
         for ("Mike.lifeguard", "Jimbo Wales") {
             print "$_ was blocked\n" if $bot->was_blocked($_);
         }
 
     Returns whether $user has ever been blocked.
 
-    References: API:Logevents <https://www.mediawiki.org/wiki/API:Logevents>
+    References: API:Logevents
+    <https://www.mediawiki.org/wiki/API:Logevents>
 
-  test_block_hist
+ test_block_hist
+
     Retained for backwards compatibility. Use "was_blocked" for clarity.
 
     This method is deprecated, and will emit deprecation warnings.
 
-  expandtemplates
+ expandtemplates
+
         my $expanded = $bot->expandtemplates($title, $wikitext);
 
     Expands templates on $page, using $text if provided, otherwise loading
@@ -894,16 +963,18 @@ METHODS
     References: API:Parsing wikitext
     <https://www.mediawiki.org/wiki/API:Parsing_wikitext>
 
-  get_allusers
+ get_allusers
+
         my @users = $bot->get_allusers($limit, $user_group, $options_hashref);
 
-    Returns an array of all users. Default $limit is 500. Optionally specify
-    a $group (like 'sysop') to list that group only. The last optional
-    parameter is an "Options hashref".
+    Returns an array of all users. Default $limit is 500. Optionally
+    specify a $group (like 'sysop') to list that group only. The last
+    optional parameter is an "Options hashref".
 
     References: API:Allusers <https://www.mediawiki.org/wiki/API:Allusers>
 
-  db_to_domain
+ db_to_domain
+
     Converts a wiki/database name (enwiki) to the domain name
     (en.wikipedia.org).
 
@@ -926,7 +997,8 @@ METHODS
     References: Extension:SiteMatrix
     <https://www.mediawiki.org/wiki/Extension:SiteMatrix>
 
-  domain_to_db
+ domain_to_db
+
         my $db = $bot->domain_to_db($domain_name);
 
     As you might expect, does the opposite of "domain_to_db": Converts a
@@ -935,35 +1007,37 @@ METHODS
     References: Extension:SiteMatrix
     <https://www.mediawiki.org/wiki/Extension:SiteMatrix>
 
-  diff
+ diff
+
     This allows retrieval of a diff from the API. The return is a scalar
-    containing the *HTML table* of the diff. Options are passed as a hashref
+    containing the HTML table of the diff. Options are passed as a hashref
     with keys:
 
-    *   *title* is the title to use. Provide *either* this or revid.
+      * title is the title to use. Provide either this or revid.
 
-    *   *revid* is any revid to diff from. If you also specified title, only
-        title will be honoured.
+      * revid is any revid to diff from. If you also specified title, only
+      title will be honoured.
 
-    *   *oldid* is an identifier to diff to. This can be a revid, or the
-        special values 'cur', 'prev' or 'next'
+      * oldid is an identifier to diff to. This can be a revid, or the
+      special values 'cur', 'prev' or 'next'
 
     References: API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-  prefixindex
-    This returns an array of hashrefs containing page titles that start with
-    the given $prefix. The hashref has keys 'title' and 'redirect' (present
-    if the page is a redirect, not present otherwise).
+ prefixindex
+
+    This returns an array of hashrefs containing page titles that start
+    with the given $prefix. The hashref has keys 'title' and 'redirect'
+    (present if the page is a redirect, not present otherwise).
 
     Additional parameters are:
 
-    *   One of all, redirects, or nonredirects
+      * One of all, redirects, or nonredirects
 
-    *   A single namespace number (unlike linksearch etc, which can accept
-        an arrayref of numbers).
+      * A single namespace number (unlike linksearch etc, which can accept
+      an arrayref of numbers).
 
-    *   $options_hashref as described in "Options hashref".
+      * $options_hashref as described in "Options hashref".
 
         my @prefix_pages = $bot->prefixindex("User:Mike.lifeguard");
         # Or, the more efficient equivalent
@@ -980,16 +1054,17 @@ METHODS
 
     References: API:Allpages <https://www.mediawiki.org/wiki/API:Allpages>
 
-  search
+ search
+
     This is a simple search for your $search_term in page text. It returns
     an array of page titles matching.
 
     Additional optional parameters are:
 
-    *   A namespace number to search in, or an arrayref of numbers (default
-        is the main namespace)
+      * A namespace number to search in, or an arrayref of numbers (default
+      is the main namespace)
 
-    *   $options_hashref is a hashref as described in "Options hashref":
+      * $options_hashref is a hashref as described in "Options hashref":
 
         my @pages = $bot->search("Mike.lifeguard", 2);
         print "@pages\n";
@@ -1007,18 +1082,19 @@ METHODS
 
     References: API:Search <https://www.mediawiki.org/wiki/API:Search>
 
-  get_log
-    This fetches log entries, and returns results as an array of hashes. The
-    first parameter is a hashref with keys:
+ get_log
 
-    *   *type* is the log type (block, delete...)
+    This fetches log entries, and returns results as an array of hashes.
+    The first parameter is a hashref with keys:
 
-    *   *user* is the user who *performed* the action. Do not include the
-        User: prefix
+      * type is the log type (block, delete...)
 
-    *   *target* is the target of the action. Where an action was performed
-        to a page, it is the page title. Where an action was performed to a
-        user, it is User:$username.
+      * user is the user who performed the action. Do not include the User:
+      prefix
+
+      * target is the target of the action. Where an action was performed
+      to a page, it is the page title. Where an action was performed to a
+      user, it is User:$username.
 
     The second is the familiar "Options hashref".
 
@@ -1030,7 +1106,7 @@ METHODS
             my $user = $entry->{'title'};
             print "$user\n";
         }
-
+    
         $bot->get_log({
                 type => 'block',
                 user => 'User:Mike.lifeguard',
@@ -1045,12 +1121,14 @@ METHODS
             }
         }
 
-    References: API:Logevents <https://www.mediawiki.org/wiki/API:Logevents>
+    References: API:Logevents
+    <https://www.mediawiki.org/wiki/API:Logevents>
 
-  is_g_blocked
+ is_g_blocked
+
         my $is_globally_blocked = $bot->is_g_blocked('127.0.0.1');
 
-    Returns what IP/range block *currently in place* affects the IP/range.
+    Returns what IP/range block currently in place affects the IP/range.
     The return is a scalar of an IP/range if found (evaluates to true in
     boolean context); undef otherwise (evaluates false in boolean context).
     Pass in a single IP or CIDR range.
@@ -1058,25 +1136,30 @@ METHODS
     References: Extension:GlobalBlocking
     <https://www.mediawiki.org/wiki/Extension:GlobalBlocking/API>
 
-  was_g_blocked
+ was_g_blocked
+
         print "127.0.0.1 was globally blocked\n" if $bot->was_g_blocked('127.0.0.1');
 
     Returns whether an IP/range was ever globally blocked. You should
-    probably call this method only when your bot is operating on Meta - this
-    method will warn if not.
+    probably call this method only when your bot is operating on Meta -
+    this method will warn if not.
 
-    References: API:Logevents <https://www.mediawiki.org/wiki/API:Logevents>
+    References: API:Logevents
+    <https://www.mediawiki.org/wiki/API:Logevents>
 
-  was_locked
+ was_locked
+
         my $was_locked = $bot->was_locked('Mike.lifeguard');
 
     Returns whether a user was ever locked. You should probably call this
     method only when your bot is operating on Meta - this method will warn
     if not.
 
-    References: API:Logevents <https://www.mediawiki.org/wiki/API:Logevents>
+    References: API:Logevents
+    <https://www.mediawiki.org/wiki/API:Logevents>
 
-  get_protection
+ get_protection
+
     Returns data on page protection as a array of up to two hashrefs. Each
     hashref has a type, level, and expiry. Levels are 'sysop' and
     'autoconfirmed'; types are 'move' and 'edit'; expiry is a timestamp.
@@ -1103,31 +1186,36 @@ METHODS
     References: API:Properties#info
     <https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
 
-  is_protected
+ is_protected
+
     This is a synonym for "get_protection", which should be used in
     preference.
 
     This method is deprecated, and will emit deprecation warnings.
 
-  patrol
+ patrol
+
         $bot->patrol($rcid);
 
     Marks a page or revision identified by the $rcid as patrolled. To mark
     several RCIDs as patrolled, you may pass an arrayref of them. Returns
-    false and sets "$bot->{error}" if the account cannot patrol.
+    false and sets $bot->{error} if the account cannot patrol.
 
     References: API:Patrol <https://www.mediawiki.org/wiki/API:Patrol>
 
-  email
+ email
+
         $bot->email($user, $subject, $body);
 
-    This allows you to send emails through the wiki. All 3 of $user (without
-    the User: prefix), $subject and $body are required. If $user is an
-    arrayref, this will send the same email (subject and body) to all users.
+    This allows you to send emails through the wiki. All 3 of $user
+    (without the User: prefix), $subject and $body are required. If $user
+    is an arrayref, this will send the same email (subject and body) to all
+    users.
 
     References: API:Email <https://www.mediawiki.org/wiki/API:Email>
 
-  top_edits
+ top_edits
+
     Returns an array of the page titles where the $user is the latest
     editor. The second parameter is the familiar $options_hashref.
 
@@ -1140,7 +1228,7 @@ METHODS
     the top edits is done. For that reason, you should use "contributions"
     if you need to use a callback. If you use a callback with top_edits(),
     you will not necessarily get top edits returned. It is only safe to use
-    a callback if you *check* that it is a top edit:
+    a callback if you check that it is a top edit:
 
         $bot->top_edits("Mike.lifeguard", { hook => \&rv });
         sub rv {
@@ -1155,19 +1243,21 @@ METHODS
     References: API:Usercontribs
     <https://www.mediawiki.org/wiki/API:Usercontribs>
 
-  contributions
+ contributions
+
         my @contribs = $bot->contributions($user, $namespace, $options);
 
     Returns an array of hashrefs of data for the user's contributions. $ns
-    can be an arrayref of namespace numbers. $options can be specified as in
-    "linksearch".
+    can be an arrayref of namespace numbers. $options can be specified as
+    in "linksearch".
 
     Specify an arrayref of users to get results for multiple users.
 
     References: API:Usercontribs
     <https://www.mediawiki.org/wiki/API:Usercontribs>
 
-  upload
+ upload
+
         $bot->upload({ data => $file_contents, summary => 'uploading file' });
         $bot->upload({ file => $file_name,     title   => 'Target filename.png' });
 
@@ -1176,9 +1266,10 @@ METHODS
 
     References: API:Upload <https://www.mediawiki.org/wiki/API:Upload>
 
-  upload_from_url
-    Upload file directly from URL to the wiki. Specify URL, the new filename
-    and summary. Summary and new filename are optional.
+ upload_from_url
+
+    Upload file directly from URL to the wiki. Specify URL, the new
+    filename and summary. Summary and new filename are optional.
 
         $bot->upload_from_url({
             url => 'http://some.domain.ext/pic.png',
@@ -1194,107 +1285,67 @@ METHODS
     References: API:Upload#Uploading_from_URL
     <https://www.mediawiki.org/wiki/API:Upload#Uploading_from_URL>
 
-  usergroups
+ usergroups
+
     Returns a list of the usergroups a user is in:
 
         my @usergroups = $bot->usergroups('Mike.lifeguard');
 
     References: API:Users <https://www.mediawiki.org/wiki/API:Users>
 
-  Options hashref
+ Options hashref
+
     This is passed through to the lower-level interface MediaWiki::API, and
     is fully documented there.
 
     The hashref can have 3 keys:
 
-    max Specifies the maximum number of queries to retrieve data from the
-        wiki. This is independent of the *size* of each query (how many
-        items each query returns). Set to 0 to retrieve all the results.
+    max
+
+      Specifies the maximum number of queries to retrieve data from the
+      wiki. This is independent of the size of each query (how many items
+      each query returns). Set to 0 to retrieve all the results.
 
     hook
-        Specifies a coderef to a hook function that can be used to process
-        large lists as they come in. When this is used, your subroutine will
-        get the raw data. This is noted in cases where it is known to be
-        significant. For example, when using a hook with "top_edits()", you
-        need to check whether the edit is the top edit yourself - your
-        subroutine gets results as they come in, and before they're
-        filtered.
+
+      Specifies a coderef to a hook function that can be used to process
+      large lists as they come in. When this is used, your subroutine will
+      get the raw data. This is noted in cases where it is known to be
+      significant. For example, when using a hook with top_edits(), you
+      need to check whether the edit is the top edit yourself - your
+      subroutine gets results as they come in, and before they're filtered.
 
     skip_encoding
-        MediaWiki's API uses UTF-8 and any 8 bit character string parameters
-        are encoded automatically by the API call. If your parameters are
-        already in UTF-8 this will be detected and the encoding will be
-        skipped. If your parameters for some reason contain UTF-8 data but
-        no UTF-8 flag is set (i.e. you did not use the "use utf8;" pragma)
-        you should prevent re-encoding by passing an option "skip_encoding
-        => 1". For example:
 
-            $category ="Cat\x{e9}gorie:moyen_fran\x{e7}ais"; # latin1 string
-            $bot->get_all_pages_in_category($category); # OK
+      MediaWiki's API uses UTF-8 and any 8 bit character string parameters
+      are encoded automatically by the API call. If your parameters are
+      already in UTF-8 this will be detected and the encoding will be
+      skipped. If your parameters for some reason contain UTF-8 data but no
+      UTF-8 flag is set (i.e. you did not use the use utf8; pragma) you
+      should prevent re-encoding by passing an option skip_encoding => 1.
+      For example:
 
-            $category = "Cat". pack("U", 0xe9)."gorie:moyen_fran".pack("U",0xe7)."ais"; # unicode string
-            $bot->get_all_pages_in_category($category); # OK
+          $category ="Cat\x{e9}gorie:moyen_fran\x{e7}ais"; # latin1 string
+          $bot->get_all_pages_in_category($category); # OK
+      
+          $category = "Cat". pack("U", 0xe9)."gorie:moyen_fran".pack("U",0xe7)."ais"; # unicode string
+          $bot->get_all_pages_in_category($category); # OK
+      
+          $category ="Cat\x{c3}\x{a9}gorie:moyen_fran\x{c3}\x{a7}ais"; # unicode data without utf-8 flag
+          # $bot->get_all_pages_in_category($category); # NOT OK
+          $bot->get_all_pages_in_category($category, { skip_encoding => 1 }); # OK
 
-            $category ="Cat\x{c3}\x{a9}gorie:moyen_fran\x{c3}\x{a7}ais"; # unicode data without utf-8 flag
-            # $bot->get_all_pages_in_category($category); # NOT OK
-            $bot->get_all_pages_in_category($category, { skip_encoding => 1 }); # OK
-
-        If you need this, it probably means you're doing something wrong.
-        Feel free to ask for help.
+      If you need this, it probably means you're doing something wrong.
+      Feel free to ask for help.
 
 ERROR HANDLING
+
     All functions will return undef in any handled error situation. Further
-    error data is stored in "$bot->{error}->{code}" and
-    "$bot->{error}->{details}".
+    error data is stored in $bot->{error}->{code} and
+    $bot->{error}->{details}.
 
     Error codes are provided as constants in MediaWiki::Bot::Constants, and
     can also be imported through this module:
 
         use MediaWiki::Bot qw(:constants);
-
-AVAILABILITY
-    The project homepage is <https://metacpan.org/module/MediaWiki::Bot>.
-
-    The latest version of this module is available from the Comprehensive
-    Perl Archive Network (CPAN). Visit <http://www.perl.com/CPAN/> to find a
-    CPAN site near you, or see
-    <https://metacpan.org/module/MediaWiki::Bot/>.
-
-SOURCE
-    The development version is on github at
-    <http://github.com/MediaWiki-Bot/MediaWiki-Bot> and may be cloned from
-    <git://github.com/MediaWiki-Bot/MediaWiki-Bot.git>
-
-BUGS AND LIMITATIONS
-    You can make new bug reports, and view existing ones, through the web
-    interface at <https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues>.
-
-AUTHORS
-    *   Dan Collins <dcollins@cpan.org>
-
-    *   Mike.lifeguard <lifeguard@cpan.org>
-
-    *   Alex Rowe <alex.d.rowe@gmail.com>
-
-    *   Oleg Alexandrov <oleg.alexandrov@gmail.com>
-
-    *   jmax.code <jmax.code@gmail.com>
-
-    *   Stefan Petrea <stefan.petrea@gmail.com>
-
-    *   kc2aei <kc2aei@gmail.com>
-
-    *   bosborne@alum.mit.edu
-
-    *   Brian Obio <brianobio@gmail.com>
-
-    *   patch and bug report contributors
-
-COPYRIGHT AND LICENSE
-    This software is Copyright (c) 2014 by the MediaWiki::Bot team
-    <perlwikibot@googlegroups.com>.
-
-    This is free software, licensed under:
-
-      The GNU General Public License, Version 3, June 2007
 
