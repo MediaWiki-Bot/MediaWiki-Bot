@@ -2853,6 +2853,7 @@ sub search {
     my $hash = {
         action   => 'query',
         list     => 'search',
+        srnamespace => $ns,
         srsearch => $term,
         srwhat   => 'text',
         srlimit  => 'max',
