@@ -19,7 +19,7 @@ my $bot = MediaWiki::Bot->new({
               undef,                    # doesn't exist
               'meta.wikimedia.org',     # ok
               undef,                    # private
-              undef                     # closed
+              'aa.wikipedia.org'        # closed
             ];
     my $domains = $bot->db_to_domain(\@wikis);
 
@@ -36,7 +36,7 @@ my $bot = MediaWiki::Bot->new({
           undef,            # doesn't exist
           'meta',           # ok
           undef,            # private
-          undef             # closed
+          'aawiki'          # closed
         ];
 
     ok(     @$wikis,                    'Something was returned');
