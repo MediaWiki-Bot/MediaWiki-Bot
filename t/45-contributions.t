@@ -31,7 +31,12 @@ subtest 'contribs' => sub {
 
 subtest 'multiple users' => sub {
     plan tests => 3;
-    my @contribs = $bot->contributions(['User:Mike.lifeguard', 'User:Reedy']);
+    my @contribs = $bot->contributions(['User:Mike.lifeguard', 'User:Reedy'], undef, undef,
+			'2015-01-01T00:00:00Z',
+			'2016-01-01T00:00:00Z',
+		);
+		use Data::Dumper;
+		print Dumper [0 + @contribs];
 
     isa_ok $contribs[0], 'HASH', 'array of hashes' or diag explain \@contribs;
     my %users = map { $_->{user} => 1 } @contribs;
