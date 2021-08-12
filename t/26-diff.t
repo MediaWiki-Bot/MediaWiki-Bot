@@ -31,7 +31,7 @@ my $is = $bot->diff({
     revid   => 92376,
     oldid   => 92373,
 });
-$is =~ s{<!-- diff cache key [a-z0-9:.]+? -->}{}; # This cache key will change, so strip it out
+$is =~ s{<!-- diff cache key [a-z0-9:.:-]+? -->}{}; # This cache key will change, so strip it out
 
 my $ought = do { local $/; <DATA> };
 1 while (chomp $is);

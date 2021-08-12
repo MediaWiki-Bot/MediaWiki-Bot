@@ -17,9 +17,9 @@ like($wikitext, qr/MediaWiki/, 'Main Page found');
 $wikitext = $bot->get_text('User:Mike.lifeguard/03-get text.t');
 is($wikitext, q{I know for a ''fact'' that this page contains 60 characters.}, 'Known text retrieved');
 
-my $page = 'Main Page';
+my $page = 'User:Mike.lifeguard/index';
 $wikitext = $bot->get_text($page);
-my $section_wikitext = $bot->get_text($page, undef, 3);
+my $section_wikitext = $bot->get_text($page, undef, 2);
 isnt $section_wikitext => undef,             'Section load pass/fail';
 isnt $wikitext => $section_wikitext,         'Section loaded content correctly';
 like $wikitext => qr/\Q$section_wikitext\E/, 'Section loaded content correctly';

@@ -3305,10 +3305,15 @@ sub top_edits {
 
 =head2 contributions
 
-    my @contribs = $bot->contributions($user, $namespace, $options);
+    my @contribs = $bot->contributions($user, $namespace, $options, $from, $to);
 
-Returns an array of hashrefs of data for the user's contributions. $ns can be an
-arrayref of namespace numbers. $options can be specified as in L</linksearch>.
+Returns an array of hashrefs of data for the user's contributions. $namespace 
+can be an arrayref of namespace numbers. $options can be specified as in 
+L</linksearch>.
+$from and $to are optional timestamps. ISO 8601 date and time is recommended: 
+2001-01-15T14:56:00Z, see L<https://www.mediawiki.org/wiki/Timestamp> for all 
+possible formats.
+Note that $from (=ucend) has to be before $to (=ucstart), unlike direct API access.
 
 Specify an arrayref of users to get results for multiple users.
 
@@ -3321,6 +3326,8 @@ sub contributions {
     my $user = shift;
     my $ns   = shift;
     my $opts = shift;
+    my $from = shift; # ucend
+    my $to   = shift; # ucstart
 
     if (ref $user eq 'ARRAY') {
         $user = join '|', map { my $u = $_; $u =~ s{^User:}{}; $u } @$user;
@@ -3342,6 +3349,8 @@ sub contributions {
         ucprop      => 'ids|title|timestamp|comment|flags',
         uclimit     => 'max',
     };
+    $query->{'ucstart'} = $to if defined $to;
+    $query->{'ucend'} = $from if defined $from;
     my $res = $self->{api}->list($query, $opts);
     return $self->_handle_api_error() unless $res->[0];
     return RET_TRUE if not ref $res; # Not a ref when using callback

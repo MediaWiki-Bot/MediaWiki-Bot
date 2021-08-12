@@ -12,7 +12,7 @@ my $bot = MediaWiki::Bot->new({
 });
 
 # Hasn't been locked (yet)
-my $result = $bot->was_locked('Jimbo Wales');
+my $result = $bot->was_locked('Reedy');
 ok(!$result, 'lock history');
 
 # I was once locked
