@@ -897,7 +897,7 @@ sub get_history {
     };
 
     $hash->{rvstartid} = $rvstartid if ($rvstartid);
-    $hash->{direction} = $direction if ($direction);
+    $hash->{rvdir}     = $direction if ($direction);
 
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
