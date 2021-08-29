@@ -3307,11 +3307,11 @@ sub top_edits {
 
     my @contribs = $bot->contributions($user, $namespace, $options, $from, $to);
 
-Returns an array of hashrefs of data for the user's contributions. $namespace 
-can be an arrayref of namespace numbers. $options can be specified as in 
+Returns an array of hashrefs of data for the user's contributions. $namespace
+can be an arrayref of namespace numbers. $options can be specified as in
 L</linksearch>.
-$from and $to are optional timestamps. ISO 8601 date and time is recommended: 
-2001-01-15T14:56:00Z, see L<https://www.mediawiki.org/wiki/Timestamp> for all 
+$from and $to are optional timestamps. ISO 8601 date and time is recommended:
+2001-01-15T14:56:00Z, see L<https://www.mediawiki.org/wiki/Timestamp> for all
 possible formats.
 Note that $from (=ucend) has to be before $to (=ucstart), unlike direct API access.
 
