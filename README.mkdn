@@ -4,7 +4,17 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 5.006003
+version 5.006004
+
+# ERROR HANDLING
+
+All functions will return undef in any handled error situation. Further error
+data is stored in `$bot->{error}->{code}` and `$bot->{error}->{details}`.
+
+Error codes are provided as constants in [MediaWiki::Bot::Constants](https://metacpan.org/pod/MediaWiki%3A%3ABot%3A%3AConstants), and can also
+be imported through this module:
+
+    use MediaWiki::Bot qw(:constants);
 
 # SYNOPSIS
 
@@ -157,7 +167,7 @@ meta, commons, incubator, and wikispecies.
 ### Basic authentication
 
 If you need to supply basic auth credentials, pass a hashref of data as
-described by [LWP::UserAgent](https://metacpan.org/pod/LWP::UserAgent):
+described by [LWP::UserAgent](https://metacpan.org/pod/LWP%3A%3AUserAgent):
 
     $bot->login({
         username    => $username,
@@ -348,7 +358,7 @@ aliases.
     $buffer = $bot->get_image('File:Foo.jpg', { width=>256, height=>256 });
 
 Download an image from a wiki. This is derived from a similar function in
-[MediaWiki::API](https://metacpan.org/pod/MediaWiki::API). This one allows the image to be scaled down by passing a hashref
+[MediaWiki::API](https://metacpan.org/pod/MediaWiki%3A%3AAPI). This one allows the image to be scaled down by passing a hashref
 with height & width parameters.
 
 It returns raw data in the original format. You may simply spew it to a file, or
@@ -520,7 +530,7 @@ Other parameters are:
 
 - One of: all (default), redirects, or nonredirects
 - A namespace number to search (pass an arrayref to search in multiple namespaces).
-- $options\_hashref as described by [MediaWiki::API](https://metacpan.org/pod/MediaWiki::API):
+- $options\_hashref as described by [MediaWiki::API](https://metacpan.org/pod/MediaWiki%3A%3AAPI):
 
     Set max to limit the number of queries performed.
 
@@ -1118,10 +1128,15 @@ callback if you _check_ that it is a top edit:
 
 ## contributions
 
-    my @contribs = $bot->contributions($user, $namespace, $options);
+    my @contribs = $bot->contributions($user, $namespace, $options, $from, $to);
 
-Returns an array of hashrefs of data for the user's contributions. $ns can be an
-arrayref of namespace numbers. $options can be specified as in ["linksearch"](#linksearch).
+Returns an array of hashrefs of data for the user's contributions. $namespace 
+can be an arrayref of namespace numbers. $options can be specified as in 
+["linksearch"](#linksearch).
+$from and $to are optional timestamps. ISO 8601 date and time is recommended: 
+2001-01-15T14:56:00Z, see [https://www.mediawiki.org/wiki/Timestamp](https://www.mediawiki.org/wiki/Timestamp) for all 
+possible formats.
+Note that $from (=ucend) has to be before $to (=ucstart), unlike direct API access.
 
 Specify an arrayref of users to get results for multiple users.
 
@@ -1164,7 +1179,7 @@ Returns a list of the usergroups a user is in:
 
 ## Options hashref
 
-This is passed through to the lower-level interface [MediaWiki::API](https://metacpan.org/pod/MediaWiki::API), and is
+This is passed through to the lower-level interface [MediaWiki::API](https://metacpan.org/pod/MediaWiki%3A%3AAPI), and is
 fully documented there.
 
 The hashref can have 3 keys:
@@ -1206,16 +1221,6 @@ The hashref can have 3 keys:
     If you need this, it probably means you're doing something wrong. Feel free to
     ask for help.
 
-# ERROR HANDLING
-
-All functions will return undef in any handled error situation. Further error
-data is stored in `$bot->{error}->{code}` and `$bot->{error}->{details}`.
-
-Error codes are provided as constants in [MediaWiki::Bot::Constants](https://metacpan.org/pod/MediaWiki::Bot::Constants), and can also
-be imported through this module:
-
-    use MediaWiki::Bot qw(:constants);
-
 # AVAILABILITY
 
 The project homepage is [https://metacpan.org/module/MediaWiki::Bot](https://metacpan.org/module/MediaWiki::Bot).
@@ -1226,7 +1231,7 @@ site near you, or see [https://metacpan.org/module/MediaWiki::Bot/](https://meta
 
 # SOURCE
 
-The development version is on github at [http://github.com/MediaWiki-Bot/MediaWiki-Bot](http://github.com/MediaWiki-Bot/MediaWiki-Bot)
+The development version is on github at [https://github.com/MediaWiki-Bot/MediaWiki-Bot](https://github.com/MediaWiki-Bot/MediaWiki-Bot)
 and may be cloned from [git://github.com/MediaWiki-Bot/MediaWiki-Bot.git](git://github.com/MediaWiki-Bot/MediaWiki-Bot.git)
 
 # BUGS AND LIMITATIONS
@@ -1249,7 +1254,7 @@ web interface at [https://github.com/MediaWiki-Bot/MediaWiki-Bot/issues](https:/
 
 # COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2016 by the MediaWiki::Bot team <perlwikibot@googlegroups.com>.
+This software is Copyright (c) 2021 by the MediaWiki::Bot team <perlwikibot@googlegroups.com>.
 
 This is free software, licensed under:
 

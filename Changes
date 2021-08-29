@@ -2,6 +2,12 @@ Changelog for {{$dist->name}}
 
 {{$NEXT}}
 
+5.006004  2021-08-29
+  - Feature: Ability to set time range when fetching contribs
+  - Fixed search: made use of unused namespace param [gh-87]
+  - Fixed history: api param is now rvdir (and not direction) [gh-88]
+  - Fixed tests [gh-91]
+
 5.006003  2016-07-06
   - Changed the file the test suite used to test fetching images
   - Documentation tweaks
