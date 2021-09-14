@@ -6,16 +6,6 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 version 5.006004
 
-# ERROR HANDLING
-
-All functions will return undef in any handled error situation. Further error
-data is stored in `$bot->{error}->{code}` and `$bot->{error}->{details}`.
-
-Error codes are provided as constants in [MediaWiki::Bot::Constants](https://metacpan.org/pod/MediaWiki%3A%3ABot%3A%3AConstants), and can also
-be imported through this module:
-
-    use MediaWiki::Bot qw(:constants);
-
 # SYNOPSIS
 
     use MediaWiki::Bot qw(:constants);
@@ -1220,6 +1210,16 @@ The hashref can have 3 keys:
 
     If you need this, it probably means you're doing something wrong. Feel free to
     ask for help.
+
+# ERROR HANDLING
+
+All functions will return undef in any handled error situation. Further error
+data is stored in `$bot->{error}->{code}` and `$bot->{error}->{details}`.
+
+Error codes are provided as constants in [MediaWiki::Bot::Constants](https://metacpan.org/pod/MediaWiki%3A%3ABot%3A%3AConstants), and can also
+be imported through this module:
+
+    use MediaWiki::Bot qw(:constants);
 
 # AVAILABILITY
 
