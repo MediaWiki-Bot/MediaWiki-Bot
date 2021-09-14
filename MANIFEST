@@ -1,5 +1,4 @@
 .travis.yml
-Build.PL
 Changes
 lib/MediaWiki/Bot.pm
 Makefile.PL
