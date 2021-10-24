@@ -2087,6 +2087,9 @@ sub links_to_image {
     my $blocked = $bot->is_blocked('User:Mike.lifeguard');
 
 Checks if a user is currently blocked.
+Returns false (!!0), if a user is not blocked.
+Returns a hash ref with the information about the block, see API
+reference for details.
 
 B<References:> L<API:Blocks|https://www.mediawiki.org/wiki/API:Blocks>
 
@@ -2096,20 +2099,19 @@ sub is_blocked {
     my $self = shift;
     my $user = shift;
 
-    # http://en.wikipedia.org/w/api.php?action=query&meta=blocks&bkusers=$user&bklimit=1&bkprop=id
+    # http://en.wikipedia.org/w/api.php?action=query&meta=blocks&bkusers=$user&bklimit=1
     my $hash = {
         action  => 'query',
         list    => 'blocks',
         bkusers => $user,
         bklimit => 1,
-        bkprop  => 'id',
     };
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
 
     my $number = scalar @{ $res->{query}->{blocks} }; # The number of blocks returned
     if ($number == 1) {
-        return RET_TRUE;
+        return $res->{query}{blocks}[0];
     }
     elsif ($number == 0) {
         return RET_FALSE;
