@@ -991,28 +991,79 @@ sub get_history_step_by_step {
 
 =head2 get_text
 
-Returns an the wikitext of the specified $page_title. The second parameter is
-$revid - if defined, returns the text of that revision; the third is
-$section_number - if defined, returns the text of that section.
+Returns the wikitext of the specified $page_title.
+The first parameter $page_title is the only required one.
+
+The second parameter is a hashref with the following independent optional keys:
+
+=over 4
+
+=item *
+
+C<rvstartid> - if defined, this function returns the text of that revision, otherwise
+the newest revision will be used.
+
+=item *
+
+C<rvsection> - if defined, returns the text of that section. Otherwise the 
+whole page text will be returned.
+
+=item *
+
+C<pageid> - this is an output parameter and can be used to fetch the id of a page 
+without the need of calling L</get_id> additionally. Note that the value of this 
+param is ignored and it will be overwritten by this function.
+
+=item *
+
+C<rv...> - any param starting with 'rv' will be forwarded to the api call.
+
+=back
 
 A blank page will return wikitext of "" (which evaluates to false in Perl,
 but is defined); a nonexistent page will return undef (which also evaluates
 to false in Perl, but is obviously undefined). You can distinguish between
 blank and nonexistent pages by using L<defined|perlfunc/defined>:
 
+    # simple example
     my $wikitext = $bot->get_text('Page title');
+    print "Wikitext: $wikitext\n" if defined $wikitext;
+
+    # advanced example
+    my $options = {'revid'=>123456, 'section_number'=>2};
+    $wikitext = $bot->get_text('Page title', $options);
+    die "error, see API error message\n" unless defined $options->{'pageid'};
+    warn "page doesn't exist\n" if $options->{'pageid'} == MediaWiki::Bot::PAGE_NONEXISTENT;
     print "Wikitext: $wikitext\n" if defined $wikitext;
 
 B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
 L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+For backward-compatibility the params \C<revid> and \C<section_number> may also be 
+given as scalar parameters:
+
+    my $wikitext = $bot->get_text('Page title', 123456, 2);
+    print "Wikitext: $wikitext\n" if defined $wikitext;
 
 =cut
 
 sub get_text {
     my $self     = shift;
     my $pagename = shift;
-    my $revid    = shift;
-    my $section  = shift;
+    unless(defined $pagename){
+        warn "get_text(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
+        return;
+    }
+    my $options  = shift;
+    # for backward-compatibility: try to read scalars
+    if(ref $options eq ''){
+        $options = {
+            'rvstartid' => $options,
+            'rvsection' => shift,
+        };
+        delete $options->{'rvstartid'} unless defined $options->{'rvstartid'};
+        delete $options->{'rvsection'} unless defined $options->{'rvsection'};
+    }
 
     my $hash = {
         action => 'query',
@@ -1020,14 +1071,16 @@ sub get_text {
         prop   => 'revisions',
         rvprop => 'content',
     };
-    $hash->{rvstartid} = $revid   if ($revid);
-    $hash->{rvsection} = $section if ($section);
-
+    for my $key(keys %$options){
+        if(substr($key, 0, 2) eq 'rv'){
+            $hash->{$key} = $options->{$key};
+        }
+    }
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
-    my ($id, $data) = %{ $res->{query}->{pages} };
+    ($options->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
 
-    return if $id == PAGE_NONEXISTENT;
+    return if $options->{'pageid'} == PAGE_NONEXISTENT;
     return $data->{revisions}[0]->{'*'}; # the wikitext
 }
 
