@@ -895,16 +895,16 @@ sub get_history {
     my $self      = shift;
     my $pagename  = shift;
     my $additional_params = shift // {};
-		# for backward-compatibility check for textual params
-		if(ref $additional_params eq ''){
-			my $rvlimit = $additional_params;
-			my $rvstartid = shift;
-			my $rvdir = shift;
-			$additional_params = {};
-			$additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
-			$additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
-			$additional_params->{'rvdir'} = $rvdir if $rvdir;
-		}
+    # for backward-compatibility check for textual params
+    if(ref $additional_params eq ''){
+        my $rvlimit = $additional_params;
+        my $rvstartid = shift;
+        my $rvdir = shift;
+        $additional_params = {};
+        $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
+        $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
+        $additional_params->{'rvdir'} = $rvdir if $rvdir;
+    }
     my $ready;
     my $filter_params = {%$additional_params};
     my @full_hist;
