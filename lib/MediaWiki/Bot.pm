@@ -868,10 +868,20 @@ sub move {
 
 =head2 get_history
 
-    my @hist = $bot->get_history($title, $limit, $revid, $direction);
+    my @hist = $bot->get_history($title);
+    my @hist = $bot->get_history($title, $additional_params);
 
-Returns an array containing the history of the specified $page_title, with
-$limit number of revisions (default is as many as possible).
+Returns an array containing the history of the specified page $title.
+
+The optional hash ref $additional_params can be used to tune the
+query by API parameters,
+such as 'rvlimit' to return only 'rvlimit' number of revisions (default is as many
+as possible, but may be limited per query) or 'rvdir' to set the chronological
+direction.
+
+Example:
+
+    my @hist = $bot->get_history('Main Page', {'rvlimit' => 10, 'rvdir' => 'older'})
 
 The array returned contains hashrefs with keys: revid, user, comment, minor,
 timestamp_date, and timestamp_time.
@@ -884,28 +894,80 @@ L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisio
 sub get_history {
     my $self      = shift;
     my $pagename  = shift;
-    my $limit     = shift || 'max';
-    my $rvstartid = shift;
-    my $direction = shift;
+    my $additional_params = shift // {};
+		# for backward-compatibility check for textual params
+		if(ref $additional_params eq ''){
+			my $rvlimit = $additional_params;
+			my $rvstartid = shift;
+			my $rvdir = shift;
+			$additional_params = {};
+			$additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
+			$additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
+			$additional_params->{'rvdir'} = $rvdir if $rvdir;
+		}
+    my $ready;
+    my $filter_params = {%$additional_params};
+    my @full_hist;
+    while(!$ready){
+        my @hist = $self->get_history_step_by_step($pagename, $filter_params);
+        if(@hist == 0 || !defined($filter_params->{'continue'})){
+            $ready = 1;
+        }
+        push @full_hist, @hist;
+    }
+    return @full_hist;
+}
 
-    my $hash = {
+=head2 get_history_step_by_step
+
+    my @hist = $bot->get_history_step_by_step($title);
+    my @hist = $bot->get_history_step_by_step($title, $additional_params);
+
+Same as get_history(), but does not return the full history at once, but let's you
+loop through it.
+
+The optional call-by-reference hash ref $additional_params can be used to loop
+through a page's full history by using the 'continue' param returned by the API.
+
+Example:
+
+    my $ready;
+    my $filter_params = {};
+    while(!$ready){
+        my @hist = $bot->get_history_step_by_step($page, $filter_params);
+        if(@hist == 0 || !defined($filter_params->{'continue'})){
+            $ready = 1;
+        }
+        # do something with @hist
+    }
+
+B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
+L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_history_step_by_step {
+    my $self      = shift;
+    my $pagename  = shift;
+    my $additional_params = shift // {};
+    my $query = {
         action  => 'query',
         prop    => 'revisions',
         titles  => $pagename,
         rvprop  => 'ids|timestamp|user|comment|flags',
-        rvlimit => $limit
     };
+    while(my ($key, $value) = each %$additional_params){
+      $query->{$key} = $value;
+    }
+    $query->{'rvlimit'} = 'max' unless defined $query->{'rvlimit'};
 
-    $hash->{rvstartid} = $rvstartid if ($rvstartid);
-    $hash->{rvdir}     = $direction if ($direction);
-
-    my $res = $self->{api}->api($hash);
+    my $res = $self->{api}->api($query);
     return $self->_handle_api_error() unless $res;
     my ($id) = keys %{ $res->{query}->{pages} };
     my $array = $res->{query}->{pages}->{$id}->{revisions};
 
     my @return;
-    foreach my $hash (@{$array}) {
+    for my $hash (@{$array}) {
         my $revid = $hash->{revid};
         my $user  = $hash->{user};
         my ($timestamp_date, $timestamp_time) = split(/T/, $hash->{timestamp});
@@ -922,6 +984,8 @@ sub get_history {
                 minor          => exists $hash->{minor},
             });
     }
+    $additional_params->{'continue'} = $res->{'continue'}{'continue'};
+    $additional_params->{'rvcontinue'} = $res->{'continue'}{'rvcontinue'};
     return @return;
 }
 
@@ -2370,7 +2434,6 @@ B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontrib
 sub last_active {
     my $self     = shift;
     my $username = shift;
-    $username = "User:$username" unless $username =~ /User:/i;
     my $res = $self->{api}->list({
             action  => 'query',
             list    => 'usercontribs',
