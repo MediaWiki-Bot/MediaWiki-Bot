@@ -290,13 +290,49 @@ redirect), use $options\_hashref, which has keys:
 
 ## get\_history
 
-    my @hist = $bot->get_history($title, $limit, $revid, $direction);
+    my @hist = $bot->get_history($title);
+    my @hist = $bot->get_history($title, $additional_params);
 
-Returns an array containing the history of the specified $page\_title, with
-$limit number of revisions (default is as many as possible).
+Returns an array containing the history of the specified page $title.
+
+The optional hash ref $additional\_params can be used to tune the
+query by API parameters,
+such as 'rvlimit' to return only 'rvlimit' number of revisions (default is as many
+as possible, but may be limited per query) or 'rvdir' to set the chronological
+direction.
+
+Example:
+
+    my @hist = $bot->get_history('Main Page', {'rvlimit' => 10, 'rvdir' => 'older'})
 
 The array returned contains hashrefs with keys: revid, user, comment, minor,
 timestamp\_date, and timestamp\_time.
+
+**References**: [Getting page history](https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history),
+[API:Properties#revisions](https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv)
+
+## get\_history\_step\_by\_step
+
+    my @hist = $bot->get_history_step_by_step($title);
+    my @hist = $bot->get_history_step_by_step($title, $additional_params);
+
+Same as get\_history(), but does not return the full history at once, but let's you
+loop through it.
+
+The optional call-by-reference hash ref $additional\_params can be used to loop
+through a page's full history by using the 'continue' param returned by the API.
+
+Example:
+
+    my $ready;
+    my $filter_params = {};
+    while(!$ready){
+        my @hist = $bot->get_history_step_by_step($page, $filter_params);
+        if(@hist == 0 || !defined($filter_params->{'continue'})){
+            $ready = 1;
+        }
+        # do something with @hist
+    }
 
 **References**: [Getting page history](https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history),
 [API:Properties#revisions](https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv)
@@ -723,6 +759,9 @@ title.
     my $blocked = $bot->is_blocked('User:Mike.lifeguard');
 
 Checks if a user is currently blocked.
+Returns false (!!0), if a user is not blocked.
+Returns a hash ref with the information about the block, see API
+reference for details.
 
 **References:** [API:Blocks](https://www.mediawiki.org/wiki/API:Blocks)
 
