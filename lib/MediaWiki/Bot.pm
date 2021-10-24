@@ -1086,10 +1086,15 @@ sub get_text {
 
 =head2 get_id
 
-Returns the id of the specified $page_title. Returns undef if page does not exist.
+Returns the id of the specified $page_title. Returns PAGE_NONEXISTENT (i.e. -1) if 
+page does not exist. Returns undef on error.
 
-    my $pageid = $bot->get_id("Main Page");
-    die "Page doesn't exist\n" if !defined($pageid);
+    my $page_id = $bot->get_id("Main Page");
+    die "could not get id of page.\n" unless defined $pageid;
+    warn "page doesn't exist\n" if $page_id == MediaWiki::Bot::PAGE_NONEXISTENT;
+
+    // or
+    die "could not get id of page.\n" unless ($page_id // -1) < 0;
 
 B<Revisions:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
 
@@ -1098,6 +1103,10 @@ B<Revisions:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Propertie
 sub get_id {
     my $self     = shift;
     my $pagename = shift;
+    unless(defined $pagename){
+        warn "get_id(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
+        return;
+    }
 
     my $hash = {
         action => 'query',
@@ -1107,8 +1116,7 @@ sub get_id {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
     my ($id) = %{ $res->{query}->{pages} };
-    return if $id == PAGE_NONEXISTENT;
-    return $id;
+    return $id; # $id might be PAGE_NONEXISTENT
 }
 
 =head2 get_pages
