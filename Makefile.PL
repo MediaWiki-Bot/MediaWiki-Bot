@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.008;
+use 5.010;
 
 use ExtUtils::MakeMaker;
 
@@ -14,7 +14,7 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "MediaWiki-Bot",
   "LICENSE" => "gpl",
-  "MIN_PERL_VERSION" => "5.008",
+  "MIN_PERL_VERSION" => "5.010",
   "NAME" => "MediaWiki::Bot",
   "PREREQ_PM" => {
     "Carp" => 0,
@@ -42,7 +42,7 @@ my %WriteMakefileArgs = (
     "Test::Warn" => 0,
     "utf8" => 0
   },
-  "VERSION" => "5.006004",
+  "VERSION" => "6.0.0",
   "test" => {
     "TESTS" => "t/*.t"
   }
