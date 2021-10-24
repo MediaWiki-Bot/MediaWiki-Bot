@@ -2432,7 +2432,6 @@ B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontrib
 sub last_active {
     my $self     = shift;
     my $username = shift;
-    $username = "User:$username" unless $username =~ /User:/i;
     my $res = $self->{api}->list({
             action  => 'query',
             list    => 'usercontribs',
