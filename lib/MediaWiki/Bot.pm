@@ -676,7 +676,7 @@ C<captcha_id> and C<captcha_solution> parameters:
     my $edit = {page => 'Main Page', text => 'got your nose'};
     my $edit_status = $bot->edit($edit);
     if (not $edit_status) {
-        if ($bot->{error}->{code} == ERR_CAPTCHA) {
+        if ($bot->{error}{code} == ERR_CAPTCHA) {
             my @captcha_uri = split /\Q?/, $bot->{error}{captcha}{url}, 2;
             my $image = URI->new(sprintf '%s://%s%s?%s' =>
                 $bot->{protocol}, $bot->{host}, $captcha_uri[0], $captcha_uri[1],
@@ -688,9 +688,9 @@ C<captcha_id> and C<captcha_solution> parameters:
             my $answer = $term->readline("Please solve $image and type the answer: ");
 
             # Add new CAPTCHA params to the edit we're attempting
-            $edit->{captcha_id} = $bot->{error}->{captcha}->{id};
+            $edit->{captcha_id} = $bot->{error}{captcha}{id};
             $edit->{captcha_solution} = $answer;
-            $status = $bot->edit($edit);
+            $edit_status = $bot->edit($edit);
         }
     }
 
