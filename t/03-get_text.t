@@ -25,7 +25,9 @@ isnt $wikitext => $section_wikitext,         'Section loaded content correctly';
 like $wikitext => qr/\Q$section_wikitext\E/, 'Section loaded content correctly';
 
 # test backward-compatibility
+no warnings;
 $section_wikitext = $bot->get_text($page, undef, 2);
+use warnings;
 isnt $section_wikitext => undef,             'Section load pass/fail';
 isnt $wikitext => $section_wikitext,         'Section loaded content correctly';
 like $wikitext => qr/\Q$section_wikitext\E/, 'Section loaded content correctly';
