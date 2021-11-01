@@ -3121,6 +3121,146 @@ sub was_locked {
     }
 }
 
+=head2 Categories
+
+=head3 get_pages_in_category
+
+Returns an array containing the names of all pages in the specified category
+(include the Category: prefix). Does not recurse into sub-categories.
+
+    my @pages = $bot->get_pages_in_category('Category:People on stamps of Gabon');
+    print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
+
+The options hashref is as described in L</"Options hashref">.
+Use C<< { max => 0 } >> to get all results.
+
+B<References:> L<Listing category contents|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-contents>,
+L<API:Categorymembers|https://www.mediawiki.org/wiki/API:Categorymembers>
+
+=cut
+
+sub get_pages_in_category {
+    my $self     = shift;
+    my $category = shift;
+    my $options  = shift;
+
+    if ($category =~ m/:/) {    # It might have a namespace name
+        my ($cat) = split(/:/, $category, 2);
+        if ($cat ne 'Category') {    # 'Category' is a canonical name for ns14
+            my $ns_data     = $self->_get_ns_data();
+            my $cat_ns_name = $ns_data->{+NS_CATEGORY};
+            if ($cat ne $cat_ns_name) {
+                $category = "$cat_ns_name:$category";
+            }
+        }
+    }
+    else {                                             # Definitely no namespace name, since there's no colon
+        $category = "Category:$category";
+    }
+    warn "Category to fetch is [[$category]]" if $self->{debug} > 1;
+
+    my $hash = {
+        action  => 'query',
+        list    => 'categorymembers',
+        cmtitle => $category,
+        cmlimit => 'max',
+    };
+    $options->{max} = 1 unless defined($options->{max});
+    delete($options->{max}) if $options->{max} == 0;
+
+    my $res = $self->{api}->list($hash, $options);
+    return RET_TRUE if not ref $res; # Not a hashref when using callback
+    return $self->_handle_api_error() unless $res;
+
+    return map { $_->{title} } @$res;
+}
+
+=head3 get_all_pages_in_category
+
+    my @pages = $bot->get_all_pages_in_category($category, $options_hashref);
+
+Returns an array containing the names of B<all> pages in the specified category
+(include the Category: prefix), including sub-categories. The $options_hashref
+is described fully in L</"Options hashref">.
+
+B<References:> L<Listing category contents|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-contents>,
+L<API:Categorymembers|https://www.mediawiki.org/wiki/API:Categorymembers>
+
+=cut
+
+{    # Instead of using the state pragma, use a bare block
+    my %data;
+
+    sub get_all_pages_in_category {
+        my $self          = shift;
+        my $base_category = shift;
+        my $options       = shift;
+        $options->{max} = 0 unless defined($options->{max});
+
+        my @first = $self->get_pages_in_category($base_category, $options);
+        %data = () unless $_[0];    # This is a special flag for internal use.
+                                    # It marks a call to this method as being
+                                    # internal. Since %data is a fake state variable,
+                                    # it needs to be cleared for every *external*
+                                    # call, but not cleared when the call is recursive.
+
+        my $ns_data     = $self->_get_ns_data();
+        my $cat_ns_name = $ns_data->{+NS_CATEGORY};
+
+        foreach my $page (@first) {
+            if ($page =~ m/^$cat_ns_name:/) {
+                if (!exists($data{$page})) {
+                    $data{$page} = '';
+                    my @pages = $self->get_all_pages_in_category($page, $options, 1);
+                    foreach (@pages) {
+                        $data{$_} = '';
+                    }
+                }
+                else {
+                    $data{$page} = '';
+                }
+            }
+            else {
+                $data{$page} = '';
+            }
+        }
+        return keys %data;
+    }
+}    # This ends the bare block around get_all_pages_in_category()
+
+=head3 get_all_categories
+
+Returns an array containing the names of all categories.
+
+    my @categories = $bot->get_all_categories();
+    print "The categories are:\n@categories\n";
+
+Use C<< { max => 0 } >> to get all results. The default number
+of categories returned is 10, the maximum allowed is 500.
+
+B<References:> L<API:Allcategories|https://www.mediawiki.org/wiki/API:Allcategories>
+
+=cut
+
+sub get_all_categories {
+    my $self     = shift;
+    my $options  = shift;
+
+    my $query = {
+        action => 'query',
+        list => 'allcategories',
+    };
+
+    if ( defined $options && $options->{'max'} == '0' ) {
+        $query->{'aclimit'} = 'max';
+    }
+
+    my $res = $self->{api}->api($query);
+    return $self->_handle_api_error() unless $res;
+
+    return map { $_->{'*'} } @{ $res->{'query'}->{'allcategories'} };
+}
+
 =head2 list_transclusions
 
 Returns an array containing a list of all pages transcluding $page.
@@ -3202,144 +3342,6 @@ sub list_transclusions {
     }
 
     return @links;
-}
-
-=head2 get_pages_in_category
-
-Returns an array containing the names of all pages in the specified category
-(include the Category: prefix). Does not recurse into sub-categories.
-
-    my @pages = $bot->get_pages_in_category('Category:People on stamps of Gabon');
-    print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
-
-The options hashref is as described in L</"Options hashref">.
-Use C<< { max => 0 } >> to get all results.
-
-B<References:> L<Listing category contents|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-contents>,
-L<API:Categorymembers|https://www.mediawiki.org/wiki/API:Categorymembers>
-
-=cut
-
-sub get_pages_in_category {
-    my $self     = shift;
-    my $category = shift;
-    my $options  = shift;
-
-    if ($category =~ m/:/) {    # It might have a namespace name
-        my ($cat) = split(/:/, $category, 2);
-        if ($cat ne 'Category') {    # 'Category' is a canonical name for ns14
-            my $ns_data     = $self->_get_ns_data();
-            my $cat_ns_name = $ns_data->{+NS_CATEGORY};
-            if ($cat ne $cat_ns_name) {
-                $category = "$cat_ns_name:$category";
-            }
-        }
-    }
-    else {                                             # Definitely no namespace name, since there's no colon
-        $category = "Category:$category";
-    }
-    warn "Category to fetch is [[$category]]" if $self->{debug} > 1;
-
-    my $hash = {
-        action  => 'query',
-        list    => 'categorymembers',
-        cmtitle => $category,
-        cmlimit => 'max',
-    };
-    $options->{max} = 1 unless defined($options->{max});
-    delete($options->{max}) if $options->{max} == 0;
-
-    my $res = $self->{api}->list($hash, $options);
-    return RET_TRUE if not ref $res; # Not a hashref when using callback
-    return $self->_handle_api_error() unless $res;
-
-    return map { $_->{title} } @$res;
-}
-
-=head2 get_all_pages_in_category
-
-    my @pages = $bot->get_all_pages_in_category($category, $options_hashref);
-
-Returns an array containing the names of B<all> pages in the specified category
-(include the Category: prefix), including sub-categories. The $options_hashref
-is described fully in L</"Options hashref">.
-
-B<References:> L<Listing category contents|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-contents>,
-L<API:Categorymembers|https://www.mediawiki.org/wiki/API:Categorymembers>
-
-=cut
-
-{    # Instead of using the state pragma, use a bare block
-    my %data;
-
-    sub get_all_pages_in_category {
-        my $self          = shift;
-        my $base_category = shift;
-        my $options       = shift;
-        $options->{max} = 0 unless defined($options->{max});
-
-        my @first = $self->get_pages_in_category($base_category, $options);
-        %data = () unless $_[0];    # This is a special flag for internal use.
-                                    # It marks a call to this method as being
-                                    # internal. Since %data is a fake state variable,
-                                    # it needs to be cleared for every *external*
-                                    # call, but not cleared when the call is recursive.
-
-        my $ns_data     = $self->_get_ns_data();
-        my $cat_ns_name = $ns_data->{+NS_CATEGORY};
-
-        foreach my $page (@first) {
-            if ($page =~ m/^$cat_ns_name:/) {
-                if (!exists($data{$page})) {
-                    $data{$page} = '';
-                    my @pages = $self->get_all_pages_in_category($page, $options, 1);
-                    foreach (@pages) {
-                        $data{$_} = '';
-                    }
-                }
-                else {
-                    $data{$page} = '';
-                }
-            }
-            else {
-                $data{$page} = '';
-            }
-        }
-        return keys %data;
-    }
-}    # This ends the bare block around get_all_pages_in_category()
-
-=head2 get_all_categories
-
-Returns an array containing the names of all categories.
-
-    my @categories = $bot->get_all_categories();
-    print "The categories are:\n@categories\n";
-
-Use C<< { max => 0 } >> to get all results. The default number
-of categories returned is 10, the maximum allowed is 500.
-
-B<References:> L<API:Allcategories|https://www.mediawiki.org/wiki/API:Allcategories>
-
-=cut
-
-sub get_all_categories {
-    my $self     = shift;
-    my $options  = shift;
-
-    my $query = {
-        action => 'query',
-        list => 'allcategories',
-    };
-
-    if ( defined $options && $options->{'max'} == '0' ) {
-        $query->{'aclimit'} = 'max';
-    }
-
-    my $res = $self->{api}->api($query);
-    return $self->_handle_api_error() unless $res;
-
-    return map { $_->{'*'} } @{ $res->{'query'}->{'allcategories'} };
 }
 
 =head2 linksearch
@@ -3808,7 +3810,6 @@ sub email {
     return $self->_handle_api_error() unless $res;
     return $res;
 }
-
 
 ################
 # Internal use #
