@@ -2396,7 +2396,9 @@ sub upload_from_url {
     return $success;
 }
 
-=head2 update_rc
+=head2 Recent changes
+
+=head3 update_rc
 
 B<This method is deprecated>, and will emit deprecation warnings.
 Replace calls to C<update_rc()> with calls to the newer C<recentchanges()>, which
@@ -2462,7 +2464,7 @@ sub update_rc {
     return @rc_table;
 }
 
-=head2 recentchanges($wiki_hashref, $options_hashref)
+=head3 recentchanges($wiki_hashref, $options_hashref)
 
 Returns an array of hashrefs containing recentchanges data.
 
