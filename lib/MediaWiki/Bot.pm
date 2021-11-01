@@ -2609,6 +2609,518 @@ sub recentchanges {
     return @$res;
 }
 
+=head2 Users
+
+=head3 count_contributions
+
+    my $count = $bot->count_contributions($user);
+
+Uses the API to count $user's contributions.
+
+B<References:> L<API:Users|https://www.mediawiki.org/wiki/API:Users>
+
+=cut
+
+sub count_contributions {
+    my $self     = shift;
+    my $username = shift;
+    $username =~ s/User://i;    # Strip namespace
+
+    my $res = $self->{api}->list({
+            action  => 'query',
+            list    => 'users',
+            ususers => $username,
+            usprop  => 'editcount'
+        },
+        { max => 1 });
+    return $self->_handle_api_error() unless $res;
+    return ${$res}[0]->{editcount};
+}
+
+=head3 timed_count_contributions
+
+    ($timed_edits_count, $total_count) = $bot->timed_count_contributions($user, $days);
+
+Uses the API to count $user's contributions in last number of $days and total number of user's contributions (if needed).
+
+Example: If you want to get user contribs for last 30 and 365 days, and total number of edits you would write
+something like this:
+
+    my ($last30days, $total) = $bot->timed_count_contributions($user, 30);
+    my $last365days = $bot->timed_count_contributions($user, 365);
+
+You could get total number of edits also by separately calling count_contributions like this:
+
+    my $total = $bot->count_contributions($user);
+
+and use timed_count_contributions only in scalar context, but that would mean one more call to server (meaning more
+server load) of which you are excused as timed_count_contributions returns array with two parameters.
+
+B<References:> L<Extension:UserDailyContribs|https://www.mediawiki.org/wiki/Extension:UserDailyContribs>
+
+=cut
+
+sub timed_count_contributions {
+    my $self     = shift;
+    my $username = shift;
+    my $days     = shift;
+    $username =~ s/User://i;    # Strip namespace
+
+    my $res = $self->{api}->api({
+            action  => 'userdailycontribs',
+            user    => $username,
+            daysago => $days,
+        },
+        { max => 1 });
+    return $self->_handle_api_error() unless $res;
+    return ($res->{userdailycontribs}->{timeFrameEdits}, $res->{userdailycontribs}->{totalEdits});
+}
+
+=head3 get_allusers
+
+    my @users = $bot->get_allusers($limit, $user_group, $options_hashref);
+
+Returns an array of all users. Default $limit is 500. Optionally specify a
+$group (like 'sysop') to list that group only. The last optional parameter
+is an L</"Options hashref">.
+
+B<References:> L<API:Allusers|https://www.mediawiki.org/wiki/API:Allusers>
+
+=cut
+
+sub get_allusers {
+    my $self   = shift;
+    my $limit  = shift || 'max';
+    my $group  = shift;
+    my $opts   = shift;
+
+    my $hash = {
+            action  => 'query',
+            list    => 'allusers',
+            aulimit => $limit,
+    };
+    $hash->{augroup} = $group if defined $group;
+    $opts->{max} = 1 unless exists $opts->{max};
+    delete $opts->{max} if exists $opts->{max} and $opts->{max} == 0;
+    my $res = $self->{api}->list($hash, $opts);
+    return $self->_handle_api_error() unless $res;
+    return RET_TRUE if not ref $res; # Not a ref when using callback
+
+    return map { $_->{name} } @$res;
+}
+
+=head3 contributions
+
+    my @contribs = $bot->contributions($user, $namespace, $options, $from, $to);
+
+Returns an array of hashrefs of data for the user's contributions. $namespace
+can be an arrayref of namespace numbers. $options can be specified as in
+L</linksearch>.
+$from and $to are optional timestamps. ISO 8601 date and time is recommended:
+2001-01-15T14:56:00Z, see L<https://www.mediawiki.org/wiki/Timestamp> for all
+possible formats.
+Note that $from (=ucend) has to be before $to (=ucstart), unlike direct API access.
+
+Specify an arrayref of users to get results for multiple users.
+
+B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontribs>
+
+=cut
+
+sub contributions {
+    my $self = shift;
+    my $user = shift;
+    my $ns   = shift;
+    my $opts = shift;
+    my $from = shift; # ucend
+    my $to   = shift; # ucstart
+
+    if (ref $user eq 'ARRAY') {
+        $user = join '|', map { my $u = $_; $u =~ s{^User:}{}; $u } @$user;
+    }
+    else {
+        $user =~ s{^User:}{};
+    }
+    $ns = join '|', @$ns
+        if ref $ns eq 'ARRAY';
+
+    $opts->{max} = 1 unless defined($opts->{max});
+    delete($opts->{max}) if $opts->{max} == 0;
+
+    my $query = {
+        action      => 'query',
+        list        => 'usercontribs',
+        ucuser      => $user,
+        ( defined $ns ? (ucnamespace => $ns) : ()),
+        ucprop      => 'ids|title|timestamp|comment|flags',
+        uclimit     => 'max',
+    };
+    $query->{'ucstart'} = $to if defined $to;
+    $query->{'ucend'} = $from if defined $from;
+    my $res = $self->{api}->list($query, $opts);
+    return $self->_handle_api_error() unless $res->[0];
+    return RET_TRUE if not ref $res; # Not a ref when using callback
+
+    return @$res;
+}
+
+=head3 top_edits
+
+Returns an array of the page titles where the $user is the latest editor. The
+second parameter is the familiar L<$options_hashref|/linksearch>.
+
+    my @pages = $bot->top_edits("Mike.lifeguard", {max => 5});
+    foreach my $page (@pages) {
+        $bot->rollback($page, "Mike.lifeguard");
+    }
+
+Note that accessing the data with a callback happens B<before> filtering
+the top edits is done. For that reason, you should use L</contributions>
+if you need to use a callback. If you use a callback with top_edits(),
+you B<will not> necessarily get top edits returned. It is only safe to use a
+callback if you I<check> that it is a top edit:
+
+    $bot->top_edits("Mike.lifeguard", { hook => \&rv });
+    sub rv {
+        my $data = shift;
+        foreach my $page (@$data) {
+            if (exists($page->{'top'})) {
+                $bot->rollback($page->{'title'}, "Mike.lifeguard");
+            }
+        }
+    }
+
+B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontribs>
+
+=cut
+
+sub top_edits {
+    my $self    = shift;
+    my $user    = shift;
+    my $options = shift;
+
+    $user =~ s/^User://;
+
+    $options->{max} = 1 unless defined($options->{max});
+    delete($options->{max}) if $options->{max} == 0;
+
+    my $res = $self->{'api'}->list({
+        action  => 'query',
+        list    => 'usercontribs',
+        ucuser  => $user,
+        ucprop  => 'title|flags',
+        uclimit => 'max',
+    }, $options);
+    return $self->_handle_api_error() unless $res;
+    return RET_TRUE if not ref $res; # Not a ref when using callback
+
+    return
+        map { $_->{title} }
+        grep { exists $_->{top} }
+        @$res;
+}
+
+=head3 last_active
+
+    my $latest_timestamp = $bot->last_active($user);
+
+Returns the last active time of $user in C<YYYY-MM-DDTHH:MM:SSZ>.
+
+B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontribs>
+
+=cut
+
+sub last_active {
+    my $self     = shift;
+    my $username = shift;
+    my $res = $self->{api}->list({
+            action  => 'query',
+            list    => 'usercontribs',
+            ucuser  => $username,
+            uclimit => 1
+        },
+        { max => 1 });
+    return $self->_handle_api_error() unless $res;
+    return ${$res}[0]->{timestamp};
+}
+
+=head3 usergroups
+
+Returns a list of the usergroups a user is in:
+
+    my @usergroups = $bot->usergroups('Mike.lifeguard');
+
+B<References:> L<API:Users|https://www.mediawiki.org/wiki/API:Users>
+
+=cut
+
+sub usergroups {
+    my $self = shift;
+    my $user = shift;
+
+    $user =~ s/^User://;
+
+    my $res = $self->{api}->api({
+        action  => 'query',
+        list    => 'users',
+        ususers => $user,
+        usprop  => 'groups',
+        ustoken => 'userrights',
+    });
+    return $self->_handle_api_error() unless $res;
+
+    foreach my $res_user (@{ $res->{query}->{users} }) {
+        next unless $res_user->{name} eq $user;
+
+        # Cache the userrights token on the assumption that we'll use it shortly to change the rights
+        $self->{userrightscache} = {
+            user    => $user,
+            token   => $res_user->{userrightstoken},
+            groups  => $res_user->{groups},
+        };
+
+        return @{ $res_user->{groups} }; # SUCCESS
+    }
+
+    return $self->_handle_api_error({ code => ERR_API, details => qq{Results for $user weren't returned by the API} });
+}
+
+=head3 is_blocked
+
+    my $blocked = $bot->is_blocked('User:Mike.lifeguard');
+
+Checks if a user is currently blocked.
+
+B<References:> L<API:Blocks|https://www.mediawiki.org/wiki/API:Blocks>
+
+=cut
+
+sub is_blocked {
+    my $self = shift;
+    my $user = shift;
+
+    # http://en.wikipedia.org/w/api.php?action=query&meta=blocks&bkusers=$user&bklimit=1&bkprop=id
+    my $hash = {
+        action  => 'query',
+        list    => 'blocks',
+        bkusers => $user,
+        bklimit => 1,
+        bkprop  => 'id',
+    };
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+
+    my $number = scalar @{ $res->{query}->{blocks} }; # The number of blocks returned
+    if ($number == 1) {
+        return RET_TRUE;
+    }
+    elsif ($number == 0) {
+        return RET_FALSE;
+    }
+    else {
+        confess "This query should return at most one result, but the API returned more than that.";
+    }
+}
+
+=head3 test_blocked
+
+Retained for backwards compatibility. Use L</is_blocked> for clarity.
+
+B<This method is deprecated>, and will emit deprecation warnings.
+
+=cut
+
+sub test_blocked { # For backwards-compatibility
+    warnings::warnif('deprecated', 'test_blocked is an alias of is_blocked; '
+        . 'please use the new name. This alias might be removed in a future release');
+    return (is_blocked(@_));
+}
+
+=head3 is_g_blocked
+
+    my $is_globally_blocked = $bot->is_g_blocked('127.0.0.1');
+
+Returns what IP/range block I<currently in place> affects the IP/range. The
+return is a scalar of an IP/range if found (evaluates to true in boolean
+context); undef otherwise (evaluates false in boolean context). Pass in a
+single IP or CIDR range.
+
+B<References:> L<Extension:GlobalBlocking|https://www.mediawiki.org/wiki/Extension:GlobalBlocking/API>
+
+=cut
+
+sub is_g_blocked {
+    my $self = shift;
+    my $ip   = shift;
+
+    # http://en.wikipedia.org/w/api.php?action=query&list=globalblocks&bglimit=1&bgprop=address&bgip=127.0.0.1
+    my $res = $self->{api}->api({
+            action  => 'query',
+            list    => 'globalblocks',
+            bglimit => 1,
+            bgprop  => 'address',
+            # So handy! It searches for blocks affecting this IP or IP range,
+            # including rangeblocks! Can't get that from UI.
+            bgip    => $ip,
+    });
+    return $self->_handle_api_error() unless $res;
+    return RET_FALSE unless ($res->{query}->{globalblocks}->[0]);
+
+    return $res->{query}->{globalblocks}->[0]->{address};
+}
+
+=head3 was_blocked
+
+    for ("Mike.lifeguard", "Jimbo Wales") {
+        print "$_ was blocked\n" if $bot->was_blocked($_);
+    }
+
+Returns whether $user has ever been blocked.
+
+B<References:> L<API:Logevents|https://www.mediawiki.org/wiki/API:Logevents>
+
+=cut
+
+sub was_blocked {
+    my $self = shift;
+    my $user = shift;
+    $user =~ s/User://i;    # Strip User: prefix, if present
+
+    # http://en.wikipedia.org/w/api.php?action=query&list=logevents&letype=block&letitle=User:127.0.0.1&lelimit=1&leprop=ids
+    my $hash = {
+        action  => 'query',
+        list    => 'logevents',
+        letype  => 'block',
+        letitle => "User:$user",    # Ensure the User: prefix is there!
+        lelimit => 1,
+        leprop  => 'ids',
+    };
+
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+
+    my $number = scalar @{ $res->{query}->{logevents} };    # The number of blocks returned
+    if ($number == 1) {
+        return RET_TRUE;
+    }
+    elsif ($number == 0) {
+        return RET_FALSE;
+    }
+    else {
+        confess "This query should return at most one result, but the API returned more than that.";
+    }
+}
+
+=head3 test_block_hist
+
+Retained for backwards compatibility. Use L</was_blocked> for clarity.
+
+B<This method is deprecated>, and will emit deprecation warnings.
+
+=cut
+
+sub test_block_hist { # Backwards compatibility
+    warnings::warnif('deprecated', 'test_block_hist is an alias of was_blocked; '
+        . 'please use the new method name. This alias might be removed in a future release');
+    return (was_blocked(@_));
+}
+
+=head3 was_g_blocked
+
+    print "127.0.0.1 was globally blocked\n" if $bot->was_g_blocked('127.0.0.1');
+
+Returns whether an IP/range was ever globally blocked. You should probably
+call this method only when your bot is operating on Meta - this method will
+warn if not.
+
+B<References:> L<API:Logevents|https://www.mediawiki.org/wiki/API:Logevents>
+
+=cut
+
+sub was_g_blocked {
+    my $self = shift;
+    my $ip   = shift;
+    $ip =~ s/User://i; # Strip User: prefix, if present
+
+    # This query should always go to Meta
+    unless ( $self->{host} eq 'meta.wikimedia.org' ) {
+        carp "GlobalBlocking queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{debug};
+    }
+
+    # http://meta.wikimedia.org/w/api.php?action=query&list=logevents&letype=gblblock&letitle=User:127.0.0.1&lelimit=1&leprop=ids
+    my $res = $self->{api}->api({
+        action  => 'query',
+        list    => 'logevents',
+        letype  => 'gblblock',
+        letitle => "User:$ip",    # Ensure the User: prefix is there!
+        lelimit => 1,
+        leprop  => 'ids',
+    });
+
+    return $self->_handle_api_error() unless $res;
+    my $number = scalar @{ $res->{query}->{logevents} };    # The number of blocks returned
+
+    if ($number == 1) {
+        return RET_TRUE;
+    }
+    elsif ($number == 0) {
+        return RET_FALSE;
+    }
+    else {
+        confess "This query should return at most one result, but the API gave more than that.";
+    }
+}
+
+=head3 was_locked
+
+    my $was_locked = $bot->was_locked('Mike.lifeguard');
+
+Returns whether a user was ever locked. You should probably call this method
+only when your bot is operating on Meta - this method will warn if not.
+
+B<References:> L<API:Logevents|https://www.mediawiki.org/wiki/API:Logevents>
+
+=cut
+
+sub was_locked {
+    my $self = shift;
+    my $user = shift;
+
+    # This query should always go to Meta
+    unless (
+        $self->{api}->{config}->{api_url} =~ m,
+            \Qhttp://meta.wikimedia.org/w/api.php\E
+                |
+            \Qhttps://secure.wikimedia.org/wikipedia/meta/w/api.php\E
+        ,x    # /x flag is pretty awesome :)
+        )
+    {
+        carp "CentralAuth queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{debug};
+    }
+
+    $user =~ s/^User://i;
+    $user =~ s/\@global$//i;
+    my $res = $self->{api}->api({
+            action  => 'query',
+            list    => 'logevents',
+            letype  => 'globalauth',
+            letitle => "User:$user\@global",
+            lelimit => 1,
+            leprop  => 'ids',
+    });
+    return $self->_handle_api_error() unless $res;
+    my $number = scalar @{ $res->{query}->{logevents} };
+    if ($number == 1) {
+        return RET_TRUE;
+    }
+    elsif ($number == 0) {
+        return RET_FALSE;
+    }
+    else {
+        confess "This query should return at most one result, but the API returned more than that.";
+    }
+}
+
 =head2 list_transclusions
 
 Returns an array containing a list of all pages transcluding $page.
@@ -2937,57 +3449,6 @@ sub get_namespace_names {
         keys %{ $res->{query}->{namespaces} };
 }
 
-=head2 is_blocked
-
-    my $blocked = $bot->is_blocked('User:Mike.lifeguard');
-
-Checks if a user is currently blocked.
-
-B<References:> L<API:Blocks|https://www.mediawiki.org/wiki/API:Blocks>
-
-=cut
-
-sub is_blocked {
-    my $self = shift;
-    my $user = shift;
-
-    # http://en.wikipedia.org/w/api.php?action=query&meta=blocks&bkusers=$user&bklimit=1&bkprop=id
-    my $hash = {
-        action  => 'query',
-        list    => 'blocks',
-        bkusers => $user,
-        bklimit => 1,
-        bkprop  => 'id',
-    };
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-
-    my $number = scalar @{ $res->{query}->{blocks} }; # The number of blocks returned
-    if ($number == 1) {
-        return RET_TRUE;
-    }
-    elsif ($number == 0) {
-        return RET_FALSE;
-    }
-    else {
-        confess "This query should return at most one result, but the API returned more than that.";
-    }
-}
-
-=head2 test_blocked
-
-Retained for backwards compatibility. Use L</is_blocked> for clarity.
-
-B<This method is deprecated>, and will emit deprecation warnings.
-
-=cut
-
-sub test_blocked { # For backwards-compatibility
-    warnings::warnif('deprecated', 'test_blocked is an alias of is_blocked; '
-        . 'please use the new name. This alias might be removed in a future release');
-    return (is_blocked(@_));
-}
-
 =head2 get_pages_in_namespace
 
     $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
@@ -3030,151 +3491,6 @@ sub get_pages_in_namespace {
     return map { $_->{title} } @$res;
 }
 
-=head2 count_contributions
-
-    my $count = $bot->count_contributions($user);
-
-Uses the API to count $user's contributions.
-
-B<References:> L<API:Users|https://www.mediawiki.org/wiki/API:Users>
-
-=cut
-
-sub count_contributions {
-    my $self     = shift;
-    my $username = shift;
-    $username =~ s/User://i;    # Strip namespace
-
-    my $res = $self->{api}->list({
-            action  => 'query',
-            list    => 'users',
-            ususers => $username,
-            usprop  => 'editcount'
-        },
-        { max => 1 });
-    return $self->_handle_api_error() unless $res;
-    return ${$res}[0]->{editcount};
-}
-
-=head2 timed_count_contributions
-
-    ($timed_edits_count, $total_count) = $bot->timed_count_contributions($user, $days);
-
-Uses the API to count $user's contributions in last number of $days and total number of user's contributions (if needed).
-
-Example: If you want to get user contribs for last 30 and 365 days, and total number of edits you would write
-something like this:
-
-    my ($last30days, $total) = $bot->timed_count_contributions($user, 30);
-    my $last365days = $bot->timed_count_contributions($user, 365);
-
-You could get total number of edits also by separately calling count_contributions like this:
-
-    my $total = $bot->count_contributions($user);
-
-and use timed_count_contributions only in scalar context, but that would mean one more call to server (meaning more
-server load) of which you are excused as timed_count_contributions returns array with two parameters.
-
-B<References:> L<Extension:UserDailyContribs|https://www.mediawiki.org/wiki/Extension:UserDailyContribs>
-
-=cut
-
-sub timed_count_contributions {
-    my $self     = shift;
-    my $username = shift;
-    my $days     = shift;
-    $username =~ s/User://i;    # Strip namespace
-
-    my $res = $self->{api}->api({
-            action  => 'userdailycontribs',
-            user    => $username,
-            daysago => $days,
-        },
-        { max => 1 });
-    return $self->_handle_api_error() unless $res;
-    return ($res->{userdailycontribs}->{timeFrameEdits}, $res->{userdailycontribs}->{totalEdits});
-}
-
-=head2 last_active
-
-    my $latest_timestamp = $bot->last_active($user);
-
-Returns the last active time of $user in C<YYYY-MM-DDTHH:MM:SSZ>.
-
-B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontribs>
-
-=cut
-
-sub last_active {
-    my $self     = shift;
-    my $username = shift;
-    my $res = $self->{api}->list({
-            action  => 'query',
-            list    => 'usercontribs',
-            ucuser  => $username,
-            uclimit => 1
-        },
-        { max => 1 });
-    return $self->_handle_api_error() unless $res;
-    return ${$res}[0]->{timestamp};
-}
-
-=head2 was_blocked
-
-    for ("Mike.lifeguard", "Jimbo Wales") {
-        print "$_ was blocked\n" if $bot->was_blocked($_);
-    }
-
-Returns whether $user has ever been blocked.
-
-B<References:> L<API:Logevents|https://www.mediawiki.org/wiki/API:Logevents>
-
-=cut
-
-sub was_blocked {
-    my $self = shift;
-    my $user = shift;
-    $user =~ s/User://i;    # Strip User: prefix, if present
-
-    # http://en.wikipedia.org/w/api.php?action=query&list=logevents&letype=block&letitle=User:127.0.0.1&lelimit=1&leprop=ids
-    my $hash = {
-        action  => 'query',
-        list    => 'logevents',
-        letype  => 'block',
-        letitle => "User:$user",    # Ensure the User: prefix is there!
-        lelimit => 1,
-        leprop  => 'ids',
-    };
-
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-
-    my $number = scalar @{ $res->{query}->{logevents} };    # The number of blocks returned
-    if ($number == 1) {
-        return RET_TRUE;
-    }
-    elsif ($number == 0) {
-        return RET_FALSE;
-    }
-    else {
-        confess "This query should return at most one result, but the API returned more than that.";
-    }
-}
-
-=head2 test_block_hist
-
-Retained for backwards compatibility. Use L</was_blocked> for clarity.
-
-B<This method is deprecated>, and will emit deprecation warnings.
-
-=cut
-
-sub test_block_hist { # Backwards compatibility
-    warnings::warnif('deprecated', 'test_block_hist is an alias of was_blocked; '
-        . 'please use the new method name. This alias might be removed in a future release');
-    return (was_blocked(@_));
-}
-
 =head2 expandtemplates
 
     my $expanded = $bot->expandtemplates($title, $wikitext);
@@ -3208,39 +3524,6 @@ sub expandtemplates {
     return exists $res->{expandtemplates}->{'*'}
         ? $res->{expandtemplates}->{'*'}
         : $res->{expandtemplates}->{wikitext};
-}
-
-=head2 get_allusers
-
-    my @users = $bot->get_allusers($limit, $user_group, $options_hashref);
-
-Returns an array of all users. Default $limit is 500. Optionally specify a
-$group (like 'sysop') to list that group only. The last optional parameter
-is an L</"Options hashref">.
-
-B<References:> L<API:Allusers|https://www.mediawiki.org/wiki/API:Allusers>
-
-=cut
-
-sub get_allusers {
-    my $self   = shift;
-    my $limit  = shift || 'max';
-    my $group  = shift;
-    my $opts   = shift;
-
-    my $hash = {
-            action  => 'query',
-            list    => 'allusers',
-            aulimit => $limit,
-    };
-    $hash->{augroup} = $group if defined $group;
-    $opts->{max} = 1 unless exists $opts->{max};
-    delete $opts->{max} if exists $opts->{max} and $opts->{max} == 0;
-    my $res = $self->{api}->list($hash, $opts);
-    return $self->_handle_api_error() unless $res;
-    return RET_TRUE if not ref $res; # Not a ref when using callback
-
-    return map { $_->{name} } @$res;
 }
 
 =head2 db_to_domain
@@ -3481,135 +3764,6 @@ sub get_log {
     return $res;
 }
 
-=head2 is_g_blocked
-
-    my $is_globally_blocked = $bot->is_g_blocked('127.0.0.1');
-
-Returns what IP/range block I<currently in place> affects the IP/range. The
-return is a scalar of an IP/range if found (evaluates to true in boolean
-context); undef otherwise (evaluates false in boolean context). Pass in a
-single IP or CIDR range.
-
-B<References:> L<Extension:GlobalBlocking|https://www.mediawiki.org/wiki/Extension:GlobalBlocking/API>
-
-=cut
-
-sub is_g_blocked {
-    my $self = shift;
-    my $ip   = shift;
-
-    # http://en.wikipedia.org/w/api.php?action=query&list=globalblocks&bglimit=1&bgprop=address&bgip=127.0.0.1
-    my $res = $self->{api}->api({
-            action  => 'query',
-            list    => 'globalblocks',
-            bglimit => 1,
-            bgprop  => 'address',
-            # So handy! It searches for blocks affecting this IP or IP range,
-            # including rangeblocks! Can't get that from UI.
-            bgip    => $ip,
-    });
-    return $self->_handle_api_error() unless $res;
-    return RET_FALSE unless ($res->{query}->{globalblocks}->[0]);
-
-    return $res->{query}->{globalblocks}->[0]->{address};
-}
-
-=head2 was_g_blocked
-
-    print "127.0.0.1 was globally blocked\n" if $bot->was_g_blocked('127.0.0.1');
-
-Returns whether an IP/range was ever globally blocked. You should probably
-call this method only when your bot is operating on Meta - this method will
-warn if not.
-
-B<References:> L<API:Logevents|https://www.mediawiki.org/wiki/API:Logevents>
-
-=cut
-
-sub was_g_blocked {
-    my $self = shift;
-    my $ip   = shift;
-    $ip =~ s/User://i; # Strip User: prefix, if present
-
-    # This query should always go to Meta
-    unless ( $self->{host} eq 'meta.wikimedia.org' ) {
-        carp "GlobalBlocking queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{debug};
-    }
-
-    # http://meta.wikimedia.org/w/api.php?action=query&list=logevents&letype=gblblock&letitle=User:127.0.0.1&lelimit=1&leprop=ids
-    my $res = $self->{api}->api({
-        action  => 'query',
-        list    => 'logevents',
-        letype  => 'gblblock',
-        letitle => "User:$ip",    # Ensure the User: prefix is there!
-        lelimit => 1,
-        leprop  => 'ids',
-    });
-
-    return $self->_handle_api_error() unless $res;
-    my $number = scalar @{ $res->{query}->{logevents} };    # The number of blocks returned
-
-    if ($number == 1) {
-        return RET_TRUE;
-    }
-    elsif ($number == 0) {
-        return RET_FALSE;
-    }
-    else {
-        confess "This query should return at most one result, but the API gave more than that.";
-    }
-}
-
-=head2 was_locked
-
-    my $was_locked = $bot->was_locked('Mike.lifeguard');
-
-Returns whether a user was ever locked. You should probably call this method
-only when your bot is operating on Meta - this method will warn if not.
-
-B<References:> L<API:Logevents|https://www.mediawiki.org/wiki/API:Logevents>
-
-=cut
-
-sub was_locked {
-    my $self = shift;
-    my $user = shift;
-
-    # This query should always go to Meta
-    unless (
-        $self->{api}->{config}->{api_url} =~ m,
-            \Qhttp://meta.wikimedia.org/w/api.php\E
-                |
-            \Qhttps://secure.wikimedia.org/wikipedia/meta/w/api.php\E
-        ,x    # /x flag is pretty awesome :)
-        )
-    {
-        carp "CentralAuth queries should probably be sent to Meta; it doesn't look like you're doing so" if $self->{debug};
-    }
-
-    $user =~ s/^User://i;
-    $user =~ s/\@global$//i;
-    my $res = $self->{api}->api({
-            action  => 'query',
-            list    => 'logevents',
-            letype  => 'globalauth',
-            letitle => "User:$user\@global",
-            lelimit => 1,
-            leprop  => 'ids',
-    });
-    return $self->_handle_api_error() unless $res;
-    my $number = scalar @{ $res->{query}->{logevents} };
-    if ($number == 1) {
-        return RET_TRUE;
-    }
-    elsif ($number == 0) {
-        return RET_FALSE;
-    }
-    else {
-        confess "This query should return at most one result, but the API returned more than that.";
-    }
-}
-
 =head2 email
 
     $bot->email($user, $subject, $body);
@@ -3653,158 +3807,6 @@ sub email {
     });
     return $self->_handle_api_error() unless $res;
     return $res;
-}
-
-=head2 top_edits
-
-Returns an array of the page titles where the $user is the latest editor. The
-second parameter is the familiar L<$options_hashref|/linksearch>.
-
-    my @pages = $bot->top_edits("Mike.lifeguard", {max => 5});
-    foreach my $page (@pages) {
-        $bot->rollback($page, "Mike.lifeguard");
-    }
-
-Note that accessing the data with a callback happens B<before> filtering
-the top edits is done. For that reason, you should use L</contributions>
-if you need to use a callback. If you use a callback with top_edits(),
-you B<will not> necessarily get top edits returned. It is only safe to use a
-callback if you I<check> that it is a top edit:
-
-    $bot->top_edits("Mike.lifeguard", { hook => \&rv });
-    sub rv {
-        my $data = shift;
-        foreach my $page (@$data) {
-            if (exists($page->{'top'})) {
-                $bot->rollback($page->{'title'}, "Mike.lifeguard");
-            }
-        }
-    }
-
-B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontribs>
-
-=cut
-
-sub top_edits {
-    my $self    = shift;
-    my $user    = shift;
-    my $options = shift;
-
-    $user =~ s/^User://;
-
-    $options->{max} = 1 unless defined($options->{max});
-    delete($options->{max}) if $options->{max} == 0;
-
-    my $res = $self->{'api'}->list({
-        action  => 'query',
-        list    => 'usercontribs',
-        ucuser  => $user,
-        ucprop  => 'title|flags',
-        uclimit => 'max',
-    }, $options);
-    return $self->_handle_api_error() unless $res;
-    return RET_TRUE if not ref $res; # Not a ref when using callback
-
-    return
-        map { $_->{title} }
-        grep { exists $_->{top} }
-        @$res;
-}
-
-=head2 contributions
-
-    my @contribs = $bot->contributions($user, $namespace, $options, $from, $to);
-
-Returns an array of hashrefs of data for the user's contributions. $namespace
-can be an arrayref of namespace numbers. $options can be specified as in
-L</linksearch>.
-$from and $to are optional timestamps. ISO 8601 date and time is recommended:
-2001-01-15T14:56:00Z, see L<https://www.mediawiki.org/wiki/Timestamp> for all
-possible formats.
-Note that $from (=ucend) has to be before $to (=ucstart), unlike direct API access.
-
-Specify an arrayref of users to get results for multiple users.
-
-B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontribs>
-
-=cut
-
-sub contributions {
-    my $self = shift;
-    my $user = shift;
-    my $ns   = shift;
-    my $opts = shift;
-    my $from = shift; # ucend
-    my $to   = shift; # ucstart
-
-    if (ref $user eq 'ARRAY') {
-        $user = join '|', map { my $u = $_; $u =~ s{^User:}{}; $u } @$user;
-    }
-    else {
-        $user =~ s{^User:}{};
-    }
-    $ns = join '|', @$ns
-        if ref $ns eq 'ARRAY';
-
-    $opts->{max} = 1 unless defined($opts->{max});
-    delete($opts->{max}) if $opts->{max} == 0;
-
-    my $query = {
-        action      => 'query',
-        list        => 'usercontribs',
-        ucuser      => $user,
-        ( defined $ns ? (ucnamespace => $ns) : ()),
-        ucprop      => 'ids|title|timestamp|comment|flags',
-        uclimit     => 'max',
-    };
-    $query->{'ucstart'} = $to if defined $to;
-    $query->{'ucend'} = $from if defined $from;
-    my $res = $self->{api}->list($query, $opts);
-    return $self->_handle_api_error() unless $res->[0];
-    return RET_TRUE if not ref $res; # Not a ref when using callback
-
-    return @$res;
-}
-
-=head2 usergroups
-
-Returns a list of the usergroups a user is in:
-
-    my @usergroups = $bot->usergroups('Mike.lifeguard');
-
-B<References:> L<API:Users|https://www.mediawiki.org/wiki/API:Users>
-
-=cut
-
-sub usergroups {
-    my $self = shift;
-    my $user = shift;
-
-    $user =~ s/^User://;
-
-    my $res = $self->{api}->api({
-        action  => 'query',
-        list    => 'users',
-        ususers => $user,
-        usprop  => 'groups',
-        ustoken => 'userrights',
-    });
-    return $self->_handle_api_error() unless $res;
-
-    foreach my $res_user (@{ $res->{query}->{users} }) {
-        next unless $res_user->{name} eq $user;
-
-        # Cache the userrights token on the assumption that we'll use it shortly to change the rights
-        $self->{userrightscache} = {
-            user    => $user,
-            token   => $res_user->{userrightstoken},
-            groups  => $res_user->{groups},
-        };
-
-        return @{ $res_user->{groups} }; # SUCCESS
-    }
-
-    return $self->_handle_api_error({ code => ERR_API, details => qq{Results for $user weren't returned by the API} });
 }
 
 
