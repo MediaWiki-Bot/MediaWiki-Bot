@@ -43,7 +43,9 @@ with the MediaWiki API (L<http://en.wikipedia.org/w/api.php>).
 
 =head1 METHODS
 
-=head2 new
+=head2 Initialization
+
+=head3 new
 
     my $bot = MediaWiki::Bot({
         host     => 'en.wikipedia.org',
@@ -246,7 +248,7 @@ sub new {
     return $self;
 }
 
-=head2 set_wiki
+=head3 set_wiki
 
 Set what wiki to use. The parameter is a hashref with keys:
 
@@ -338,7 +340,7 @@ sub set_wiki {
     return RET_TRUE;
 }
 
-=head2 login
+=head3 login
 
 This method takes a hashref with keys I<username> and I<password> at a minimum.
 See L</"Single User Login"> and L</"Basic authentication"> for additional options.
@@ -377,7 +379,7 @@ For backward compatibility, you can call this as
 B<This form is deprecated>, and will emit deprecation warnings. It will
 never do autoconfiguration or SUL login.
 
-=head3 Single User Login
+=head4 Single User Login
 
 On WMF wikis, C<do_sul> specifies whether to log in on all projects. The default
 is false. But even when false, you still get a CentralAuth cookie for, and are
@@ -386,7 +388,7 @@ When set, a login is done on each WMF domain so you are logged in on all ~800
 content wikis. Since C<*.wikimedia.org> is not possible, we explicitly include
 meta, commons, incubator, and wikispecies.
 
-=head3 Basic authentication
+=head4 Basic authentication
 
 If you need to supply basic auth credentials, pass a hashref of data as
 described by L<LWP::UserAgent>:
@@ -401,7 +403,7 @@ described by L<LWP::UserAgent>:
                         }
     }) or die "Couldn't log in";
 
-=head3 Bot passwords
+=head4 Bot passwords
 
 C<MediaWiki::Bot> doesn't yet support the more complicated (but more secure)
 oAuth login flow for bots. Instead, we support a simpler "bot password", which
@@ -590,7 +592,7 @@ sub _do_sul {
     return $sum == $total;
 }
 
-=head2 logout
+=head3 logout
 
     $bot->logout();
 
