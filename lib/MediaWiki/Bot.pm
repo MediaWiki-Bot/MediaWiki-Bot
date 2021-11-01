@@ -3328,7 +3328,44 @@ sub get_pages_in_namespace {
     return map { $_->{title} } @$res;
 }
 
-=head2 list_transclusions
+=head2 Templates and Transclusions
+
+=head3 expandtemplates
+
+    my $expanded = $bot->expandtemplates($title, $wikitext);
+
+Expands templates on $page, using $text if provided, otherwise loading the page
+text automatically.
+
+B<References:> L<API:Parsing wikitext|https://www.mediawiki.org/wiki/API:Parsing_wikitext>
+
+=cut
+
+sub expandtemplates {
+    my $self = shift;
+    my $page = shift;
+    my $text = shift;
+
+    unless ($text) {
+        croak q{You must provide a page title} unless $page;
+        $text = $self->get_text($page);
+    }
+
+    my $hash = {
+        action => 'expandtemplates',
+        prop   => 'wikitext',
+        ( $page ? (title  => $page) : ()),
+        text   => $text,
+    };
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+
+    return exists $res->{expandtemplates}->{'*'}
+        ? $res->{expandtemplates}->{'*'}
+        : $res->{expandtemplates}->{wikitext};
+}
+
+=head3 list_transclusions
 
 Returns an array containing a list of all pages transcluding $page.
 
@@ -3411,7 +3448,9 @@ sub list_transclusions {
     return @links;
 }
 
-=head2 linksearch
+=head2 External links
+
+=head3 linksearch
 
 Runs a linksearch on the specified $link and returns an array containing
 anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page
@@ -3495,42 +3534,9 @@ sub linksearch {
 
 }
 
-=head2 expandtemplates
+=head2 Meta
 
-    my $expanded = $bot->expandtemplates($title, $wikitext);
-
-Expands templates on $page, using $text if provided, otherwise loading the page
-text automatically.
-
-B<References:> L<API:Parsing wikitext|https://www.mediawiki.org/wiki/API:Parsing_wikitext>
-
-=cut
-
-sub expandtemplates {
-    my $self = shift;
-    my $page = shift;
-    my $text = shift;
-
-    unless ($text) {
-        croak q{You must provide a page title} unless $page;
-        $text = $self->get_text($page);
-    }
-
-    my $hash = {
-        action => 'expandtemplates',
-        prop   => 'wikitext',
-        ( $page ? (title  => $page) : ()),
-        text   => $text,
-    };
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-
-    return exists $res->{expandtemplates}->{'*'}
-        ? $res->{expandtemplates}->{'*'}
-        : $res->{expandtemplates}->{wikitext};
-}
-
-=head2 db_to_domain
+=head3 db_to_domain
 
 Converts a wiki/database name (enwiki) to the domain name (en.wikipedia.org).
 
@@ -3580,7 +3586,7 @@ sub db_to_domain {
     }
 }
 
-=head2 domain_to_db
+=head3 domain_to_db
 
     my $db = $bot->domain_to_db($domain_name);
 
@@ -3615,76 +3621,7 @@ sub domain_to_db {
     }
 }
 
-=head2 search
-
-This is a simple search for your $search_term in page text. It returns an array
-of page titles matching.
-
-Additional optional parameters are:
-
-=over 4
-
-=item *
-
-A namespace number to search in, or an arrayref of numbers (default is the
-main namespace)
-
-=item *
-
-$options_hashref is a hashref as described in L</"Options hashref">:
-
-=back
-
-    my @pages = $bot->search("Mike.lifeguard", 2);
-    print "@pages\n";
-
-Or, use a callback for incremental processing:
-
-    my @pages = $bot->search("Mike.lifeguard", 2, { hook => \&mysub });
-    sub mysub {
-        my ($res) = @_;
-        foreach my $hashref (@$res) {
-            my $page = $hashref->{'title'};
-            print "$page\n";
-        }
-    }
-
-B<References:> L<API:Search|https://www.mediawiki.org/wiki/API:Search>
-
-=cut
-
-sub search {
-    my $self    = shift;
-    my $term    = shift;
-    my $ns      = shift || 0;
-    my $options = shift;
-
-    if (ref $ns eq 'ARRAY') {    # Accept a hashref
-        $ns = join('|', @$ns);
-    }
-
-    my $hash = {
-        action   => 'query',
-        list     => 'search',
-        srnamespace => $ns,
-        srsearch => $term,
-        srwhat   => 'text',
-        srlimit  => 'max',
-
-        #srinfo      => 'totalhits',
-        srprop      => 'size',
-        srredirects => 0,
-    };
-    $options->{max} = 1 unless $options->{max};
-
-    my $res = $self->{api}->list($hash, $options);
-    return $self->_handle_api_error() unless $res;
-    return RET_TRUE if not ref $res; # Not a ref when used with callback
-
-    return map { $_->{title} } @$res;
-}
-
-=head2 get_log
+=head3 get_log
 
 This fetches log entries, and returns results as an array of hashes. The first
 parameter is a hashref with keys:
@@ -3768,7 +3705,78 @@ sub get_log {
     return $res;
 }
 
-=head2 email
+=head3 search
+
+This is a simple search for your $search_term in page text. It returns an array
+of page titles matching.
+
+Additional optional parameters are:
+
+=over 4
+
+=item *
+
+A namespace number to search in, or an arrayref of numbers (default is the
+main namespace)
+
+=item *
+
+$options_hashref is a hashref as described in L</"Options hashref">:
+
+=back
+
+    my @pages = $bot->search("Mike.lifeguard", 2);
+    print "@pages\n";
+
+Or, use a callback for incremental processing:
+
+    my @pages = $bot->search("Mike.lifeguard", 2, { hook => \&mysub });
+    sub mysub {
+        my ($res) = @_;
+        foreach my $hashref (@$res) {
+            my $page = $hashref->{'title'};
+            print "$page\n";
+        }
+    }
+
+B<References:> L<API:Search|https://www.mediawiki.org/wiki/API:Search>
+
+=cut
+
+sub search {
+    my $self    = shift;
+    my $term    = shift;
+    my $ns      = shift || 0;
+    my $options = shift;
+
+    if (ref $ns eq 'ARRAY') {    # Accept a hashref
+        $ns = join('|', @$ns);
+    }
+
+    my $hash = {
+        action   => 'query',
+        list     => 'search',
+        srnamespace => $ns,
+        srsearch => $term,
+        srwhat   => 'text',
+        srlimit  => 'max',
+
+        #srinfo      => 'totalhits',
+        srprop      => 'size',
+        srredirects => 0,
+    };
+    $options->{max} = 1 unless $options->{max};
+
+    my $res = $self->{api}->list($hash, $options);
+    return $self->_handle_api_error() unless $res;
+    return RET_TRUE if not ref $res; # Not a ref when used with callback
+
+    return map { $_->{title} } @$res;
+}
+
+=head2 Mail
+
+=head3 email
 
     $bot->email($user, $subject, $body);
 
