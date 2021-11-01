@@ -610,6 +610,890 @@ sub logout {
     return RET_TRUE;
 }
 
+=head2 Getting information about pages
+
+=head3 diff
+
+This allows retrieval of a diff from the API. The return is a scalar containing
+the I<HTML table> of the diff. Options are passed as a hashref with keys:
+
+=over 4
+
+=item *
+
+I<title> is the title to use. Provide I<either> this or revid.
+
+=item *
+
+I<revid> is any revid to diff from. If you also specified title, only title will
+be honoured.
+
+=item *
+
+I<oldid> is an identifier to diff to. This can be a revid, or the special values
+'cur', 'prev' or 'next'
+
+=back
+
+B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub diff {
+    my $self = shift;
+    my $title;
+    my $revid;
+    my $oldid;
+
+    if (ref $_[0] eq 'HASH') {
+        $title = $_[0]->{title};
+        $revid = $_[0]->{revid};
+        $oldid = $_[0]->{oldid};
+    }
+    else {
+        $title = shift;
+        $revid = shift;
+        $oldid = shift;
+    }
+
+    my $hash = {
+        action   => 'query',
+        prop     => 'revisions',
+        rvdiffto => $oldid,
+    };
+    if ($title) {
+        $hash->{titles}  = $title;
+        $hash->{rvlimit} = 1;
+    }
+    elsif ($revid) {
+        $hash->{'revids'} = $revid;
+    }
+
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    my @revids = keys %{ $res->{query}->{pages} };
+    my $diff   = $res->{query}->{pages}->{ $revids[0] }->{revisions}->[0]->{diff}->{'*'};
+
+    return $diff;
+}
+
+=head3 get_history
+
+    my @hist = $bot->get_history($title);
+    my @hist = $bot->get_history($title, $additional_params);
+
+Returns an array containing the history of the specified page $title.
+
+The optional hash ref $additional_params can be used to tune the
+query by API parameters,
+such as 'rvlimit' to return only 'rvlimit' number of revisions (default is as many
+as possible, but may be limited per query) or 'rvdir' to set the chronological
+direction.
+
+Example:
+
+    my @hist = $bot->get_history('Main Page', {'rvlimit' => 10, 'rvdir' => 'older'})
+
+The array returned contains hashrefs with keys: revid, user, comment, minor,
+timestamp_date, and timestamp_time.
+
+B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
+L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_history {
+    my $self      = shift;
+    my $pagename  = shift;
+    my $additional_params = shift // {};
+    # for backward-compatibility check for textual params
+    if(ref $additional_params eq ''){
+        my $rvlimit = $additional_params;
+        my $rvstartid = shift;
+        my $rvdir = shift;
+        $additional_params = {};
+        $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
+        $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
+        $additional_params->{'rvdir'} = $rvdir if $rvdir;
+    }
+    my $ready;
+    my $filter_params = {%$additional_params};
+    my @full_hist;
+    while(!$ready){
+        my @hist = $self->get_history_step_by_step($pagename, $filter_params);
+        if(@hist == 0 || !defined($filter_params->{'continue'})){
+            $ready = 1;
+        }
+        push @full_hist, @hist;
+    }
+    return @full_hist;
+}
+
+=head3 get_history_step_by_step
+
+    my @hist = $bot->get_history_step_by_step($title);
+    my @hist = $bot->get_history_step_by_step($title, $additional_params);
+
+Same as get_history(), but does not return the full history at once, but let's you
+loop through it.
+
+The optional call-by-reference hash ref $additional_params can be used to loop
+through a page's full history by using the 'continue' param returned by the API.
+
+Example:
+
+    my $ready;
+    my $filter_params = {};
+    while(!$ready){
+        my @hist = $bot->get_history_step_by_step($page, $filter_params);
+        if(@hist == 0 || !defined($filter_params->{'continue'})){
+            $ready = 1;
+        }
+        # do something with @hist
+    }
+
+B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
+L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_history_step_by_step {
+    my $self      = shift;
+    my $pagename  = shift;
+    my $additional_params = shift // {};
+    my $query = {
+        action  => 'query',
+        prop    => 'revisions',
+        titles  => $pagename,
+        rvprop  => 'ids|timestamp|user|comment|flags',
+    };
+    while(my ($key, $value) = each %$additional_params){
+      $query->{$key} = $value;
+    }
+    $query->{'rvlimit'} = 'max' unless defined $query->{'rvlimit'};
+
+    my $res = $self->{api}->api($query);
+    return $self->_handle_api_error() unless $res;
+    my ($id) = keys %{ $res->{query}->{pages} };
+    my $array = $res->{query}->{pages}->{$id}->{revisions};
+
+    my @return;
+    for my $hash (@{$array}) {
+        my $revid = $hash->{revid};
+        my $user  = $hash->{user};
+        my ($timestamp_date, $timestamp_time) = split(/T/, $hash->{timestamp});
+        $timestamp_time =~ s/Z$//;
+        my $comment = $hash->{comment};
+        push(
+            @return,
+            {
+                revid          => $revid,
+                user           => $user,
+                timestamp_date => $timestamp_date,
+                timestamp_time => $timestamp_time,
+                comment        => $comment,
+                minor          => exists $hash->{minor},
+            });
+    }
+    $additional_params->{'continue'} = $res->{'continue'}{'continue'};
+    $additional_params->{'rvcontinue'} = $res->{'continue'}{'rvcontinue'};
+    return @return;
+}
+
+=head3 what_links_here
+
+Returns an array containing a list of all pages linking to $page.
+
+Additional optional parameters are:
+
+=over 4
+
+=item *
+
+One of: all (default), redirects, or nonredirects.
+
+=item *
+
+A namespace number to search (pass an arrayref to search in multiple namespaces)
+
+=item *
+
+An L</"Options hashref">.
+
+=back
+
+A typical query:
+
+    my @links = $bot->what_links_here("Meta:Sandbox",
+        undef, 1,
+        { hook=>\&mysub }
+    );
+    sub mysub{
+        my ($res) = @_;
+        foreach my $hash (@$res) {
+            my $title = $hash->{'title'};
+            my $is_redir = $hash->{'redirect'};
+            print "Redirect: $title\n" if $is_redir;
+            print "Page: $title\n" unless $is_redir;
+        }
+    }
+
+Transclusions are no longer handled by what_links_here() - use
+L</list_transclusions> instead.
+
+B<References:> L<Listing incoming links|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-incoming-links>,
+L<API:Backlinks|https://www.mediawiki.org/wiki/API:Backlinks>
+
+=cut
+
+sub what_links_here {
+    my $self    = shift;
+    my $page    = shift;
+    my $filter  = shift;
+    my $ns      = shift;
+    my $options = shift;
+
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');    # Allow array of namespaces
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {    # Verify $filter
+        $filter = $1;
+    }
+
+    # http://en.wikipedia.org/w/api.php?action=query&list=backlinks&bltitle=template:tlx
+    my $hash = {
+        action      => 'query',
+        list        => 'backlinks',
+        bltitle     => $page,
+        bllimit     => 'max',
+    };
+    $hash->{blnamespace}   = $ns if defined $ns;
+    $hash->{blfilterredir} = $filter if $filter;
+    $options->{max} = 1 unless $options->{max};
+
+    my $res = $self->{api}->list($hash, $options);
+    return $self->_handle_api_error() unless $res;
+    return RET_TRUE if not ref $res; # When using a callback hook, this won't be a reference
+    my @links;
+    foreach my $hashref (@$res) {
+        my $title    = $hashref->{title};
+        my $redirect = defined($hashref->{redirect});
+        push @links, { title => $title, redirect => $redirect };
+    }
+
+    return @links;
+}
+
+=head3 get_page
+
+Given a $page_title (required), this function returns a hash ref (or undef on 
+error) with several data of a page. That data can comfortably be used to 
+L</edit> a page. 
+
+The second parameter (optional) is a hashref with optional keys that will be 
+forwarded to the API, if their name starts with C<rv...>. Especially interesting
+are the params rvsection and rvstartid, see L</get_text> for some more detailed
+description.
+
+The returned hashref contains the following keys:
+
+=over 4
+
+=item *
+
+C<page> - the full page title (including the resolved namespace) or undef if the 
+page does not exist
+
+=item *
+
+C<pageid> - the page id (set to PAGE_NONEXISTENT, i.e. -1, if page does not exist)
+
+=item *
+
+C<text> - the text of the page (or of a section depending on the input params), 
+see L</get_text> for details.
+
+=item *
+
+C<section> - if 'rvsection' is set (in the second parameter of the dunction call),
+then this key will be set to the same value. Otherwise it will be unset.
+
+=item *
+
+C<edittoken> - a token that will be used by L</edit> to detect edit conflicts.
+
+=back
+
+This function is very similar to L</get_text>. It just gives a more comfortable way
+to edit pages.
+With L</get_text> you might write:
+
+    my $params = {};
+    # get_text will add an edittoken to $params
+    my $text = $bot->get_text('My page', $params);
+    $text .= "\n\n* More text\n";
+    $bot->edit({
+        page      => 'My page',
+        text      => $text,
+        summary   => 'Adding new content',
+        section   => 'new',
+        edittoken => $params->{'edittoken'},
+    });
+
+With L</get_page> the same will be done via:
+
+    my $page = $bot->get_page('My page');
+    $page->{'text'} .= "\n\n* More text\n";
+    $page->{'summary'} = 'Adding new content';
+    $page->{'section'} = 'new';
+    $bot->edit($page);
+
+That means you don't have to cope with the edit token. That will be done implicitly. And you don't have to tell the page name again. if you use C<'rvsection' = n> in the second parameter, then you don't even have to explicitly set the section number again.
+
+B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
+L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_page {
+    my $self     = shift;
+    my $pagename = shift;
+    my $options  = shift // {};
+    unless(defined $pagename){
+        if($self->{'debug'} > 1){
+            warn "get_page(): param \$pagename is not defined.\n";
+        }
+        return;
+    }
+    my $hash = {
+        action => 'query',
+        titles => $pagename,
+        prop   => 'revisions',
+        rvprop => 'content',
+    };
+    # users might forget that the param is called section and not rvsection
+    if(defined $options->{'section'} && !(defined $options->{'rvsection'})){
+        $options->{'rvsection'} = $options->{'section'};
+    }
+    for my $key(keys %$options){
+        if(substr($key, 0, 2) eq 'rv'){
+            $hash->{$key} = $options->{$key};
+        }
+    }
+    my $page = {
+        'page' => $pagename,
+        'edittoken' => $self->_get_edittoken($pagename),
+    };
+    if(defined $options->{'rvsection'}){
+        $page->{'section'} = $options->{'rvsection'};
+    }
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    ($page->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
+    if($page->{'pageid'} != PAGE_NONEXISTENT){
+       $page->{'text'} = $data->{revisions}[0]->{'*'};
+    }
+    return $page;
+}
+
+=head3 get_id
+
+Returns the id of the specified $page_title. Returns PAGE_NONEXISTENT (i.e. -1) if 
+page does not exist. Returns undef on error.
+
+    my $page_id = $bot->get_id("Main Page");
+    die "could not get id of page.\n" unless defined $pageid;
+    warn "page doesn't exist\n" if $page_id == MediaWiki::Bot::PAGE_NONEXISTENT;
+
+    // or
+    die "could not get id of page.\n" unless ($page_id // -1) < 0;
+
+B<Revisions:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
+
+=cut
+
+sub get_id {
+    my $self     = shift;
+    my $pagename = shift;
+    unless(defined $pagename){
+        warn "get_id(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
+        return;
+    }
+
+    my $hash = {
+        action => 'query',
+        titles => $pagename,
+    };
+
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    my ($id) = %{ $res->{query}->{pages} };
+    return $id; # $id might be PAGE_NONEXISTENT
+}
+
+=head3 get_pages
+
+Returns the text of the specified pages in a hashref. Content of undef means
+page does not exist. Also handles redirects or article names that use namespace
+aliases.
+
+    my @pages = ('Page 1', 'Page 2', 'Page 3');
+    my $thing = $bot->get_pages(\@pages);
+    foreach my $page (keys %$thing) {
+        my $text = $thing->{$page};
+        print "$text\n" if defined($text);
+    }
+
+B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
+L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_pages {
+    my $self  = shift;
+    my @pages = (ref $_[0] eq 'ARRAY') ? @{$_[0]} : @_;
+    my %return;
+
+    my $hash = {
+        action => 'query',
+        titles => join('|', @pages),
+        prop   => 'revisions',
+        rvprop => 'content',
+    };
+
+    my $diff;    # Used to track problematic article names
+    map { $diff->{$_} = 1; } @pages;
+
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+
+    foreach my $id (keys %{ $res->{query}->{pages} }) {
+        my $page = $res->{query}->{pages}->{$id};
+        if ($diff->{ $page->{title} }) {
+            $diff->{ $page->{title} }++;
+        }
+        else {
+            next;
+        }
+
+        if (defined($page->{missing})) {
+            $return{ $page->{title} } = undef;
+            next;
+        }
+        if (defined($page->{revisions})) {
+            my $revisions = @{ $page->{revisions} }[0]->{'*'};
+            if (!defined $revisions) {
+                $return{ $page->{title} } = $revisions;
+            }
+            elsif (length($revisions) < 150 && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {    # FRAGILE!
+                my $redirect_to = $1;
+                $return{ $page->{title} } = $self->get_text($redirect_to);
+            }
+            else {
+                $return{ $page->{title} } = $revisions;
+            }
+        }
+    }
+
+    my $expand = $self->_get_ns_alias_data();
+    # Only for those article names that remained after the first part
+    # If we're here we are dealing most likely with a WP:CSD type of article name
+    for my $title (keys %$diff) {
+        if ($diff->{$title} == 1) {
+            my @pieces = split(/:/, $title);
+            if (@pieces > 1) {
+                $pieces[0] = ($expand->{ $pieces[0] } || $pieces[0]);
+                my $v = $self->get_text(join ':', @pieces);
+                warn "Detected article name that needed expanding $title\n" if $self->{debug} > 1;
+
+                $return{$title} = $v;
+                if (defined $v and $v =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {
+                    $v = $self->get_text($1);
+                    $return{$title} = $v;
+                }
+            }
+        }
+    }
+    return \%return;
+}
+
+=head3 prefixindex
+
+This returns an array of hashrefs containing page titles that start with the
+given $prefix. The hashref has keys 'title' and 'redirect' (present if the
+page is a redirect, not present otherwise).
+
+Additional parameters are:
+
+=over 4
+
+=item *
+
+One of all, redirects, or nonredirects
+
+=item *
+
+A single namespace number (unlike linksearch etc, which can accept an arrayref
+of numbers).
+
+=item *
+
+$options_hashref as described in L</"Options hashref">.
+
+=back
+
+    my @prefix_pages = $bot->prefixindex("User:Mike.lifeguard");
+    # Or, the more efficient equivalent
+    my @prefix_pages = $bot->prefixindex("Mike.lifeguard", 2);
+    foreach my $hashref (@pages) {
+        my $title = $hashref->{'title'};
+        if $hashref->{'redirect'} {
+            print "$title is a redirect\n";
+        }
+        else {
+            print "$title\n is not a redirect\n";
+        }
+    }
+
+B<References:> L<API:Allpages|https://www.mediawiki.org/wiki/API:Allpages>
+
+=cut
+
+sub prefixindex {
+    my $self    = shift;
+    my $prefix  = shift;
+    my $ns      = shift;
+    my $filter  = shift;
+    my $options = shift;
+
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {    # Verify
+        $filter = $1;
+    }
+
+    if (!defined $ns && $prefix =~ m/:/) {
+        print STDERR "Converted '$prefix' to..." if $self->{debug} > 1;
+        my ($name) = split(/:/, $prefix, 2);
+        my $ns_data = $self->_get_ns_data();
+        $ns = $ns_data->{$name};
+        $prefix =~ s/^$name://;
+        warn "'$prefix' with a namespace filter $ns" if $self->{debug} > 1;
+    }
+
+    my $hash = {
+        action   => 'query',
+        list     => 'allpages',
+        apprefix => $prefix,
+        aplimit  => 'max',
+    };
+    $hash->{apnamespace}   = $ns     if defined $ns;
+    $hash->{apfilterredir} = $filter if $filter;
+    $options->{max} = 1 unless $options->{max};
+
+    my $res = $self->{api}->list($hash, $options);
+
+    return $self->_handle_api_error() unless $res;
+    return RET_TRUE if not ref $res; # Not a ref when using callback hook
+
+    return map {
+        { title => $_->{title}, redirect => defined $_->{redirect} }
+    } @$res;
+}
+
+=head3 get_protection
+
+Returns data on page protection as a array of up to two hashrefs. Each hashref
+has a type, level, and expiry. Levels are 'sysop' and 'autoconfirmed'; types are
+'move' and 'edit'; expiry is a timestamp. Additionally, the key 'cascade' will
+exist if cascading protection is used.
+
+    my $page = 'Main Page';
+    $bot->edit({
+        page    => $page,
+        text    => rand(),
+        summary => 'test',
+    }) unless $bot->get_protection($page);
+
+You can also pass an arrayref of page titles to do bulk queries:
+
+    my @pages = ('Main Page', 'User:Mike.lifeguard', 'Project:Sandbox');
+    my $answer = $bot->get_protection(\@pages);
+    foreach my $title (keys %$answer) {
+        my $protected = $answer->{$title};
+        print "$title is protected\n" if $protected;
+        print "$title is unprotected\n" unless $protected;
+    }
+
+B<References:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
+
+=cut
+
+sub get_protection {
+    my $self = shift;
+    my $page = shift;
+    if (ref $page eq 'ARRAY') {
+        $page = join('|', @$page);
+    }
+
+    my $hash = {
+        action => 'query',
+        titles => $page,
+        prop   => 'info',
+        inprop => 'protection',
+    };
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+
+    my $data = $res->{query}->{pages};
+
+    my $out_data;
+    foreach my $item (keys %$data) {
+        my $title      = $data->{$item}->{title};
+        my $protection = $data->{$item}->{protection};
+        if (@$protection == 0) {
+            $protection = undef;
+        }
+        $out_data->{$title} = $protection;
+    }
+
+    if (scalar keys %$out_data == 1) {
+        return $out_data->{$page};
+    }
+    else {
+        return $out_data;
+    }
+}
+
+=head3 get_last
+
+Returns the revid of the last revision to $page not made by $user. undef is
+returned if no result was found, as would be the case if the page is deleted or 
+if an error occured. If you want to distinguish between error and a non-existing 
+page, you can use the optional third parameter which has to be a hash ref.
+
+That additional param will get filled with two values C<pageid> and C<edittoken>, 
+similar as in L</get_text> (see there for details).
+
+    # simple example
+    my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
+    if(defined $revid){
+        print "Reverting to $revid without checking for edit conflicts.\n";
+        $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
+    }
+
+    # advanced example
+    my $options = {};
+    my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard', $options);
+    die "error, see API error message\n" unless defined $options->{'pageid'};
+    if($options->{'pageid'} == MediaWiki::Bot::PAGE_NONEXISTENT){
+        warn "page doesn't exist\n";
+    }else{
+        print "Reverting to $revid\n";
+        $bot->revert('User:Mike.lifeguard', $revid, 'rvv', $options->{'edittoken'});
+    }
+
+B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_last {
+    my $self = shift;
+    my $page = shift;
+    my $user = shift;
+    unless(defined $page){
+        warn "get_last(): param \$page is not defined.\n" if $self->{'debug'} > 1;
+        return;
+    }
+    my $options = shift;
+    $options->{'edittoken'} = $self->_get_edittoken($page);
+    my $res = $self->{api}->api({
+            action        => 'query',
+            titles        => $page,
+            prop          => 'revisions',
+            rvlimit       => 1,
+            rvprop        => 'ids|user',
+            rvexcludeuser => $user // '',
+    });
+    return $self->_handle_api_error() unless $res;
+    ($options->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
+    my $revid;
+    if($options->{'pageid'} != PAGE_NONEXISTENT){
+       $revid = $data->{revisions}[0]->{revid};
+    }
+    return $revid;
+}
+
+=head3 recent_edit_to_page
+
+     my ($timestamp, $user) = $bot->recent_edit_to_page($title);
+
+Returns timestamp and username for most recent (top) edit to $page.
+
+B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub recent_edit_to_page {
+    my $self = shift;
+    my $page = shift;
+    my $res  = $self->{api}->api({
+            action  => 'query',
+            prop    => 'revisions',
+            titles  => $page,
+            rvlimit => 1
+        },
+        { max => 1 });
+    return $self->_handle_api_error() unless $res;
+    my $data = ( %{ $res->{query}->{pages} } )[1];
+    return ($data->{revisions}[0]->{timestamp},
+        $data->{revisions}[0]->{user});
+}
+
+=head3 get_users
+
+    my @recent_editors = $bot->get_users($title, $limit, $revid, $direction);
+
+Gets the most recent editors to $page, up to $limit, starting from $revision
+and going in $direction.
+
+B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_users {
+    my $self      = shift;
+    my $pagename  = shift;
+    my $limit     = shift || 'max';
+    my $rvstartid = shift;
+    my $direction = shift;
+
+    if ($limit > 50) {
+        $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
+        carp $self->{errstr};
+        return;
+    }
+    my $hash = {
+        action  => 'query',
+        prop    => 'revisions',
+        titles  => $pagename,
+        rvprop  => 'ids|timestamp|user|comment',
+        rvlimit => $limit,
+    };
+    $hash->{rvstartid} = $rvstartid if ($rvstartid);
+    $hash->{rvdir}     = $direction if ($direction);
+
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+
+    my ($id) = keys %{ $res->{query}->{pages} };
+    return map { $_->{user} } @{$res->{query}->{pages}->{$id}->{revisions}};
+}
+
+=head3 get_text
+
+Returns the wikitext of the specified $page_title. It's similar to L</get_page>. See
+L</get_page> for differences.
+
+The first parameter $page_title is the only required one.
+
+The second parameter is a hashref with the following independent optional keys:
+
+=over 4
+
+=item *
+
+C<rvstartid> - if defined, this function returns the text of that revision, otherwise
+the newest revision will be used.
+
+=item *
+
+C<rvsection> - if defined, returns the text of that section. Otherwise the 
+whole page text will be returned.
+
+=item *
+
+C<pageid> - this is an output parameter and can be used to fetch the id of a page 
+without the need of calling L</get_id> additionally. Note that the value of this 
+param is ignored and it will be overwritten by this function.
+
+=item *
+
+C<rv...> - any param starting with 'rv' will be forwarded to the api call.
+
+=back
+
+The second param has another task: C<get_text> will set a value for the key 
+C<edittoken>, such that you may use this param when L</edit>ing a page. However, 
+using L</get_page> is the recommended way for doing that instead.
+
+A blank page will return wikitext of "" (which evaluates to false in Perl,
+but is defined); a nonexistent page will return undef (which also evaluates
+to false in Perl, but is obviously undefined). You can distinguish between
+blank and nonexistent pages by using L<defined|perlfunc/defined>:
+
+    # simple example
+    my $wikitext = $bot->get_text('Page title');
+    print "Wikitext: $wikitext\n" if defined $wikitext;
+
+    # advanced example
+    my $options = {'revid'=>123456, 'section_number'=>2};
+    $wikitext = $bot->get_text('Page title', $options);
+    die "error, see API error message\n" unless defined $options->{'pageid'};
+    warn "page doesn't exist\n" if $options->{'pageid'} == MediaWiki::Bot::PAGE_NONEXISTENT;
+    print "Wikitext: $wikitext\n" if defined $wikitext;
+
+B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
+L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+For backward-compatibility the params \C<revid> and \C<section_number> may also be 
+given as scalar parameters:
+
+    my $wikitext = $bot->get_text('Page title', 123456, 2);
+    print "Wikitext: $wikitext\n" if defined $wikitext;
+
+=cut
+
+sub get_text {
+    my $self     = shift;
+    my $pagename = shift;
+    unless(defined $pagename){
+        warn "get_text(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
+        return;
+    }
+    my $options = shift;
+    # for backward-compatibility: try to read scalars
+    if(ref $options eq ''){
+        $options = {
+            'rvstartid' => $options,
+            'rvsection' => shift,
+        };
+        delete $options->{'rvstartid'} unless defined $options->{'rvstartid'};
+        delete $options->{'rvsection'} unless defined $options->{'rvsection'};
+        if(keys %$options > 0){
+            warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
+            . 'get_text is deprecated, and will be removed in a future release.');
+        }
+    }
+
+    my $page = $self->get_page($pagename, $options);
+    return unless defined $page;
+    $options->{'edittoken'} = $page->{'edittoken'};
+    $options->{'pageid'} = $page->{'pageid'};
+    return $page->{'text'};
+}
+
+=head3 is_protected
+
+This is a synonym for L</get_protection>, which should be used in preference.
+
+B<This method is deprecated>, and will emit deprecation warnings.
+
+=cut
+
+sub is_protected {
+    warnings::warnif('deprecated', 'is_protected is deprecated, and might be '
+        . 'removed in a future release; please use get_protection instead');
+    my $self = shift;
+    return $self->get_protection(@_);
+}
+
 =head2 edit
 
     my $page = $bot->get_page('My page');
@@ -925,455 +1809,6 @@ sub move {
     return $res; # should we return something more useful?
 }
 
-=head2 get_history
-
-    my @hist = $bot->get_history($title);
-    my @hist = $bot->get_history($title, $additional_params);
-
-Returns an array containing the history of the specified page $title.
-
-The optional hash ref $additional_params can be used to tune the
-query by API parameters,
-such as 'rvlimit' to return only 'rvlimit' number of revisions (default is as many
-as possible, but may be limited per query) or 'rvdir' to set the chronological
-direction.
-
-Example:
-
-    my @hist = $bot->get_history('Main Page', {'rvlimit' => 10, 'rvdir' => 'older'})
-
-The array returned contains hashrefs with keys: revid, user, comment, minor,
-timestamp_date, and timestamp_time.
-
-B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
-L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_history {
-    my $self      = shift;
-    my $pagename  = shift;
-    my $additional_params = shift // {};
-    # for backward-compatibility check for textual params
-    if(ref $additional_params eq ''){
-        my $rvlimit = $additional_params;
-        my $rvstartid = shift;
-        my $rvdir = shift;
-        $additional_params = {};
-        $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
-        $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
-        $additional_params->{'rvdir'} = $rvdir if $rvdir;
-    }
-    my $ready;
-    my $filter_params = {%$additional_params};
-    my @full_hist;
-    while(!$ready){
-        my @hist = $self->get_history_step_by_step($pagename, $filter_params);
-        if(@hist == 0 || !defined($filter_params->{'continue'})){
-            $ready = 1;
-        }
-        push @full_hist, @hist;
-    }
-    return @full_hist;
-}
-
-=head2 get_history_step_by_step
-
-    my @hist = $bot->get_history_step_by_step($title);
-    my @hist = $bot->get_history_step_by_step($title, $additional_params);
-
-Same as get_history(), but does not return the full history at once, but let's you
-loop through it.
-
-The optional call-by-reference hash ref $additional_params can be used to loop
-through a page's full history by using the 'continue' param returned by the API.
-
-Example:
-
-    my $ready;
-    my $filter_params = {};
-    while(!$ready){
-        my @hist = $bot->get_history_step_by_step($page, $filter_params);
-        if(@hist == 0 || !defined($filter_params->{'continue'})){
-            $ready = 1;
-        }
-        # do something with @hist
-    }
-
-B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
-L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_history_step_by_step {
-    my $self      = shift;
-    my $pagename  = shift;
-    my $additional_params = shift // {};
-    my $query = {
-        action  => 'query',
-        prop    => 'revisions',
-        titles  => $pagename,
-        rvprop  => 'ids|timestamp|user|comment|flags',
-    };
-    while(my ($key, $value) = each %$additional_params){
-      $query->{$key} = $value;
-    }
-    $query->{'rvlimit'} = 'max' unless defined $query->{'rvlimit'};
-
-    my $res = $self->{api}->api($query);
-    return $self->_handle_api_error() unless $res;
-    my ($id) = keys %{ $res->{query}->{pages} };
-    my $array = $res->{query}->{pages}->{$id}->{revisions};
-
-    my @return;
-    for my $hash (@{$array}) {
-        my $revid = $hash->{revid};
-        my $user  = $hash->{user};
-        my ($timestamp_date, $timestamp_time) = split(/T/, $hash->{timestamp});
-        $timestamp_time =~ s/Z$//;
-        my $comment = $hash->{comment};
-        push(
-            @return,
-            {
-                revid          => $revid,
-                user           => $user,
-                timestamp_date => $timestamp_date,
-                timestamp_time => $timestamp_time,
-                comment        => $comment,
-                minor          => exists $hash->{minor},
-            });
-    }
-    $additional_params->{'continue'} = $res->{'continue'}{'continue'};
-    $additional_params->{'rvcontinue'} = $res->{'continue'}{'rvcontinue'};
-    return @return;
-}
-
-=head2 get_page
-
-Given a $page_title (required), this function returns a hash ref (or undef on 
-error) with several data of a page. That data can comfortably be used to 
-L</edit> a page. 
-
-The second parameter (optional) is a hashref with optional keys that will be 
-forwarded to the API, if their name starts with C<rv...>. Especially interesting
-are the params rvsection and rvstartid, see L</get_text> for some more detailed
-description.
-
-The returned hashref contains the following keys:
-
-=over 4
-
-=item *
-
-C<page> - the full page title (including the resolved namespace) or undef if the 
-page does not exist
-
-=item *
-
-C<pageid> - the page id (set to PAGE_NONEXISTENT, i.e. -1, if page does not exist)
-
-=item *
-
-C<text> - the text of the page (or of a section depending on the input params), 
-see L</get_text> for details.
-
-=item *
-
-C<section> - if 'rvsection' is set (in the second parameter of the dunction call),
-then this key will be set to the same value. Otherwise it will be unset.
-
-=item *
-
-C<edittoken> - a token that will be used by L</edit> to detect edit conflicts.
-
-=back
-
-This function is very similar to L</get_text>. It just gives a more comfortable way
-to edit pages.
-With L</get_text> you might write:
-
-    my $params = {};
-    # get_text will add an edittoken to $params
-    my $text = $bot->get_text('My page', $params);
-    $text .= "\n\n* More text\n";
-    $bot->edit({
-        page      => 'My page',
-        text      => $text,
-        summary   => 'Adding new content',
-        section   => 'new',
-        edittoken => $params->{'edittoken'},
-    });
-
-With L</get_page> the same will be done via:
-
-    my $page = $bot->get_page('My page');
-    $page->{'text'} .= "\n\n* More text\n";
-    $page->{'summary'} = 'Adding new content';
-    $page->{'section'} = 'new';
-    $bot->edit($page);
-
-That means you don't have to cope with the edit token. That will be done implicitly. And you don't have to tell the page name again. if you use C<'rvsection' = n> in the second parameter, then you don't even have to explicitly set the section number again.
-
-B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
-L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_page {
-    my $self     = shift;
-    my $pagename = shift;
-    my $options  = shift // {};
-    unless(defined $pagename){
-        if($self->{'debug'} > 1){
-            warn "get_page(): param \$pagename is not defined.\n";
-        }
-        return;
-    }
-    my $hash = {
-        action => 'query',
-        titles => $pagename,
-        prop   => 'revisions',
-        rvprop => 'content',
-    };
-    # users might forget that the param is called section and not rvsection
-    if(defined $options->{'section'} && !(defined $options->{'rvsection'})){
-        $options->{'rvsection'} = $options->{'section'};
-    }
-    for my $key(keys %$options){
-        if(substr($key, 0, 2) eq 'rv'){
-            $hash->{$key} = $options->{$key};
-        }
-    }
-    my $page = {
-        'page' => $pagename,
-        'edittoken' => $self->_get_edittoken($pagename),
-    };
-    if(defined $options->{'rvsection'}){
-        $page->{'section'} = $options->{'rvsection'};
-    }
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    ($page->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
-    if($page->{'pageid'} != PAGE_NONEXISTENT){
-       $page->{'text'} = $data->{revisions}[0]->{'*'};
-    }
-    return $page;
-}
-
-=head2 get_text
-
-Returns the wikitext of the specified $page_title. It's similar to L</get_page>. See
-L</get_page> for differences.
-
-The first parameter $page_title is the only required one.
-
-The second parameter is a hashref with the following independent optional keys:
-
-=over 4
-
-=item *
-
-C<rvstartid> - if defined, this function returns the text of that revision, otherwise
-the newest revision will be used.
-
-=item *
-
-C<rvsection> - if defined, returns the text of that section. Otherwise the 
-whole page text will be returned.
-
-=item *
-
-C<pageid> - this is an output parameter and can be used to fetch the id of a page 
-without the need of calling L</get_id> additionally. Note that the value of this 
-param is ignored and it will be overwritten by this function.
-
-=item *
-
-C<rv...> - any param starting with 'rv' will be forwarded to the api call.
-
-=back
-
-The second param has another task: C<get_text> will set a value for the key 
-C<edittoken>, such that you may use this param when L</edit>ing a page. However, 
-using L</get_page> is the recommended way for doing that instead.
-
-A blank page will return wikitext of "" (which evaluates to false in Perl,
-but is defined); a nonexistent page will return undef (which also evaluates
-to false in Perl, but is obviously undefined). You can distinguish between
-blank and nonexistent pages by using L<defined|perlfunc/defined>:
-
-    # simple example
-    my $wikitext = $bot->get_text('Page title');
-    print "Wikitext: $wikitext\n" if defined $wikitext;
-
-    # advanced example
-    my $options = {'revid'=>123456, 'section_number'=>2};
-    $wikitext = $bot->get_text('Page title', $options);
-    die "error, see API error message\n" unless defined $options->{'pageid'};
-    warn "page doesn't exist\n" if $options->{'pageid'} == MediaWiki::Bot::PAGE_NONEXISTENT;
-    print "Wikitext: $wikitext\n" if defined $wikitext;
-
-B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
-L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-For backward-compatibility the params \C<revid> and \C<section_number> may also be 
-given as scalar parameters:
-
-    my $wikitext = $bot->get_text('Page title', 123456, 2);
-    print "Wikitext: $wikitext\n" if defined $wikitext;
-
-=cut
-
-sub get_text {
-    my $self     = shift;
-    my $pagename = shift;
-    unless(defined $pagename){
-        warn "get_text(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
-        return;
-    }
-    my $options = shift;
-    # for backward-compatibility: try to read scalars
-    if(ref $options eq ''){
-        $options = {
-            'rvstartid' => $options,
-            'rvsection' => shift,
-        };
-        delete $options->{'rvstartid'} unless defined $options->{'rvstartid'};
-        delete $options->{'rvsection'} unless defined $options->{'rvsection'};
-        if(keys %$options > 0){
-            warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
-            . 'get_text is deprecated, and will be removed in a future release.');
-        }
-    }
-
-    my $page = $self->get_page($pagename, $options);
-    return unless defined $page;
-    $options->{'edittoken'} = $page->{'edittoken'};
-    $options->{'pageid'} = $page->{'pageid'};
-    return $page->{'text'};
-}
-
-=head2 get_id
-
-Returns the id of the specified $page_title. Returns PAGE_NONEXISTENT (i.e. -1) if 
-page does not exist. Returns undef on error.
-
-    my $page_id = $bot->get_id("Main Page");
-    die "could not get id of page.\n" unless defined $pageid;
-    warn "page doesn't exist\n" if $page_id == MediaWiki::Bot::PAGE_NONEXISTENT;
-
-    // or
-    die "could not get id of page.\n" unless ($page_id // -1) < 0;
-
-B<Revisions:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
-
-=cut
-
-sub get_id {
-    my $self     = shift;
-    my $pagename = shift;
-    unless(defined $pagename){
-        warn "get_id(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
-        return;
-    }
-
-    my $hash = {
-        action => 'query',
-        titles => $pagename,
-    };
-
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    my ($id) = %{ $res->{query}->{pages} };
-    return $id; # $id might be PAGE_NONEXISTENT
-}
-
-=head2 get_pages
-
-Returns the text of the specified pages in a hashref. Content of undef means
-page does not exist. Also handles redirects or article names that use namespace
-aliases.
-
-    my @pages = ('Page 1', 'Page 2', 'Page 3');
-    my $thing = $bot->get_pages(\@pages);
-    foreach my $page (keys %$thing) {
-        my $text = $thing->{$page};
-        print "$text\n" if defined($text);
-    }
-
-B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
-L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_pages {
-    my $self  = shift;
-    my @pages = (ref $_[0] eq 'ARRAY') ? @{$_[0]} : @_;
-    my %return;
-
-    my $hash = {
-        action => 'query',
-        titles => join('|', @pages),
-        prop   => 'revisions',
-        rvprop => 'content',
-    };
-
-    my $diff;    # Used to track problematic article names
-    map { $diff->{$_} = 1; } @pages;
-
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-
-    foreach my $id (keys %{ $res->{query}->{pages} }) {
-        my $page = $res->{query}->{pages}->{$id};
-        if ($diff->{ $page->{title} }) {
-            $diff->{ $page->{title} }++;
-        }
-        else {
-            next;
-        }
-
-        if (defined($page->{missing})) {
-            $return{ $page->{title} } = undef;
-            next;
-        }
-        if (defined($page->{revisions})) {
-            my $revisions = @{ $page->{revisions} }[0]->{'*'};
-            if (!defined $revisions) {
-                $return{ $page->{title} } = $revisions;
-            }
-            elsif (length($revisions) < 150 && $revisions =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {    # FRAGILE!
-                my $redirect_to = $1;
-                $return{ $page->{title} } = $self->get_text($redirect_to);
-            }
-            else {
-                $return{ $page->{title} } = $revisions;
-            }
-        }
-    }
-
-    my $expand = $self->_get_ns_alias_data();
-    # Only for those article names that remained after the first part
-    # If we're here we are dealing most likely with a WP:CSD type of article name
-    for my $title (keys %$diff) {
-        if ($diff->{$title} == 1) {
-            my @pieces = split(/:/, $title);
-            if (@pieces > 1) {
-                $pieces[0] = ($expand->{ $pieces[0] } || $pieces[0]);
-                my $v = $self->get_text(join ':', @pieces);
-                warn "Detected article name that needed expanding $title\n" if $self->{debug} > 1;
-
-                $return{$title} = $v;
-                if (defined $v and $v =~ m/\#REDIRECT\s\[\[([^\[\]]+)\]\]/) {
-                    $v = $self->get_text($1);
-                    $return{$title} = $v;
-                }
-            }
-        }
-    }
-    return \%return;
-}
-
 =head2 get_image
 
     $buffer = $bot->get_image('File:Foo.jpg', { width=>256, height=>256 });
@@ -1490,65 +1925,6 @@ sub undo {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
     return $res;
-}
-
-=head2 get_last
-
-Returns the revid of the last revision to $page not made by $user. undef is
-returned if no result was found, as would be the case if the page is deleted or 
-if an error occured. If you want to distinguish between error and a non-existing 
-page, you can use the optional third parameter which has to be a hash ref.
-
-That additional param will get filled with two values C<pageid> and C<edittoken>, 
-similar as in L</get_text> (see there for details).
-
-    # simple example
-    my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
-    if(defined $revid){
-        print "Reverting to $revid without checking for edit conflicts.\n";
-        $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
-    }
-
-    # advanced example
-    my $options = {};
-    my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard', $options);
-    die "error, see API error message\n" unless defined $options->{'pageid'};
-    if($options->{'pageid'} == MediaWiki::Bot::PAGE_NONEXISTENT){
-        warn "page doesn't exist\n";
-    }else{
-        print "Reverting to $revid\n";
-        $bot->revert('User:Mike.lifeguard', $revid, 'rvv', $options->{'edittoken'});
-    }
-
-B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_last {
-    my $self = shift;
-    my $page = shift;
-    my $user = shift;
-    unless(defined $page){
-        warn "get_last(): param \$page is not defined.\n" if $self->{'debug'} > 1;
-        return;
-    }
-    my $options = shift;
-    $options->{'edittoken'} = $self->_get_edittoken($page);
-    my $res = $self->{api}->api({
-            action        => 'query',
-            titles        => $page,
-            prop          => 'revisions',
-            rvlimit       => 1,
-            rvprop        => 'ids|user',
-            rvexcludeuser => $user // '',
-    });
-    return $self->_handle_api_error() unless $res;
-    ($options->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
-    my $revid;
-    if($options->{'pageid'} != PAGE_NONEXISTENT){
-       $revid = $data->{revisions}[0]->{revid};
-    }
-    return $revid;
 }
 
 =head2 update_rc
@@ -1760,88 +2136,6 @@ sub recentchanges {
         or return $self->_handle_api_error();
     return RET_TRUE unless ref $res; # Not a ref when using callback
     return @$res;
-}
-
-=head2 what_links_here
-
-Returns an array containing a list of all pages linking to $page.
-
-Additional optional parameters are:
-
-=over 4
-
-=item *
-
-One of: all (default), redirects, or nonredirects.
-
-=item *
-
-A namespace number to search (pass an arrayref to search in multiple namespaces)
-
-=item *
-
-An L</"Options hashref">.
-
-=back
-
-A typical query:
-
-    my @links = $bot->what_links_here("Meta:Sandbox",
-        undef, 1,
-        { hook=>\&mysub }
-    );
-    sub mysub{
-        my ($res) = @_;
-        foreach my $hash (@$res) {
-            my $title = $hash->{'title'};
-            my $is_redir = $hash->{'redirect'};
-            print "Redirect: $title\n" if $is_redir;
-            print "Page: $title\n" unless $is_redir;
-        }
-    }
-
-Transclusions are no longer handled by what_links_here() - use
-L</list_transclusions> instead.
-
-B<References:> L<Listing incoming links|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-incoming-links>,
-L<API:Backlinks|https://www.mediawiki.org/wiki/API:Backlinks>
-
-=cut
-
-sub what_links_here {
-    my $self    = shift;
-    my $page    = shift;
-    my $filter  = shift;
-    my $ns      = shift;
-    my $options = shift;
-
-    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');    # Allow array of namespaces
-    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {    # Verify $filter
-        $filter = $1;
-    }
-
-    # http://en.wikipedia.org/w/api.php?action=query&list=backlinks&bltitle=template:tlx
-    my $hash = {
-        action      => 'query',
-        list        => 'backlinks',
-        bltitle     => $page,
-        bllimit     => 'max',
-    };
-    $hash->{blnamespace}   = $ns if defined $ns;
-    $hash->{blfilterredir} = $filter if $filter;
-    $options->{max} = 1 unless $options->{max};
-
-    my $res = $self->{api}->list($hash, $options);
-    return $self->_handle_api_error() unless $res;
-    return RET_TRUE if not ref $res; # When using a callback hook, this won't be a reference
-    my @links;
-    foreach my $hashref (@$res) {
-        my $title    = $hashref->{title};
-        my $redirect = defined($hashref->{redirect});
-        push @links, { title => $title, redirect => $redirect };
-    }
-
-    return @links;
 }
 
 =head2 list_transclusions
@@ -2695,72 +2989,6 @@ sub last_active {
     return ${$res}[0]->{timestamp};
 }
 
-=head2 recent_edit_to_page
-
-     my ($timestamp, $user) = $bot->recent_edit_to_page($title);
-
-Returns timestamp and username for most recent (top) edit to $page.
-
-B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub recent_edit_to_page {
-    my $self = shift;
-    my $page = shift;
-    my $res  = $self->{api}->api({
-            action  => 'query',
-            prop    => 'revisions',
-            titles  => $page,
-            rvlimit => 1
-        },
-        { max => 1 });
-    return $self->_handle_api_error() unless $res;
-    my $data = ( %{ $res->{query}->{pages} } )[1];
-    return ($data->{revisions}[0]->{timestamp},
-        $data->{revisions}[0]->{user});
-}
-
-=head2 get_users
-
-    my @recent_editors = $bot->get_users($title, $limit, $revid, $direction);
-
-Gets the most recent editors to $page, up to $limit, starting from $revision
-and going in $direction.
-
-B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_users {
-    my $self      = shift;
-    my $pagename  = shift;
-    my $limit     = shift || 'max';
-    my $rvstartid = shift;
-    my $direction = shift;
-
-    if ($limit > 50) {
-        $self->{errstr} = "Error requesting history for $pagename: Limit may not be set to values above 50";
-        carp $self->{errstr};
-        return;
-    }
-    my $hash = {
-        action  => 'query',
-        prop    => 'revisions',
-        titles  => $pagename,
-        rvprop  => 'ids|timestamp|user|comment',
-        rvlimit => $limit,
-    };
-    $hash->{rvstartid} = $rvstartid if ($rvstartid);
-    $hash->{rvdir}     = $direction if ($direction);
-
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-
-    my ($id) = keys %{ $res->{query}->{pages} };
-    return map { $_->{user} } @{$res->{query}->{pages}->{$id}->{revisions}};
-}
-
 =head2 was_blocked
 
     for ("Mike.lifeguard", "Jimbo Wales") {
@@ -2968,153 +3196,6 @@ sub domain_to_db {
         my $db = $self->{sitematrix}->{$wiki} || undef;
         return $db;
     }
-}
-
-=head2 diff
-
-This allows retrieval of a diff from the API. The return is a scalar containing
-the I<HTML table> of the diff. Options are passed as a hashref with keys:
-
-=over 4
-
-=item *
-
-I<title> is the title to use. Provide I<either> this or revid.
-
-=item *
-
-I<revid> is any revid to diff from. If you also specified title, only title will
-be honoured.
-
-=item *
-
-I<oldid> is an identifier to diff to. This can be a revid, or the special values
-'cur', 'prev' or 'next'
-
-=back
-
-B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub diff {
-    my $self = shift;
-    my $title;
-    my $revid;
-    my $oldid;
-
-    if (ref $_[0] eq 'HASH') {
-        $title = $_[0]->{title};
-        $revid = $_[0]->{revid};
-        $oldid = $_[0]->{oldid};
-    }
-    else {
-        $title = shift;
-        $revid = shift;
-        $oldid = shift;
-    }
-
-    my $hash = {
-        action   => 'query',
-        prop     => 'revisions',
-        rvdiffto => $oldid,
-    };
-    if ($title) {
-        $hash->{titles}  = $title;
-        $hash->{rvlimit} = 1;
-    }
-    elsif ($revid) {
-        $hash->{'revids'} = $revid;
-    }
-
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    my @revids = keys %{ $res->{query}->{pages} };
-    my $diff   = $res->{query}->{pages}->{ $revids[0] }->{revisions}->[0]->{diff}->{'*'};
-
-    return $diff;
-}
-
-=head2 prefixindex
-
-This returns an array of hashrefs containing page titles that start with the
-given $prefix. The hashref has keys 'title' and 'redirect' (present if the
-page is a redirect, not present otherwise).
-
-Additional parameters are:
-
-=over 4
-
-=item *
-
-One of all, redirects, or nonredirects
-
-=item *
-
-A single namespace number (unlike linksearch etc, which can accept an arrayref
-of numbers).
-
-=item *
-
-$options_hashref as described in L</"Options hashref">.
-
-=back
-
-    my @prefix_pages = $bot->prefixindex("User:Mike.lifeguard");
-    # Or, the more efficient equivalent
-    my @prefix_pages = $bot->prefixindex("Mike.lifeguard", 2);
-    foreach my $hashref (@pages) {
-        my $title = $hashref->{'title'};
-        if $hashref->{'redirect'} {
-            print "$title is a redirect\n";
-        }
-        else {
-            print "$title\n is not a redirect\n";
-        }
-    }
-
-B<References:> L<API:Allpages|https://www.mediawiki.org/wiki/API:Allpages>
-
-=cut
-
-sub prefixindex {
-    my $self    = shift;
-    my $prefix  = shift;
-    my $ns      = shift;
-    my $filter  = shift;
-    my $options = shift;
-
-    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {    # Verify
-        $filter = $1;
-    }
-
-    if (!defined $ns && $prefix =~ m/:/) {
-        print STDERR "Converted '$prefix' to..." if $self->{debug} > 1;
-        my ($name) = split(/:/, $prefix, 2);
-        my $ns_data = $self->_get_ns_data();
-        $ns = $ns_data->{$name};
-        $prefix =~ s/^$name://;
-        warn "'$prefix' with a namespace filter $ns" if $self->{debug} > 1;
-    }
-
-    my $hash = {
-        action   => 'query',
-        list     => 'allpages',
-        apprefix => $prefix,
-        aplimit  => 'max',
-    };
-    $hash->{apnamespace}   = $ns     if defined $ns;
-    $hash->{apfilterredir} = $filter if $filter;
-    $options->{max} = 1 unless $options->{max};
-
-    my $res = $self->{api}->list($hash, $options);
-
-    return $self->_handle_api_error() unless $res;
-    return RET_TRUE if not ref $res; # Not a ref when using callback hook
-
-    return map {
-        { title => $_->{title}, redirect => defined $_->{redirect} }
-    } @$res;
 }
 
 =head2 search
@@ -3397,85 +3478,6 @@ sub was_locked {
     else {
         confess "This query should return at most one result, but the API returned more than that.";
     }
-}
-
-=head2 get_protection
-
-Returns data on page protection as a array of up to two hashrefs. Each hashref
-has a type, level, and expiry. Levels are 'sysop' and 'autoconfirmed'; types are
-'move' and 'edit'; expiry is a timestamp. Additionally, the key 'cascade' will
-exist if cascading protection is used.
-
-    my $page = 'Main Page';
-    $bot->edit({
-        page    => $page,
-        text    => rand(),
-        summary => 'test',
-    }) unless $bot->get_protection($page);
-
-You can also pass an arrayref of page titles to do bulk queries:
-
-    my @pages = ('Main Page', 'User:Mike.lifeguard', 'Project:Sandbox');
-    my $answer = $bot->get_protection(\@pages);
-    foreach my $title (keys %$answer) {
-        my $protected = $answer->{$title};
-        print "$title is protected\n" if $protected;
-        print "$title is unprotected\n" unless $protected;
-    }
-
-B<References:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
-
-=cut
-
-sub get_protection {
-    my $self = shift;
-    my $page = shift;
-    if (ref $page eq 'ARRAY') {
-        $page = join('|', @$page);
-    }
-
-    my $hash = {
-        action => 'query',
-        titles => $page,
-        prop   => 'info',
-        inprop => 'protection',
-    };
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-
-    my $data = $res->{query}->{pages};
-
-    my $out_data;
-    foreach my $item (keys %$data) {
-        my $title      = $data->{$item}->{title};
-        my $protection = $data->{$item}->{protection};
-        if (@$protection == 0) {
-            $protection = undef;
-        }
-        $out_data->{$title} = $protection;
-    }
-
-    if (scalar keys %$out_data == 1) {
-        return $out_data->{$page};
-    }
-    else {
-        return $out_data;
-    }
-}
-
-=head2 is_protected
-
-This is a synonym for L</get_protection>, which should be used in preference.
-
-B<This method is deprecated>, and will emit deprecation warnings.
-
-=cut
-
-sub is_protected {
-    warnings::warnif('deprecated', 'is_protected is deprecated, and might be '
-        . 'removed in a future release; please use get_protection instead');
-    my $self = shift;
-    return $self->get_protection(@_);
 }
 
 =head2 patrol
