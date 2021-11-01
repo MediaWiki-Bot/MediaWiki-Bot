@@ -1979,7 +1979,9 @@ sub undo {
     return $res;
 }
 
-=head2 get_image
+=head2 Files / Images
+
+=head3 get_image
 
     $buffer = $bot->get_image('File:Foo.jpg', { width=>256, height=>256 });
 
@@ -2031,6 +2033,367 @@ sub get_image{
     my $response = $self->{api}->{ua}->get($url);
     return $self->_handle_api_error() unless ( $response->code == 200 );
     return $response->decoded_content;
+}
+
+=head3 image_usage
+
+Gets a list of pages which include a certain $image. Include the C<File:>
+namespace prefix to avoid incurring an extra round-trip (which will also emit
+a deprecation warnings).
+
+Additional parameters are:
+
+=over 4
+
+=item *
+
+A namespace number to fetch results from (or an arrayref of multiple namespace
+numbers)
+
+=item *
+
+One of all, redirect, or nonredirects.
+
+=item *
+
+$options is a hashref as described in the section for L</linksearch>.
+
+=back
+
+    my @pages = $bot->image_usage("File:Albert Einstein Head.jpg");
+
+Or, make use of the L</"Options hashref"> to do incremental processing:
+
+    $bot->image_usage("File:Albert Einstein Head.jpg",
+        undef, undef,
+        { hook=>\&mysub, max=>5 }
+    );
+    sub mysub {
+        my $res = shift;
+        foreach my $page (@$res) {
+            my $title = $page->{'title'};
+            print "$title\n";
+        }
+    }
+
+B<References:> L<API:Imageusage|https://www.mediawiki.org/wiki/API:Imageusage>
+
+=cut
+
+sub image_usage {
+    my $self    = shift;
+    my $image   = shift;
+    my $ns      = shift;
+    my $filter  = shift;
+    my $options = shift;
+
+    if ($image !~ m/^File:|Image:/) {
+        warnings::warnif('deprecated', q{Please include the canonical File: }
+            . q{namespace in the image name. If you don't, MediaWiki::Bot might }
+            . q{incur a network round-trip to get the localized namespace name});
+        my $ns_data = $self->_get_ns_data();
+        my $file_ns_name = $ns_data->{+NS_FILE};
+        if ($image !~ m/^\Q$file_ns_name\E:/) {
+            $image = "$file_ns_name:$image";
+        }
+    }
+
+    $options->{max} = 1 unless defined($options->{max});
+    delete($options->{max}) if $options->{max} == 0;
+
+    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
+
+    my $hash = {
+        action          => 'query',
+        list            => 'imageusage',
+        iutitle         => $image,
+        iulimit         => 'max',
+    };
+    $hash->{iunamespace} = $ns if defined $ns;
+    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {
+        $hash->{'iufilterredir'} = $1;
+    }
+    my $res = $self->{api}->list($hash, $options);
+    return $self->_handle_api_error() unless $res;
+    return RET_TRUE if not ref $res; # When using a callback hook, this won't be a reference
+
+    return map { $_->{title} } @$res;
+}
+
+=head3 global_image_usage($image, $results, $filterlocal)
+
+Returns an array of hashrefs of data about pages which use the given image.
+
+    my @data = $bot->global_image_usage('File:Albert Einstein Head.jpg');
+
+The keys in each hashref are title, url, and wiki. C<$results> is the maximum
+number of results that will be returned (not the maximum number of requests that
+will be sent, like C<max> in the L</"Options hashref">); the default is to
+attempt to fetch 500 (set to 0 to get all results). C<$filterlocal> will filter
+out local uses of the image.
+
+B<References:> L<Extension:GlobalUsage#API|https://www.mediawiki.org/wiki/Extension:GlobalUsage#API>
+
+=cut
+
+sub global_image_usage {
+    my $self    = shift;
+    my $image   = shift;
+    my $limit   = shift;
+    my $filterlocal = shift;
+    $limit = defined $limit ? $limit : 500;
+
+    if ($image !~ m/^File:|Image:/) {
+        my $ns_data = $self->_get_ns_data();
+        my $image_ns_name = $ns_data->{+NS_FILE};
+        if ($image !~ m/^\Q$image_ns_name\E:/) {
+            $image = "$image_ns_name:$image";
+        }
+    }
+
+    my @data;
+    my $cont;
+    while ($limit ? scalar @data < $limit : 1) {
+        my $hash = {
+            action          => 'query',
+            prop            => 'globalusage',
+            titles          => $image,
+            # gufilterlocal   => $filterlocal,
+            gulimit         => 'max',
+        };
+        $hash->{gufilterlocal} = $filterlocal if $filterlocal;
+        $hash->{gucontinue}    = $cont if $cont;
+
+        my $res = $self->{api}->api($hash);
+        return $self->_handle_api_error() unless $res;
+
+        $cont = $res->{'query-continue'}->{globalusage}->{gucontinue};
+        warn "gucontinue: $cont\n" if $cont and $self->{debug} > 1;
+        my $page_id = (keys %{ $res->{query}->{pages} })[0];
+        my $results = $res->{query}->{pages}->{$page_id}->{globalusage};
+        push @data, @$results;
+        last unless $cont;
+    }
+
+    return @data > $limit
+        ? @data[0 .. $limit-1]
+        : @data;
+}
+
+=head3 links_to_image
+
+A backward-compatible call to L</image_usage>. You can provide only the image
+title.
+
+B<This method is deprecated>, and will emit deprecation warnings.
+
+=cut
+
+sub links_to_image {
+    warnings::warnif('deprecated', 'links_to_image is an alias of image_usage; '
+        . 'please use the new name');
+    my $self = shift;
+    return $self->image_usage($_[0]);
+}
+
+=head3 test_image_exists
+
+Checks if an image exists at $page.
+
+=over 4
+
+=item *
+
+C<FILE_NONEXISTENT> (0) means "Nothing there"
+
+=item *
+
+C<FILE_LOCAL> (1) means "Yes, an image exists locally"
+
+=item *
+
+C<FILE_SHARED> (2) means "Yes, an image exists on L<Commons|http://commons.wikimedia.org>"
+
+=item *
+
+C<FILE_PAGE_TEXT_ONLY> (3) means "No image exists, but there is text on the page"
+
+=back
+
+If you pass in an arrayref of images, you'll get out an arrayref of
+results.
+
+    use MediaWiki::Bot::Constants;
+    my $exists = $bot->test_image_exists('File:Albert Einstein Head.jpg');
+    if ($exists == FILE_NONEXISTENT) {
+        print "Doesn't exist\n";
+    }
+    elsif ($exists == FILE_LOCAL) {
+        print "Exists locally\n";
+    }
+    elsif ($exists == FILE_SHARED) {
+        print "Exists on Commons\n";
+    }
+    elsif ($exists == FILE_PAGE_TEXT_ONLY) {
+        print "Page exists, but no image\n";
+    }
+
+B<References:> L<API:Properties#imageinfo|https://www.mediawiki.org/wiki/API:Properties#imageinfo_.2F_ii>
+
+=cut
+
+sub test_image_exists {
+    my $self  = shift;
+    my $image = shift;
+
+    my $multi;
+    if (ref $image eq 'ARRAY') {
+        $multi = $image; # so we know to return a hash/scalar & keep track of order
+        $image = join('|', @$image);
+    }
+
+    my $res = $self->{api}->api({
+        action  => 'query',
+        titles  => $image,
+        iilimit => 1,
+        prop    => 'imageinfo'
+    });
+    return $self->_handle_api_error() unless $res;
+
+    my @sorted_ids;
+    if ($multi) {
+        my %mapped;
+        $mapped{ $res->{query}->{pages}->{$_}->{title} } = $_
+            for (keys %{ $res->{query}->{pages} });
+        foreach my $file ( @$multi ) {
+            unshift @sorted_ids, $mapped{$file};
+        }
+    }
+    else {
+        push @sorted_ids, keys %{ $res->{query}->{pages} };
+    }
+    my @return;
+    foreach my $id (@sorted_ids) {
+        if ($res->{query}->{pages}->{$id}->{imagerepository} eq 'shared') {
+            if ($multi) {
+                unshift @return, FILE_SHARED;
+            }
+            else {
+                return FILE_SHARED;
+            }
+        }
+        elsif (exists($res->{query}->{pages}->{$id}->{missing})) {
+            if ($multi) {
+                unshift @return, FILE_NONEXISTENT;
+            }
+            else {
+                return FILE_NONEXISTENT;
+            }
+        }
+        elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq '') {
+            if ($multi) {
+                unshift @return, FILE_PAGE_TEXT_ONLY;
+            }
+            else {
+                return FILE_PAGE_TEXT_ONLY;
+            }
+        }
+        elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq 'local') {
+            if ($multi) {
+                unshift @return, FILE_LOCAL;
+            }
+            else {
+                return FILE_LOCAL;
+            }
+        }
+    }
+
+    return \@return;
+}
+
+=head3 upload
+
+    $bot->upload({ data => $file_contents, summary => 'uploading file' });
+    $bot->upload({ file => $file_name,     title   => 'Target filename.png' });
+
+Upload a file to the wiki. Specify the file by either giving the filename, which
+will be read in, or by giving the data directly.
+
+B<References:> L<API:Upload|https://www.mediawiki.org/wiki/API:Upload>
+
+=cut
+
+sub upload {
+    my $self = shift;
+    my $args = shift;
+
+    my $data = delete $args->{data};
+    if (!defined $data and defined $args->{file}) {
+            $data = do { local $/; open my $in, '<:raw', $args->{file} or die $!; <$in> };
+    }
+    unless (defined $data) {
+        $self->{error}->{code} = ERR_PARAMS;
+        $self->{error}->{details} = q{You must provide either file contents or a filename.};
+        return undef;
+    }
+    unless (defined $args->{file} or defined $args->{title}) {
+        $self->{error}->{code} = ERR_PARAMS;
+        $self->{error}->{details} = q{You must specify a title to upload to.};
+        return undef;
+    }
+
+    my $filename = $args->{title} || do { require File::Basename; File::Basename::basename($args->{file}) };
+    my $success = $self->{api}->edit({
+        action   => 'upload',
+        filename => $filename,
+        comment  => $args->{summary},
+        file     => [ undef, $filename, Content => $data ],
+    }) || return $self->_handle_api_error();
+    return $success;
+}
+
+=head3 upload_from_url
+
+Upload file directly from URL to the wiki. Specify URL, the new filename
+and summary. Summary and new filename are optional.
+
+    $bot->upload_from_url({
+        url => 'http://some.domain.ext/pic.png',
+        title => 'Target_filename.png',
+        summary => 'uploading new pic',
+    });
+
+If on your target wiki is enabled uploading from URL, meaning C<$wgAllowCopyUploads>
+is set to true in LocalSettings.php and you have appropriate user rights, you
+can use this function to upload files to your wiki directly from remote server.
+
+B<References:> L<API:Upload#Uploading_from_URL|https://www.mediawiki.org/wiki/API:Upload#Uploading_from_URL>
+
+=cut
+
+sub upload_from_url {
+    my $self = shift;
+    my $args = shift;
+
+    my $url  = delete $args->{url};
+    unless (defined $url) {
+        $self->{error}->{code} = ERR_PARAMS;
+        $self->{error}->{details} = q{You must provide URL of file to upload.};
+        return undef;
+    }
+
+    my $filename = $args->{title} || do {
+        require File::Basename;
+        File::Basename::basename($url)
+    };
+    my $success = $self->{api}->edit({
+        action   => 'upload',
+        filename => $filename,
+        comment  => $args->{summary},
+        url      => $url,
+        ignorewarnings => 1,
+    }) || return $self->_handle_api_error();
+    return $success;
 }
 
 =head2 update_rc
@@ -2572,167 +2935,6 @@ sub get_namespace_names {
         keys %{ $res->{query}->{namespaces} };
 }
 
-=head2 image_usage
-
-Gets a list of pages which include a certain $image. Include the C<File:>
-namespace prefix to avoid incurring an extra round-trip (which will also emit
-a deprecation warnings).
-
-Additional parameters are:
-
-=over 4
-
-=item *
-
-A namespace number to fetch results from (or an arrayref of multiple namespace
-numbers)
-
-=item *
-
-One of all, redirect, or nonredirects.
-
-=item *
-
-$options is a hashref as described in the section for L</linksearch>.
-
-=back
-
-    my @pages = $bot->image_usage("File:Albert Einstein Head.jpg");
-
-Or, make use of the L</"Options hashref"> to do incremental processing:
-
-    $bot->image_usage("File:Albert Einstein Head.jpg",
-        undef, undef,
-        { hook=>\&mysub, max=>5 }
-    );
-    sub mysub {
-        my $res = shift;
-        foreach my $page (@$res) {
-            my $title = $page->{'title'};
-            print "$title\n";
-        }
-    }
-
-B<References:> L<API:Imageusage|https://www.mediawiki.org/wiki/API:Imageusage>
-
-=cut
-
-sub image_usage {
-    my $self    = shift;
-    my $image   = shift;
-    my $ns      = shift;
-    my $filter  = shift;
-    my $options = shift;
-
-    if ($image !~ m/^File:|Image:/) {
-        warnings::warnif('deprecated', q{Please include the canonical File: }
-            . q{namespace in the image name. If you don't, MediaWiki::Bot might }
-            . q{incur a network round-trip to get the localized namespace name});
-        my $ns_data = $self->_get_ns_data();
-        my $file_ns_name = $ns_data->{+NS_FILE};
-        if ($image !~ m/^\Q$file_ns_name\E:/) {
-            $image = "$file_ns_name:$image";
-        }
-    }
-
-    $options->{max} = 1 unless defined($options->{max});
-    delete($options->{max}) if $options->{max} == 0;
-
-    $ns = join('|', @$ns) if (ref $ns eq 'ARRAY');
-
-    my $hash = {
-        action          => 'query',
-        list            => 'imageusage',
-        iutitle         => $image,
-        iulimit         => 'max',
-    };
-    $hash->{iunamespace} = $ns if defined $ns;
-    if (defined($filter) and $filter =~ m/(all|redirects|nonredirects)/) {
-        $hash->{'iufilterredir'} = $1;
-    }
-    my $res = $self->{api}->list($hash, $options);
-    return $self->_handle_api_error() unless $res;
-    return RET_TRUE if not ref $res; # When using a callback hook, this won't be a reference
-
-    return map { $_->{title} } @$res;
-}
-
-=head2 global_image_usage($image, $results, $filterlocal)
-
-Returns an array of hashrefs of data about pages which use the given image.
-
-    my @data = $bot->global_image_usage('File:Albert Einstein Head.jpg');
-
-The keys in each hashref are title, url, and wiki. C<$results> is the maximum
-number of results that will be returned (not the maximum number of requests that
-will be sent, like C<max> in the L</"Options hashref">); the default is to
-attempt to fetch 500 (set to 0 to get all results). C<$filterlocal> will filter
-out local uses of the image.
-
-B<References:> L<Extension:GlobalUsage#API|https://www.mediawiki.org/wiki/Extension:GlobalUsage#API>
-
-=cut
-
-sub global_image_usage {
-    my $self    = shift;
-    my $image   = shift;
-    my $limit   = shift;
-    my $filterlocal = shift;
-    $limit = defined $limit ? $limit : 500;
-
-    if ($image !~ m/^File:|Image:/) {
-        my $ns_data = $self->_get_ns_data();
-        my $image_ns_name = $ns_data->{+NS_FILE};
-        if ($image !~ m/^\Q$image_ns_name\E:/) {
-            $image = "$image_ns_name:$image";
-        }
-    }
-
-    my @data;
-    my $cont;
-    while ($limit ? scalar @data < $limit : 1) {
-        my $hash = {
-            action          => 'query',
-            prop            => 'globalusage',
-            titles          => $image,
-            # gufilterlocal   => $filterlocal,
-            gulimit         => 'max',
-        };
-        $hash->{gufilterlocal} = $filterlocal if $filterlocal;
-        $hash->{gucontinue}    = $cont if $cont;
-
-        my $res = $self->{api}->api($hash);
-        return $self->_handle_api_error() unless $res;
-
-        $cont = $res->{'query-continue'}->{globalusage}->{gucontinue};
-        warn "gucontinue: $cont\n" if $cont and $self->{debug} > 1;
-        my $page_id = (keys %{ $res->{query}->{pages} })[0];
-        my $results = $res->{query}->{pages}->{$page_id}->{globalusage};
-        push @data, @$results;
-        last unless $cont;
-    }
-
-    return @data > $limit
-        ? @data[0 .. $limit-1]
-        : @data;
-}
-
-=head2 links_to_image
-
-A backward-compatible call to L</image_usage>. You can provide only the image
-title.
-
-B<This method is deprecated>, and will emit deprecation warnings.
-
-=cut
-
-sub links_to_image {
-    warnings::warnif('deprecated', 'links_to_image is an alias of image_usage; '
-        . 'please use the new name');
-    my $self = shift;
-    return $self->image_usage($_[0]);
-}
-
 =head2 is_blocked
 
     my $blocked = $bot->is_blocked('User:Mike.lifeguard');
@@ -2782,121 +2984,6 @@ sub test_blocked { # For backwards-compatibility
     warnings::warnif('deprecated', 'test_blocked is an alias of is_blocked; '
         . 'please use the new name. This alias might be removed in a future release');
     return (is_blocked(@_));
-}
-
-=head2 test_image_exists
-
-Checks if an image exists at $page.
-
-=over 4
-
-=item *
-
-C<FILE_NONEXISTENT> (0) means "Nothing there"
-
-=item *
-
-C<FILE_LOCAL> (1) means "Yes, an image exists locally"
-
-=item *
-
-C<FILE_SHARED> (2) means "Yes, an image exists on L<Commons|http://commons.wikimedia.org>"
-
-=item *
-
-C<FILE_PAGE_TEXT_ONLY> (3) means "No image exists, but there is text on the page"
-
-=back
-
-If you pass in an arrayref of images, you'll get out an arrayref of
-results.
-
-    use MediaWiki::Bot::Constants;
-    my $exists = $bot->test_image_exists('File:Albert Einstein Head.jpg');
-    if ($exists == FILE_NONEXISTENT) {
-        print "Doesn't exist\n";
-    }
-    elsif ($exists == FILE_LOCAL) {
-        print "Exists locally\n";
-    }
-    elsif ($exists == FILE_SHARED) {
-        print "Exists on Commons\n";
-    }
-    elsif ($exists == FILE_PAGE_TEXT_ONLY) {
-        print "Page exists, but no image\n";
-    }
-
-B<References:> L<API:Properties#imageinfo|https://www.mediawiki.org/wiki/API:Properties#imageinfo_.2F_ii>
-
-=cut
-
-sub test_image_exists {
-    my $self  = shift;
-    my $image = shift;
-
-    my $multi;
-    if (ref $image eq 'ARRAY') {
-        $multi = $image; # so we know to return a hash/scalar & keep track of order
-        $image = join('|', @$image);
-    }
-
-    my $res = $self->{api}->api({
-        action  => 'query',
-        titles  => $image,
-        iilimit => 1,
-        prop    => 'imageinfo'
-    });
-    return $self->_handle_api_error() unless $res;
-
-    my @sorted_ids;
-    if ($multi) {
-        my %mapped;
-        $mapped{ $res->{query}->{pages}->{$_}->{title} } = $_
-            for (keys %{ $res->{query}->{pages} });
-        foreach my $file ( @$multi ) {
-            unshift @sorted_ids, $mapped{$file};
-        }
-    }
-    else {
-        push @sorted_ids, keys %{ $res->{query}->{pages} };
-    }
-    my @return;
-    foreach my $id (@sorted_ids) {
-        if ($res->{query}->{pages}->{$id}->{imagerepository} eq 'shared') {
-            if ($multi) {
-                unshift @return, FILE_SHARED;
-            }
-            else {
-                return FILE_SHARED;
-            }
-        }
-        elsif (exists($res->{query}->{pages}->{$id}->{missing})) {
-            if ($multi) {
-                unshift @return, FILE_NONEXISTENT;
-            }
-            else {
-                return FILE_NONEXISTENT;
-            }
-        }
-        elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq '') {
-            if ($multi) {
-                unshift @return, FILE_PAGE_TEXT_ONLY;
-            }
-            else {
-                return FILE_PAGE_TEXT_ONLY;
-            }
-        }
-        elsif ($res->{query}->{pages}->{$id}->{imagerepository} eq 'local') {
-            if ($multi) {
-                unshift @return, FILE_LOCAL;
-            }
-            else {
-                return FILE_LOCAL;
-            }
-        }
-    }
-
-    return \@return;
 }
 
 =head2 get_pages_in_namespace
@@ -3676,92 +3763,6 @@ sub contributions {
 
     return @$res;
 }
-
-=head2 upload
-
-    $bot->upload({ data => $file_contents, summary => 'uploading file' });
-    $bot->upload({ file => $file_name,     title   => 'Target filename.png' });
-
-Upload a file to the wiki. Specify the file by either giving the filename, which
-will be read in, or by giving the data directly.
-
-B<References:> L<API:Upload|https://www.mediawiki.org/wiki/API:Upload>
-
-=cut
-
-sub upload {
-    my $self = shift;
-    my $args = shift;
-
-    my $data = delete $args->{data};
-    if (!defined $data and defined $args->{file}) {
-            $data = do { local $/; open my $in, '<:raw', $args->{file} or die $!; <$in> };
-    }
-    unless (defined $data) {
-        $self->{error}->{code} = ERR_PARAMS;
-        $self->{error}->{details} = q{You must provide either file contents or a filename.};
-        return undef;
-    }
-    unless (defined $args->{file} or defined $args->{title}) {
-        $self->{error}->{code} = ERR_PARAMS;
-        $self->{error}->{details} = q{You must specify a title to upload to.};
-        return undef;
-    }
-
-    my $filename = $args->{title} || do { require File::Basename; File::Basename::basename($args->{file}) };
-    my $success = $self->{api}->edit({
-        action   => 'upload',
-        filename => $filename,
-        comment  => $args->{summary},
-        file     => [ undef, $filename, Content => $data ],
-    }) || return $self->_handle_api_error();
-    return $success;
-}
-
-=head2 upload_from_url
-
-Upload file directly from URL to the wiki. Specify URL, the new filename
-and summary. Summary and new filename are optional.
-
-    $bot->upload_from_url({
-        url => 'http://some.domain.ext/pic.png',
-        title => 'Target_filename.png',
-        summary => 'uploading new pic',
-    });
-
-If on your target wiki is enabled uploading from URL, meaning C<$wgAllowCopyUploads>
-is set to true in LocalSettings.php and you have appropriate user rights, you
-can use this function to upload files to your wiki directly from remote server.
-
-B<References:> L<API:Upload#Uploading_from_URL|https://www.mediawiki.org/wiki/API:Upload#Uploading_from_URL>
-
-=cut
-
-sub upload_from_url {
-    my $self = shift;
-    my $args = shift;
-
-    my $url  = delete $args->{url};
-    unless (defined $url) {
-        $self->{error}->{code} = ERR_PARAMS;
-        $self->{error}->{details} = q{You must provide URL of file to upload.};
-        return undef;
-    }
-
-    my $filename = $args->{title} || do {
-        require File::Basename;
-        File::Basename::basename($url)
-    };
-    my $success = $self->{api}->edit({
-        action   => 'upload',
-        filename => $filename,
-        comment  => $args->{summary},
-        url      => $url,
-        ignorewarnings => 1,
-    }) || return $self->_handle_api_error();
-    return $success;
-}
-
 
 =head2 usergroups
 
