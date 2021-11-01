@@ -1494,7 +1494,9 @@ sub is_protected {
     return $self->get_protection(@_);
 }
 
-=head2 edit
+=head2 Modifying pages
+
+=head3 edit
 
     my $page = $bot->get_page('My page');
     $page->{'text'} .= "\n\n* More text\n";
@@ -1743,7 +1745,7 @@ sub edit {
     return $res;
 }
 
-=head2 move
+=head3 move
 
     $bot->move($from_title, $to_title, $reason, $options_hashref);
 
@@ -1809,6 +1811,174 @@ sub move {
     return $res; # should we return something more useful?
 }
 
+=head3 patrol
+
+    $bot->patrol($rcid);
+
+Marks a page or revision identified by the $rcid as patrolled. To mark several
+RCIDs as patrolled, you may pass an arrayref of them. Returns false and sets
+C<< $bot->{error} >> if the account cannot patrol.
+
+B<References:> L<API:Patrol|https://www.mediawiki.org/wiki/API:Patrol>
+
+=cut
+
+sub patrol {
+    my $self = shift;
+    my $rcid = shift;
+
+    if (ref $rcid eq 'ARRAY') {
+        my @return;
+        foreach my $id (@$rcid) {
+            my $res = $self->patrol($id);
+            push(@return, $res);
+        }
+        return @return;
+    }
+    else {
+        my $edittoken = $self->_get_edittoken('patrol');
+        my $res = $self->{api}->api({
+            action  => 'patrol',
+            rcid    => $rcid,
+            token   => $edittoken->{'token'},
+        });
+        return $self->_handle_api_error()
+            if !$res
+            or $self->{error}->{details} && $self->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/;
+
+        return $res;
+    }
+}
+
+=head3 purge_page
+
+Purges the server cache of the specified $page. Returns true on success; false
+on failure. Pass an array reference to purge multiple pages.
+
+If you really care, a true return value is the number of pages successfully
+purged. You could check that it is the same as the number you wanted to
+purge - maybe some pages don't exist, or you passed invalid titles, or you
+aren't allowed to purge the cache:
+
+    my @to_purge = ('Main Page', 'A', 'B', 'C', 'Very unlikely to exist');
+    my $size = scalar @to_purge;
+
+    print "all-at-once:\n";
+    my $success = $bot->purge_page(\@to_purge);
+
+    if ($success == $size) {
+        print "@to_purge: OK ($success/$size)\n";
+    }
+    else {
+        my $missed = @to_purge - $success;
+        print "We couldn't purge $missed pages (list was: "
+            . join(', ', @to_purge)
+            . ")\n";
+    }
+
+    # OR
+    print "\n\none-at-a-time:\n";
+    foreach my $page (@to_purge) {
+        my $ok = $bot->purge_page($page);
+        print "$page: $ok\n";
+    }
+
+B<References:> L<Purging the server cache|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Purging-the-server-cache>,
+L<API:Purge|https://www.mediawiki.org/wiki/API:Purge>
+
+=cut
+
+sub purge_page {
+    my $self = shift;
+    my $page = shift;
+
+    my $hash;
+    if (ref $page eq 'ARRAY') {             # If it is an array reference...
+        $hash = {
+            action => 'purge',
+            titles => join('|', @$page),    # dereference it and purge all those titles
+        };
+    }
+    else {                                  # Just one page
+        $hash = {
+            action => 'purge',
+            titles => $page,
+        };
+    }
+
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    my $success = 0;
+    foreach my $hashref (@{ $res->{purge} }) {
+        $success++ if exists $hashref->{purged};
+    }
+    return $success;
+}
+
+=head3 revert
+
+Reverts the specified $page_title to $revid, with an edit summary of $summary. A
+default edit summary will be used if $summary is omitted.
+An optional forth parameter $edittoken can be used to detect edit conflicts.
+
+See L</get_last> for examples.
+
+B<References:> L<API:Edit|https://www.mediawiki.org/wiki/API:Edit>
+
+=cut
+
+sub revert {
+    my $self      = shift;
+    my $pagename  = shift;
+    my $revid     = shift;
+    my $summary   = shift // "Reverting to old revision $revid";
+    my $edittoken = shift;
+
+    my $page = $self->get_page($pagename, {'rvstartid' => $revid});
+    $page->{'summary'} = $summary;
+    $page->{'edittoken'} = $edittoken if defined $edittoken;
+    my $res = $self->edit($page);
+
+    return $res;
+}
+
+=head3 undo
+
+    $bot->undo($title, $revid, $summary, $after);
+
+Reverts the specified $revid, with an edit summary of $summary, using the undo
+function. To undo all revisions from $revid up to but not including this one,
+set $after to another revid. If not set, just undo the one revision ($revid).
+
+B<References:> L<API:Edit|https://www.mediawiki.org/wiki/API:Edit>
+
+=cut
+
+sub undo {
+    my $self    = shift;
+    my $page    = shift;
+    my $revid   = shift || croak "No revid given";
+    my $summary = shift || "Reverting revision #$revid";
+    my $after   = shift;
+    $summary = "Reverting edits between #$revid & #$after" if defined($after);    # Is that clear? Correct?
+
+    my $edittoken = $self->_get_edittoken($page);
+    my $hash = {
+        action         => 'edit',
+        title          => $page,
+        undo           => $revid,
+        (undoafter     => $after)x!! defined $after,
+        summary        => $summary,
+        token          => $edittoken->{'token'},
+        starttimestamp => $edittoken->{'starttimestamp'},
+        basetimestamp  => $edittoken->{'basetimestamp'},
+    };
+
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    return $res;
+}
+
 =head2 get_image
 
     $buffer = $bot->get_image('File:Foo.jpg', { width=>256, height=>256 });
@@ -1861,70 +2031,6 @@ sub get_image{
     my $response = $self->{api}->{ua}->get($url);
     return $self->_handle_api_error() unless ( $response->code == 200 );
     return $response->decoded_content;
-}
-
-=head2 revert
-
-Reverts the specified $page_title to $revid, with an edit summary of $summary. A
-default edit summary will be used if $summary is omitted.
-An optional forth parameter $edittoken can be used to detect edit conflicts.
-
-See L</get_last> for examples.
-
-B<References:> L<API:Edit|https://www.mediawiki.org/wiki/API:Edit>
-
-=cut
-
-sub revert {
-    my $self      = shift;
-    my $pagename  = shift;
-    my $revid     = shift;
-    my $summary   = shift // "Reverting to old revision $revid";
-    my $edittoken = shift;
-
-    my $page = $self->get_page($pagename, {'rvstartid' => $revid});
-    $page->{'summary'} = $summary;
-    $page->{'edittoken'} = $edittoken if defined $edittoken;
-    my $res = $self->edit($page);
-
-    return $res;
-}
-
-=head2 undo
-
-    $bot->undo($title, $revid, $summary, $after);
-
-Reverts the specified $revid, with an edit summary of $summary, using the undo
-function. To undo all revisions from $revid up to but not including this one,
-set $after to another revid. If not set, just undo the one revision ($revid).
-
-B<References:> L<API:Edit|https://www.mediawiki.org/wiki/API:Edit>
-
-=cut
-
-sub undo {
-    my $self    = shift;
-    my $page    = shift;
-    my $revid   = shift || croak "No revid given";
-    my $summary = shift || "Reverting revision #$revid";
-    my $after   = shift;
-    $summary = "Reverting edits between #$revid & #$after" if defined($after);    # Is that clear? Correct?
-
-    my $edittoken = $self->_get_edittoken($page);
-    my $hash = {
-        action         => 'edit',
-        title          => $page,
-        undo           => $revid,
-        (undoafter     => $after)x!! defined $after,
-        summary        => $summary,
-        token          => $edittoken->{'token'},
-        starttimestamp => $edittoken->{'starttimestamp'},
-        basetimestamp  => $edittoken->{'basetimestamp'},
-    };
-
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    return $res;
 }
 
 =head2 update_rc
@@ -2441,71 +2547,6 @@ sub linksearch {
         title => $_->{title},
     }} @$res;
 
-}
-
-=head2 purge_page
-
-Purges the server cache of the specified $page. Returns true on success; false
-on failure. Pass an array reference to purge multiple pages.
-
-If you really care, a true return value is the number of pages successfully
-purged. You could check that it is the same as the number you wanted to
-purge - maybe some pages don't exist, or you passed invalid titles, or you
-aren't allowed to purge the cache:
-
-    my @to_purge = ('Main Page', 'A', 'B', 'C', 'Very unlikely to exist');
-    my $size = scalar @to_purge;
-
-    print "all-at-once:\n";
-    my $success = $bot->purge_page(\@to_purge);
-
-    if ($success == $size) {
-        print "@to_purge: OK ($success/$size)\n";
-    }
-    else {
-        my $missed = @to_purge - $success;
-        print "We couldn't purge $missed pages (list was: "
-            . join(', ', @to_purge)
-            . ")\n";
-    }
-
-    # OR
-    print "\n\none-at-a-time:\n";
-    foreach my $page (@to_purge) {
-        my $ok = $bot->purge_page($page);
-        print "$page: $ok\n";
-    }
-
-B<References:> L<Purging the server cache|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Purging-the-server-cache>,
-L<API:Purge|https://www.mediawiki.org/wiki/API:Purge>
-
-=cut
-
-sub purge_page {
-    my $self = shift;
-    my $page = shift;
-
-    my $hash;
-    if (ref $page eq 'ARRAY') {             # If it is an array reference...
-        $hash = {
-            action => 'purge',
-            titles => join('|', @$page),    # dereference it and purge all those titles
-        };
-    }
-    else {                                  # Just one page
-        $hash = {
-            action => 'purge',
-            titles => $page,
-        };
-    }
-
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    my $success = 0;
-    foreach my $hashref (@{ $res->{purge} }) {
-        $success++ if exists $hashref->{purged};
-    }
-    return $success;
 }
 
 =head2 get_namespace_names
@@ -3477,45 +3518,6 @@ sub was_locked {
     }
     else {
         confess "This query should return at most one result, but the API returned more than that.";
-    }
-}
-
-=head2 patrol
-
-    $bot->patrol($rcid);
-
-Marks a page or revision identified by the $rcid as patrolled. To mark several
-RCIDs as patrolled, you may pass an arrayref of them. Returns false and sets
-C<< $bot->{error} >> if the account cannot patrol.
-
-B<References:> L<API:Patrol|https://www.mediawiki.org/wiki/API:Patrol>
-
-=cut
-
-sub patrol {
-    my $self = shift;
-    my $rcid = shift;
-
-    if (ref $rcid eq 'ARRAY') {
-        my @return;
-        foreach my $id (@$rcid) {
-            my $res = $self->patrol($id);
-            push(@return, $res);
-        }
-        return @return;
-    }
-    else {
-        my $edittoken = $self->_get_edittoken('patrol');
-        my $res = $self->{api}->api({
-            action  => 'patrol',
-            rcid    => $rcid,
-            token   => $edittoken->{'token'},
-        });
-        return $self->_handle_api_error()
-            if !$res
-            or $self->{error}->{details} && $self->{error}->{details} =~ m/^(?:permissiondenied|badtoken)/;
-
-        return $res;
     }
 }
 
