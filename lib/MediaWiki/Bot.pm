@@ -3261,6 +3261,73 @@ sub get_all_categories {
     return map { $_->{'*'} } @{ $res->{'query'}->{'allcategories'} };
 }
 
+=head2 Namespaces
+
+=head3 get_namespace_names
+
+    my %namespace_names = $bot->get_namespace_names();
+
+Returns a hash linking the namespace id, such as 1, to its named equivalent,
+such as "Talk".
+
+B<References:> L<API:Meta#siteinfo|https://www.mediawiki.org/wiki/API:Meta#siteinfo_.2F_si>
+
+=cut
+
+sub get_namespace_names {
+    my $self = shift;
+    my $res = $self->{api}->api({
+            action => 'query',
+            meta   => 'siteinfo',
+            siprop => 'namespaces',
+    });
+    return $self->_handle_api_error() unless $res;
+    return map { $_ => $res->{query}->{namespaces}->{$_}->{'*'} }
+        keys %{ $res->{query}->{namespaces} };
+}
+
+=head3 get_pages_in_namespace
+
+    $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
+
+Returns an array containing the names of all pages in the specified namespace.
+The $namespace_id must be a number, not a namespace name.
+
+Setting $page_limit is optional, and specifies how many items to retrieve at
+once. Setting this to 'max' is recommended, and this is the default if omitted.
+If $page_limit is over 500, it will be rounded up to the next multiple of 500.
+If $page_limit is set higher than you are allowed to use, it will silently be
+reduced. Consider setting key 'max' in the L</"Options hashref"> to
+retrieve multiple sets of results:
+
+    # Gotta get 'em all!
+    my @pages = $bot->get_pages_in_namespace(6, 'max', { max => 0 });
+
+B<References:> L<API:Allpages|https://www.mediawiki.org/wiki/API:Allpages>
+
+=cut
+
+sub get_pages_in_namespace {
+    my $self      = shift;
+    my $namespace = shift;
+    my $limit     = shift || 'max';
+    my $options   = shift;
+
+    my $hash = {
+        action      => 'query',
+        list        => 'allpages',
+        apnamespace => $namespace,
+        aplimit     => $limit,
+    };
+    $options->{max} = 1 unless defined $options->{max};
+    delete $options->{max} if exists $options->{max} and $options->{max} == 0;
+
+    my $res = $self->{api}->list($hash, $options);
+    return $self->_handle_api_error() unless $res;
+    return RET_TRUE if not ref $res; # Not a ref when using callback
+    return map { $_->{title} } @$res;
+}
+
 =head2 list_transclusions
 
 Returns an array containing a list of all pages transcluding $page.
@@ -3426,71 +3493,6 @@ sub linksearch {
         title => $_->{title},
     }} @$res;
 
-}
-
-=head2 get_namespace_names
-
-    my %namespace_names = $bot->get_namespace_names();
-
-Returns a hash linking the namespace id, such as 1, to its named equivalent,
-such as "Talk".
-
-B<References:> L<API:Meta#siteinfo|https://www.mediawiki.org/wiki/API:Meta#siteinfo_.2F_si>
-
-=cut
-
-sub get_namespace_names {
-    my $self = shift;
-    my $res = $self->{api}->api({
-            action => 'query',
-            meta   => 'siteinfo',
-            siprop => 'namespaces',
-    });
-    return $self->_handle_api_error() unless $res;
-    return map { $_ => $res->{query}->{namespaces}->{$_}->{'*'} }
-        keys %{ $res->{query}->{namespaces} };
-}
-
-=head2 get_pages_in_namespace
-
-    $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
-
-Returns an array containing the names of all pages in the specified namespace.
-The $namespace_id must be a number, not a namespace name.
-
-Setting $page_limit is optional, and specifies how many items to retrieve at
-once. Setting this to 'max' is recommended, and this is the default if omitted.
-If $page_limit is over 500, it will be rounded up to the next multiple of 500.
-If $page_limit is set higher than you are allowed to use, it will silently be
-reduced. Consider setting key 'max' in the L</"Options hashref"> to
-retrieve multiple sets of results:
-
-    # Gotta get 'em all!
-    my @pages = $bot->get_pages_in_namespace(6, 'max', { max => 0 });
-
-B<References:> L<API:Allpages|https://www.mediawiki.org/wiki/API:Allpages>
-
-=cut
-
-sub get_pages_in_namespace {
-    my $self      = shift;
-    my $namespace = shift;
-    my $limit     = shift || 'max';
-    my $options   = shift;
-
-    my $hash = {
-        action      => 'query',
-        list        => 'allpages',
-        apnamespace => $namespace,
-        aplimit     => $limit,
-    };
-    $options->{max} = 1 unless defined $options->{max};
-    delete $options->{max} if exists $options->{max} and $options->{max} == 0;
-
-    my $res = $self->{api}->list($hash, $options);
-    return $self->_handle_api_error() unless $res;
-    return RET_TRUE if not ref $res; # Not a ref when using callback
-    return map { $_->{title} } @$res;
 }
 
 =head2 expandtemplates
