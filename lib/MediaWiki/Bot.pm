@@ -1269,13 +1269,13 @@ the newest revision will be used.
 
 =item *
 
-C<rvsection> - if defined, returns the text of that section. Otherwise the 
+C<rvsection> - if defined, returns the text of that section. Otherwise the
 whole page text will be returned.
 
 =item *
 
-C<pageid> - this is an output parameter and can be used to fetch the id of a page 
-without the need of calling L</get_id> additionally. Note that the value of this 
+C<pageid> - this is an output parameter and can be used to fetch the id of a page
+without the need of calling L</get_id> additionally. Note that the value of this
 param is ignored and it will be overwritten by this function.
 
 =item *
@@ -1303,7 +1303,7 @@ blank and nonexistent pages by using L<defined|perlfunc/defined>:
 B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
 L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-For backward-compatibility the params \C<revid> and \C<section_number> may also be 
+For backward-compatibility the params C<revid> and C<section_number> may also be
 given as scalar parameters:
 
     my $wikitext = $bot->get_text('Page title', 123456, 2);
@@ -3643,7 +3643,7 @@ sub email {
 
 =head2 get_mw_version
 
-Returns a hash ref with the MediaWiki version. The hash ref contains the keys 
+Returns a hash ref with the MediaWiki version. The hash ref contains the keys
 I<major>, I<minor>, I<patch>, and I<string>.
 Returns undef on errors.
 
