@@ -887,6 +887,10 @@ Example:
 The array returned contains hashrefs with keys: revid, user, comment, minor,
 timestamp_date, and timestamp_time.
 
+For backward compatibility, you can specify up to four parameters:
+
+    my @hist = $bot->get_history($title, $limit, $revid, $direction);
+
 B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
 L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
@@ -895,16 +899,22 @@ L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisio
 sub get_history {
     my $self      = shift;
     my $pagename  = shift;
-    my $additional_params = shift // {};
+    my $additional_params = shift;
     # for backward-compatibility check for textual params
-    if(ref $additional_params eq ''){
-        my $rvlimit = $additional_params;
-        my $rvstartid = shift;
-        my $rvdir = shift;
-        $additional_params = {};
-        $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
-        $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
-        $additional_params->{'rvdir'} = $rvdir if $rvdir;
+    if(ref $additional_params eq '' ){
+        if(@_ > 0 || defined $additional_params){
+            warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
+                . 'get_history is deprecated and will be removed in a future release');
+            my $rvlimit = $additional_params;
+            my $rvstartid = shift;
+            my $rvdir = shift;
+            $additional_params = {};
+            $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
+            $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
+            $additional_params->{'rvdir'} = $rvdir if $rvdir;
+        }else{
+            $additional_params = {};
+        }
     }
     my $ready;
     my $filter_params = {%$additional_params};

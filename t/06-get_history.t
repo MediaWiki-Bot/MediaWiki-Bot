@@ -1,7 +1,8 @@
 use strict;
 use warnings;
 use Test::RequiresInternet 'test.wikipedia.org' => 80;
-use Test::More tests => 5;
+use Test::More tests => 7;
+use Test::Warn;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -31,7 +32,17 @@ my $result = [
 ];
 
 # old style
-my @history = $bot->get_history($title, 2);
+my @history;
+warning_is(
+    sub { @history = $bot->get_history($title, undef, 132955); },
+    'Please pass a hashref; this method of calling get_history is deprecated and will be removed in a future release',
+    'deprecated usage of get_history'
+);
+warning_is(
+    sub { @history = $bot->get_history($title, 2); },
+    'Please pass a hashref; this method of calling get_history is deprecated and will be removed in a future release',
+    'deprecated usage of get_history'
+);
 is_deeply(\@history, $result, 'Loaded page history (old format) OK') or diag explain \@history;
 
 #new style
