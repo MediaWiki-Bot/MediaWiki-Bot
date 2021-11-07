@@ -4,7 +4,7 @@ MediaWiki::Bot - a high-level bot framework for interacting with MediaWiki wikis
 
 # VERSION
 
-version 5.006004
+version 5.007000
 
 # SYNOPSIS
 

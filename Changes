@@ -1,6 +1,13 @@
 Changelog for {{$dist->name}}
 
 {{$NEXT}}
+  - fix: last_active(): deleted explicit "user:" prefix addition [gh-84]
+  - fix: diff(): changed test for newer mediawiki versions [gh-100]
+  - feat: new function get_mw_version() gets version of currently used mediawiki
+  - feat: get_text(): changed interface, more options [gh-93]
+  - feat: get_history(): changed interface, more options [gh-13]
+  - feat: new function get_history_step_by_step() for looping over large history [gh-13]
+  - no breaking changes, but added some new deprecation notices
 
 5.006004  2021-09-15
   - Feature: Ability to set time range when fetching contribs
