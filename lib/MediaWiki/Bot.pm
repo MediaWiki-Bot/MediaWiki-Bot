@@ -225,6 +225,7 @@ sub new {
         use_http_get    => 1,  # use HTTP GET to make certain requests cacheable
     });
     $self->{api}->{ua}->agent($agent) if defined $agent;
+    $self->{mw_version} = undef; # will be set in get_mw_version
 
     # Set wiki (handles setting $self->{host} etc)
     $self->set_wiki({
@@ -697,6 +698,10 @@ Example:
 The array returned contains hashrefs with keys: revid, user, comment, minor,
 timestamp_date, and timestamp_time.
 
+For backward compatibility, you can specify up to four parameters:
+
+    my @hist = $bot->get_history($title, $limit, $revid, $direction);
+
 B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
 L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
@@ -705,16 +710,22 @@ L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisio
 sub get_history {
     my $self      = shift;
     my $pagename  = shift;
-    my $additional_params = shift // {};
+    my $additional_params = shift;
     # for backward-compatibility check for textual params
     if(ref $additional_params eq ''){
-        my $rvlimit = $additional_params;
-        my $rvstartid = shift;
-        my $rvdir = shift;
-        $additional_params = {};
-        $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
-        $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
-        $additional_params->{'rvdir'} = $rvdir if $rvdir;
+        if(@_ > 0 || defined $additional_params){
+            warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
+                . 'get_history is deprecated and will be removed in a future release');
+            my $rvlimit = $additional_params;
+            my $rvstartid = shift;
+            my $rvdir = shift;
+            $additional_params = {};
+            $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
+            $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
+            $additional_params->{'rvdir'} = $rvdir if $rvdir;
+        }else{
+            $additional_params = {};
+        }
     }
     my $ready;
     my $filter_params = {%$additional_params};
@@ -882,129 +893,12 @@ sub what_links_here {
     return @links;
 }
 
-=head3 get_page
-
-Given a $page_title (required), this function returns a hash ref (or undef on 
-error) with several data of a page. That data can comfortably be used to 
-L</edit> a page. 
-
-The second parameter (optional) is a hashref with optional keys that will be 
-forwarded to the API, if their name starts with C<rv...>. Especially interesting
-are the params rvsection and rvstartid, see L</get_text> for some more detailed
-description.
-
-The returned hashref contains the following keys:
-
-=over 4
-
-=item *
-
-C<page> - the full page title (including the resolved namespace) or undef if the 
-page does not exist
-
-=item *
-
-C<pageid> - the page id (set to PAGE_NONEXISTENT, i.e. -1, if page does not exist)
-
-=item *
-
-C<text> - the text of the page (or of a section depending on the input params), 
-see L</get_text> for details.
-
-=item *
-
-C<section> - if 'rvsection' is set (in the second parameter of the dunction call),
-then this key will be set to the same value. Otherwise it will be unset.
-
-=item *
-
-C<edittoken> - a token that will be used by L</edit> to detect edit conflicts.
-
-=back
-
-This function is very similar to L</get_text>. It just gives a more comfortable way
-to edit pages.
-With L</get_text> you might write:
-
-    my $params = {};
-    # get_text will add an edittoken to $params
-    my $text = $bot->get_text('My page', $params);
-    $text .= "\n\n* More text\n";
-    $bot->edit({
-        page      => 'My page',
-        text      => $text,
-        summary   => 'Adding new content',
-        section   => 'new',
-        edittoken => $params->{'edittoken'},
-    });
-
-With L</get_page> the same will be done via:
-
-    my $page = $bot->get_page('My page');
-    $page->{'text'} .= "\n\n* More text\n";
-    $page->{'summary'} = 'Adding new content';
-    $page->{'section'} = 'new';
-    $bot->edit($page);
-
-That means you don't have to cope with the edit token. That will be done implicitly. And you don't have to tell the page name again. if you use C<'rvsection' = n> in the second parameter, then you don't even have to explicitly set the section number again.
-
-B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
-L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_page {
-    my $self     = shift;
-    my $pagename = shift;
-    my $options  = shift // {};
-    unless(defined $pagename){
-        if($self->{'debug'} > 1){
-            warn "get_page(): param \$pagename is not defined.\n";
-        }
-        return;
-    }
-    my $hash = {
-        action => 'query',
-        titles => $pagename,
-        prop   => 'revisions',
-        rvprop => 'content',
-    };
-    # users might forget that the param is called section and not rvsection
-    if(defined $options->{'section'} && !(defined $options->{'rvsection'})){
-        $options->{'rvsection'} = $options->{'section'};
-    }
-    for my $key(keys %$options){
-        if(substr($key, 0, 2) eq 'rv'){
-            $hash->{$key} = $options->{$key};
-        }
-    }
-    my $page = {
-        'page' => $pagename,
-        'edittoken' => $self->_get_edittoken($pagename),
-    };
-    if(defined $options->{'rvsection'}){
-        $page->{'section'} = $options->{'rvsection'};
-    }
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    ($page->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
-    if($page->{'pageid'} != PAGE_NONEXISTENT){
-       $page->{'text'} = $data->{revisions}[0]->{'*'};
-    }
-    return $page;
-}
-
 =head3 get_id
 
-Returns the id of the specified $page_title. Returns PAGE_NONEXISTENT (i.e. -1) if 
-page does not exist. Returns undef on error.
+Returns the id of the specified $page_title. Returns undef if page does not exist.
 
-    my $page_id = $bot->get_id("Main Page");
-    die "could not get id of page.\n" unless defined $pageid;
-    warn "page doesn't exist\n" if $page_id == MediaWiki::Bot::PAGE_NONEXISTENT;
-
-    // or
-    die "could not get id of page.\n" unless ($page_id // -1) < 0;
+    my $pageid = $bot->get_id("Main Page");
+    die "Page doesn't exist\n" if !defined($pageid);
 
 B<Revisions:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Properties#info_.2F_in>
 
@@ -1013,10 +907,6 @@ B<Revisions:> L<API:Properties#info|https://www.mediawiki.org/wiki/API:Propertie
 sub get_id {
     my $self     = shift;
     my $pagename = shift;
-    unless(defined $pagename){
-        warn "get_id(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
-        return;
-    }
 
     my $hash = {
         action => 'query',
@@ -1026,7 +916,8 @@ sub get_id {
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
     my ($id) = %{ $res->{query}->{pages} };
-    return $id; # $id might be PAGE_NONEXISTENT
+    return if $id == PAGE_NONEXISTENT;
+    return $id;
 }
 
 =head3 get_pages
@@ -1264,29 +1155,12 @@ sub get_protection {
 =head3 get_last
 
 Returns the revid of the last revision to $page not made by $user. undef is
-returned if no result was found, as would be the case if the page is deleted or 
-if an error occured. If you want to distinguish between error and a non-existing 
-page, you can use the optional third parameter which has to be a hash ref.
+returned if no result was found, as would be the case if the page is deleted.
 
-That additional param will get filled with two values C<pageid> and C<edittoken>, 
-similar as in L</get_text> (see there for details).
-
-    # simple example
     my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
-    if(defined $revid){
-        print "Reverting to $revid without checking for edit conflicts.\n";
-        $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
-    }
-
-    # advanced example
-    my $options = {};
-    my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard', $options);
-    die "error, see API error message\n" unless defined $options->{'pageid'};
-    if($options->{'pageid'} == MediaWiki::Bot::PAGE_NONEXISTENT){
-        warn "page doesn't exist\n";
-    }else{
+    if defined($revid) {
         print "Reverting to $revid\n";
-        $bot->revert('User:Mike.lifeguard', $revid, 'rvv', $options->{'edittoken'});
+        $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
     }
 
 B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
@@ -1297,12 +1171,7 @@ sub get_last {
     my $self = shift;
     my $page = shift;
     my $user = shift;
-    unless(defined $page){
-        warn "get_last(): param \$page is not defined.\n" if $self->{'debug'} > 1;
-        return;
-    }
-    my $options = shift;
-    $options->{'edittoken'} = $self->_get_edittoken($page);
+
     my $res = $self->{api}->api({
             action        => 'query',
             titles        => $page,
@@ -1312,11 +1181,9 @@ sub get_last {
             rvexcludeuser => $user // '',
     });
     return $self->_handle_api_error() unless $res;
-    ($options->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
-    my $revid;
-    if($options->{'pageid'} != PAGE_NONEXISTENT){
-       $revid = $data->{revisions}[0]->{revid};
-    }
+
+    my (undef, $data) = %{ $res->{query}->{pages} };
+    my $revid = $data->{revisions}[0]->{revid};
     return $revid;
 }
 
@@ -1388,9 +1255,7 @@ sub get_users {
 
 =head3 get_text
 
-Returns the wikitext of the specified $page_title. It's similar to L</get_page>. See
-L</get_page> for differences.
-
+Returns the wikitext of the specified $page_title.
 The first parameter $page_title is the only required one.
 
 The second parameter is a hashref with the following independent optional keys:
@@ -1418,10 +1283,6 @@ param is ignored and it will be overwritten by this function.
 C<rv...> - any param starting with 'rv' will be forwarded to the api call.
 
 =back
-
-The second param has another task: C<get_text> will set a value for the key 
-C<edittoken>, such that you may use this param when L</edit>ing a page. However, 
-using L</get_page> is the recommended way for doing that instead.
 
 A blank page will return wikitext of "" (which evaluates to false in Perl,
 but is defined); a nonexistent page will return undef (which also evaluates
@@ -1457,26 +1318,40 @@ sub get_text {
         warn "get_text(): param \$pagename is not defined.\n" if $self->{'debug'} > 1;
         return;
     }
-    my $options = shift;
+    my $options  = shift;
     # for backward-compatibility: try to read scalars
     if(ref $options eq ''){
-        $options = {
-            'rvstartid' => $options,
-            'rvsection' => shift,
-        };
-        delete $options->{'rvstartid'} unless defined $options->{'rvstartid'};
-        delete $options->{'rvsection'} unless defined $options->{'rvsection'};
-        if(keys %$options > 0){
+        if(@_ > 0 || defined $options){
             warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
-            . 'get_text is deprecated, and will be removed in a future release.');
+                . 'get_text is deprecated and will be removed in a future release');
+            $options = {
+                'rvstartid' => $options,
+                'rvsection' => shift,
+            };
+            delete $options->{'rvstartid'} unless defined $options->{'rvstartid'};
+            delete $options->{'rvsection'} unless defined $options->{'rvsection'};
+        }else{
+            $options = {};
         }
     }
 
-    my $page = $self->get_page($pagename, $options);
-    return unless defined $page;
-    $options->{'edittoken'} = $page->{'edittoken'};
-    $options->{'pageid'} = $page->{'pageid'};
-    return $page->{'text'};
+    my $hash = {
+        action => 'query',
+        titles => $pagename,
+        prop   => 'revisions',
+        rvprop => 'content',
+    };
+    for my $key(keys %$options){
+        if(substr($key, 0, 2) eq 'rv'){
+            $hash->{$key} = $options->{$key};
+        }
+    }
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    ($options->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
+
+    return if $options->{'pageid'} == PAGE_NONEXISTENT;
+    return $data->{revisions}[0]->{'*'}; # the wikitext
 }
 
 =head3 is_protected
@@ -1498,86 +1373,50 @@ sub is_protected {
 
 =head3 edit
 
-    my $page = $bot->get_page('My page');
-    $page->{'text'} .= "\n\n* More text\n";
-    $page->{'summary'} = 'Adding new content';
-    $page->{'section'} = 'new';
-    $bot->edit($page);
+    my $text = $bot->get_text('My page');
+    $text .= "\n\n* More text\n";
+    $bot->edit({
+        page    => 'My page',
+        text    => $text,
+        summary => 'Adding new content',
+        section => 'new',
+    });
 
-This method edits a wiki page, and takes a hashref of data with the following 
-keys, where I<page> (or I<pageid> respectively) and I<text> are the only required 
-ones:
-
-=over 4
-
-=item *
-
-I<page> - the page title to edit (required unless I<pageid> is given)
-
-=item *
-
-I<pageid> - instead of I<page> you may give the pageid. If both is given, then 
-I<page> is preferred.
-
-=item *
-
-I<text> - the page text to write (required)
-
-=item *
-
-I<summary> - an edit summary (default: some useless message, so better define this)
-
-=item *
-
-I<minor> - whether to mark the edit as minor (boolean, default = 1)
-
-=item *
-
-I<bot> - whether to mark the edit as a bot edit (boolean, default = 1)
-
-=item *
-
-I<assertion> - usually 'bot', but see 
-L<http://mediawiki.org/wiki/Extension:AssertEdit>.
-
-=item *
-
-I<section> - edit a single section (identified by number) instead of the whole 
-page. If set to 'new', a new section will be appended to the page. That new 
-section will be titled with the name given by the param I<sectiontitle>.
-
-=item *
-
-I<sectiontitle> - a section title of a new section, see I<section> param.
-
-=item *
-
-I<edittoken> - used to detect edit conflicts. It is an optional parameter normally
-generated by L</get_page> or L</get_text>. If you don't set it, then it will be
-created inside the function. But because then an edit conflict might not be
-detected, it is recommended to use this param. Normally you don't have to care 
-about the content. However, it is a hashref that consists of three keys/value 
-pairs:
+This method edits a wiki page, and takes a hashref of data with keys:
 
 =over 4
 
 =item *
 
-C<token> - the (csrf) token string
+I<page> - the page title to edit
 
 =item *
 
-C<base_timestamp> - timestamp of the base revision
+I<text> - the page text to write
 
 =item *
 
-C<start_timestamp> - timestamp when the editing process began.
+I<summary> - an edit summary
+
+=item *
+
+I<minor> - whether to mark the edit as minor or not (boolean)
+
+=item *
+
+I<bot> - whether to mark the edit as a bot edit (boolean)
+
+=item *
+
+I<assertion> - usually 'bot', but see L<http://mediawiki.org/wiki/Extension:AssertEdit>.
+
+=item *
+
+I<section> - edit a single section (identified by number) instead of the whole page
 
 =back
 
-=back
-
-An MD5 hash is sent internally to guard against data corruption while in transit.
+An MD5 hash is sent to guard against data corruption while in transit.
 
 You can also call this as:
 
@@ -1627,31 +1466,25 @@ L<API:Tokens|https://www.mediawiki.org/wiki/API:Tokens>
 sub edit {
     my $self = shift;
     my $page;
-    my $pageid;
     my $text;
-    my $edittoken;
     my $summary;
     my $is_minor;
     my $assert;
     my $markasbot;
     my $section;
-    my $section_title;
     my $captcha_id;
     my $captcha_solution;
 
     if (ref $_[0] eq 'HASH') {
-        $page             = $_[0]->{page};
-        $pageid           = $_[0]->{pageid};
-        $text             = $_[0]->{text};
-        $summary          = $_[0]->{summary};
-        $is_minor         = $_[0]->{minor};
-        $assert           = $_[0]->{assert};
-        $markasbot        = $_[0]->{markasbot};
-        $section          = $_[0]->{section};
-        $section_title    = $_[0]->{sectiontitle};
-        $edittoken        = $_[0]->{edittoken};
-        $captcha_id       = $_[0]->{captcha_id};
-        $captcha_solution = $_[0]->{captcha_solution};
+        $page      = $_[0]->{page};
+        $text      = $_[0]->{text};
+        $summary   = $_[0]->{summary};
+        $is_minor  = $_[0]->{minor};
+        $assert    = $_[0]->{assert};
+        $markasbot = $_[0]->{markasbot};
+        $section   = $_[0]->{section};
+        $captcha_id         = $_[0]->{captcha_id};
+        $captcha_solution   = $_[0]->{captcha_solution};
     }
     else {
         warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
@@ -1664,27 +1497,17 @@ sub edit {
         $markasbot = shift;
         $section   = shift;
     }
-    unless(defined $page && defined $pageid){
-        if($self->{'debug'} > 1){
-            warn "edit(): at least one of \$page or \$pageid has to be defined.\n";
-        }
-        return;
-    }
-    unless(defined $text){
-        warn "edit(): param \$text is not defined.\n" if $self->{'debug'} > 1;
-        return;
-    }
 
     # Set defaults
-    $summary = 'BOT: Changing page text' unless defined $summary;
+    $summary = 'BOT: Changing page text' unless $summary;
     if ($assert) {
         $assert =~ s/^[&?]assert=//;
     }
     else {
         $assert = $self->{assert};
     }
-    $is_minor  = 1 unless defined $is_minor;
-    $markasbot = 1 unless defined $markasbot;
+    $is_minor  = 1 unless defined($is_minor);
+    $markasbot = 1 unless defined($markasbot);
 
     # Clear any captcha data that might remain from a previous edit attempt
     delete $self->{error}->{captcha};
@@ -1692,7 +1515,7 @@ sub edit {
         if (defined $captcha_id and not defined $captcha_solution)
         or (defined $captcha_solution and not defined $captcha_id);
 
-    $edittoken = $self->_get_edittoken($page) unless defined $edittoken;
+    my ($edittoken, $lastedit, $tokentime) = $self->_get_edittoken($page);
     return $self->_handle_api_error() unless $edittoken;
 
     # HTTP::Message will do this eventually as of 6.03  (RT#75592), so we need
@@ -1704,24 +1527,19 @@ sub edit {
     my $md5 = md5_hex(encode_utf8($text)); # Pass only bytes to md5_hex()
     my $hash = {
         action         => 'edit',
-        ( defined $page ? (title => $page) : (pageid => $pageid)),
         title          => $page,
-        token          => $edittoken->{'token'},
+        token          => $edittoken,
         text           => $text,
-        # Guard against data corruption
-        md5            => $md5,
+        md5            => $md5,             # Guard against data corruption
         summary        => $summary,
-        # Guard against edit conflicts
-        basetimestamp  => $edittoken->{'base_timestamp'},
-        # Guard against the page being deleted/moved
-        starttimestamp => $edittoken->{'start_timestamp'},
+        basetimestamp  => $lastedit,        # Guard against edit conflicts
+        starttimestamp => $tokentime,       # Guard against the page being deleted/moved
         bot            => $markasbot,
-        ( defined $section          ? (section => $section) : ()),
-        ( defined $section_title    ? (sectiontitle => $section_title) : ()),
-        ( defined $assert           ? (assert => $assert)   : ()),
-        ( $is_minor                 ? (minor => 1)          : (notminor => 1)),
-        ( defined $captcha_id       ? (captchaid => $captcha_id) : ()),
-        ( defined $captcha_solution ? (captchaword => $captcha_solution) : ()),
+        ( $section  ? (section => $section) : ()),
+        ( $assert   ? (assert => $assert)   : ()),
+        ( $is_minor ? (minor => 1)          : (notminor => 1)),
+        ( $captcha_id ? (captchaid => $captcha_id) : ()),
+        ( $captcha_solution ? (captchaword => $captcha_solution) : ()),
     };
 
     ### Actually do the edit
@@ -1836,11 +1654,11 @@ sub patrol {
         return @return;
     }
     else {
-        my $edittoken = $self->_get_edittoken('patrol');
+        my ($token) = $self->_get_edittoken('patrol');
         my $res = $self->{api}->api({
             action  => 'patrol',
             rcid    => $rcid,
-            token   => $edittoken->{'token'},
+            token   => $token,
         });
         return $self->_handle_api_error()
             if !$res
@@ -1919,25 +1737,27 @@ sub purge_page {
 
 Reverts the specified $page_title to $revid, with an edit summary of $summary. A
 default edit summary will be used if $summary is omitted.
-An optional forth parameter $edittoken can be used to detect edit conflicts.
 
-See L</get_last> for examples.
+    my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
+    print "Reverting to $revid\n" if defined($revid);
+    $bot->revert('User:Mike.lifeguard', $revid, 'rvv');
 
 B<References:> L<API:Edit|https://www.mediawiki.org/wiki/API:Edit>
 
 =cut
 
 sub revert {
-    my $self      = shift;
-    my $pagename  = shift;
-    my $revid     = shift;
-    my $summary   = shift // "Reverting to old revision $revid";
-    my $edittoken = shift;
+    my $self     = shift;
+    my $pagename = shift;
+    my $revid    = shift;
+    my $summary  = shift || "Reverting to old revision $revid";
 
-    my $page = $self->get_page($pagename, {'rvstartid' => $revid});
-    $page->{'summary'} = $summary;
-    $page->{'edittoken'} = $edittoken if defined $edittoken;
-    my $res = $self->edit($page);
+    my $text = $self->get_text($pagename, $revid);
+    my $res = $self->edit({
+        page    => $pagename,
+        text    => $text,
+        summary => $summary,
+    });
 
     return $res;
 }
@@ -1962,16 +1782,16 @@ sub undo {
     my $after   = shift;
     $summary = "Reverting edits between #$revid & #$after" if defined($after);    # Is that clear? Correct?
 
-    my $edittoken = $self->_get_edittoken($page);
+    my ($edittoken, $basetimestamp, $starttimestamp) = $self->_get_edittoken($page);
     my $hash = {
         action         => 'edit',
         title          => $page,
         undo           => $revid,
         (undoafter     => $after)x!! defined $after,
         summary        => $summary,
-        token          => $edittoken->{'token'},
-        starttimestamp => $edittoken->{'starttimestamp'},
-        basetimestamp  => $edittoken->{'basetimestamp'},
+        token          => $edittoken,
+        starttimestamp => $starttimestamp,
+        basetimestamp  => $basetimestamp,
     };
 
     my $res = $self->{api}->api($hash);
@@ -3809,16 +3629,61 @@ sub email {
         $user =~ s/^$user_ns_name://;
     }
 
-    my $edittoken = $self->_get_edittoken;
+    my ($token) = $self->_get_edittoken;
     my $res = $self->{api}->api({
         action  => 'emailuser',
         target  => $user,
         subject => $subject,
         text    => $body,
-        token   => $edittoken->{'token'},
+        token   => $token,
     });
     return $self->_handle_api_error() unless $res;
     return $res;
+}
+
+=head2 get_mw_version
+
+Returns a hash ref with the MediaWiki version. The hash ref contains the keys 
+I<major>, I<minor>, I<patch>, and I<string>.
+Returns undef on errors.
+
+    my $mw_version = $bot->get_mw_version;
+
+    # get version as string
+    my $mw_ver_as_string = $mw_version->{'major'} . '.' . $mw_version->{'minor'};
+    if(defined $mw_version->{'patch'}){
+        $mw_ver_as_string .= '.' . $mw_version->{'patch'};
+    }
+
+    # or simply
+    my $mw_ver_as_string = $mw_version->{'string'};
+
+B<References:> L<API:Siteinfo|https://www.mediawiki.org/wiki/API:Siteinfo>
+
+=cut
+
+sub get_mw_version {
+    my $self = shift;
+    my $hash = {
+        'action' => 'query',
+        'meta'   => 'siteinfo',
+        'siprop' => 'general',
+    };
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    my $version = $res->{'query'}{'general'}{'generator'};
+    if(defined $version && $version =~ /^MediaWiki (([0-9]+)\.([0-9]+)(?:\.([0-9]+))?+)/){
+        $self->{'mw_version'} = {
+            major => $2,
+            minor => $3,
+            patch => $4,
+            string => $1,
+        };
+    }else{
+        warn "could not fetch MediaWiki version.\n" if $self->{debug} > 1;
+        return;
+    }
+    return {%{$self->{'mw_version'}}}; # don't return ref to member
 }
 
 ################
@@ -3840,12 +3705,11 @@ sub _get_edittoken { # Actually returns ($token, $base_timestamp, $start_timesta
     }) or return $self->_handle_api_error();
 
     my $data            = ( %{ $res->{query}->{pages} })[1];
-    my $edittoken           = {
-        'token' => $res->{query}->{tokens}->{"${type}token"}, 
-        'base_timestamp' => $data->{revisions}[0]->{timestamp}, 
-        'start_timestamp' => $res->{query}->{general}->{time},
-    };
-    return $edittoken;
+    my $base_timestamp  = $data->{revisions}[0]->{timestamp};
+    my $start_timestamp = $res->{query}->{general}->{time};
+    my $token           = $res->{query}->{tokens}->{"${type}token"};
+
+    return ($token, $base_timestamp, $start_timestamp);
 }
 
 sub _handle_api_error {
