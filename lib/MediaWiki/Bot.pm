@@ -1050,7 +1050,7 @@ blank and nonexistent pages by using L<defined|perlfunc/defined>:
 B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
 L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-For backward-compatibility the params \C<revid> and \C<section_number> may also be
+For backward-compatibility the params C<revid> and C<section_number> may also be
 given as scalar parameters:
 
     my $wikitext = $bot->get_text('Page title', 123456, 2);
