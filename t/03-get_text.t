@@ -1,7 +1,8 @@
 use strict;
 use warnings;
 use Test::RequiresInternet 'test.wikipedia.org' => 80;
-use Test::More tests => 11;
+use Test::More tests => 12;
+use Test::Warn;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -25,9 +26,11 @@ isnt $wikitext => $section_wikitext,         'Section loaded content correctly';
 like $wikitext => qr/\Q$section_wikitext\E/, 'Section loaded content correctly';
 
 # test backward-compatibility
-no warnings;
-$section_wikitext = $bot->get_text($page, undef, 2);
-use warnings;
+warning_is(
+    sub { $section_wikitext = $bot->get_text($page, undef, 2); },
+    'Please pass a hashref; this method of calling get_text is deprecated and will be removed in a future release',
+    'deprecated usage of get_text'
+);
 isnt $section_wikitext => undef,             'Section load pass/fail';
 isnt $wikitext => $section_wikitext,         'Section loaded content correctly';
 like $wikitext => qr/\Q$section_wikitext\E/, 'Section loaded content correctly';

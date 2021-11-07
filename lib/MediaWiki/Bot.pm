@@ -223,6 +223,7 @@ sub new {
         use_http_get    => 1,  # use HTTP GET to make certain requests cacheable
     });
     $self->{api}->{ua}->agent($agent) if defined $agent;
+    $self->{mw_version} = undef; # will be set in get_mw_version
 
     # Set wiki (handles setting $self->{host} etc)
     $self->set_wiki({
@@ -943,6 +944,10 @@ Example:
 The array returned contains hashrefs with keys: revid, user, comment, minor,
 timestamp_date, and timestamp_time.
 
+For backward compatibility, you can specify up to four parameters:
+
+    my @hist = $bot->get_history($title, $limit, $revid, $direction);
+
 B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
 L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
@@ -951,16 +956,22 @@ L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisio
 sub get_history {
     my $self      = shift;
     my $pagename  = shift;
-    my $additional_params = shift // {};
+    my $additional_params = shift;
     # for backward-compatibility check for textual params
-    if(ref $additional_params eq ''){
-        my $rvlimit = $additional_params;
-        my $rvstartid = shift;
-        my $rvdir = shift;
-        $additional_params = {};
-        $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
-        $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
-        $additional_params->{'rvdir'} = $rvdir if $rvdir;
+    if(ref $additional_params eq '' ){
+        if(@_ > 0 || defined $additional_params){
+            warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
+                . 'get_history is deprecated and will be removed in a future release');
+            my $rvlimit = $additional_params;
+            my $rvstartid = shift;
+            my $rvdir = shift;
+            $additional_params = {};
+            $additional_params->{'rvlimit'} = $rvlimit if $rvlimit;
+            $additional_params->{'rvstartid'} = $rvstartid if $rvstartid;
+            $additional_params->{'rvdir'} = $rvdir if $rvdir;
+        }else{
+            $additional_params = {};
+        }
     }
     my $ready;
     my $filter_params = {%$additional_params};
@@ -1232,15 +1243,17 @@ sub get_text {
     my $options = shift;
     # for backward-compatibility: try to read scalars
     if(ref $options eq ''){
-        $options = {
-            'rvstartid' => $options,
-            'rvsection' => shift,
-        };
-        delete $options->{'rvstartid'} unless defined $options->{'rvstartid'};
-        delete $options->{'rvsection'} unless defined $options->{'rvsection'};
-        if(keys %$options > 0){
+        if(@_ > 0 || defined $options){
             warnings::warnif('deprecated', 'Please pass a hashref; this method of calling '
-            . 'get_text is deprecated, and will be removed in a future release.');
+                . 'get_text is deprecated and will be removed in a future release');
+            $options = {
+                'rvstartid' => $options,
+                'rvsection' => shift,
+            };
+            delete $options->{'rvstartid'} unless defined $options->{'rvstartid'};
+            delete $options->{'rvsection'} unless defined $options->{'rvsection'};
+        }else{
+            $options = {};
         }
     }
 
@@ -3756,7 +3769,6 @@ sub upload_from_url {
     return $success;
 }
 
-
 =head2 usergroups
 
 Returns a list of the usergroups a user is in:
@@ -3796,6 +3808,51 @@ sub usergroups {
     }
 
     return $self->_handle_api_error({ code => ERR_API, details => qq{Results for $user weren't returned by the API} });
+}
+
+=head2 get_mw_version
+
+Returns a hash ref with the MediaWiki version. The hash ref contains the keys 
+I<major>, I<minor>, I<patch>, and I<string>.
+Returns undef on errors.
+
+    my $mw_version = $bot->get_mw_version;
+
+    # get version as string
+    my $mw_ver_as_string = $mw_version->{'major'} . '.' . $mw_version->{'minor'};
+    if(defined $mw_version->{'patch'}){
+        $mw_ver_as_string .= '.' . $mw_version->{'patch'};
+    }
+
+    # or simply
+    my $mw_ver_as_string = $mw_version->{'string'};
+
+B<References:> L<API:Siteinfo|https://www.mediawiki.org/wiki/API:Siteinfo>
+
+=cut
+
+sub get_mw_version {
+    my $self = shift;
+    my $hash = {
+        'action' => 'query',
+        'meta'   => 'siteinfo',
+        'siprop' => 'general',
+    };
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    my $version = $res->{'query'}{'general'}{'generator'};
+    if(defined $version && $version =~ /^MediaWiki (([0-9]+)\.([0-9]+)(?:\.([0-9]+))?+)/){
+        $self->{'mw_version'} = {
+            major => $2,
+            minor => $3,
+            patch => $4,
+            string => $1,
+        };
+    }else{
+        warn "could not fetch MediaWiki version.\n" if $self->{debug} > 1;
+        return;
+    }
+    return {%{$self->{'mw_version'}}}; # don't return ref to member
 }
 
 
