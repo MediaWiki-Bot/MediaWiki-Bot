@@ -22,7 +22,7 @@ my $bot = MediaWiki::Bot->new({
         'test_blocked is deprecated'
     );
     ok(!$result,     'current blocks');
-    is($result, $bc,    'BC method returned the same as the current method');
+    is(defined $result, $bc,    'BC method returned the same as the current method');
 }
 
 {
@@ -36,5 +36,5 @@ my $bot = MediaWiki::Bot->new({
         'test_blocked is deprecated'
     );
     ok($result,         'current blocks');
-    is($result, $bc,    'BC method returned the same as the current method');
+    is(defined $result, $bc, 'BC method returned the same as the current method');
 }

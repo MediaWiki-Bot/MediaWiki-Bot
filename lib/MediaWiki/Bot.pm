@@ -2274,7 +2274,7 @@ B<This method is deprecated>, and will emit deprecation warnings.
 sub test_blocked { # For backwards-compatibility
     warnings::warnif('deprecated', 'test_blocked is an alias of is_blocked; '
         . 'please use the new name. This alias might be removed in a future release');
-    return (is_blocked(@_));
+    return (defined is_blocked(@_));
 }
 
 =head2 test_image_exists
