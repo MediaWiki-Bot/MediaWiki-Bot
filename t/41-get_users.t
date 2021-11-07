@@ -14,7 +14,7 @@ my $bot = MediaWiki::Bot->new({
 
 my $title = 'User:Mike.lifeguard/03-get text.t';
 
-my @history = uniq map { $_->{user} } $bot->get_history($title, 5);
+my @history = uniq map { $_->{user} } $bot->get_history($title, {'rvlimit' => 5});
 my @users   = uniq $bot->get_users($title, 5);
 
 is_deeply(\@users, \@history, 'Concordance between two methods of getting the same data');
