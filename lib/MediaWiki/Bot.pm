@@ -2413,6 +2413,11 @@ sub recentchanges {
         $options = shift;
     }
     else {
+        if(@_ > 0){
+            warnings::warnif('deprecated', 'Please pass a hashref; this method of '
+                . 'calling recentchanges is deprecated and will be removed in a '
+                . 'future release');
+        }
         $ns      = shift || 0;
         $limit   = shift || 50;
         $options = shift;
