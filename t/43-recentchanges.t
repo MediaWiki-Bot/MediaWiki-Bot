@@ -42,13 +42,13 @@ subtest 'basic' => sub {
         is( scalar @rc, $rows,                                                 'Returned the right number of rows');
         $tests_run++;
         for my $i (0..$rows-1) {
-            ok(grep($rc[$i]->{ns} == $_, @$ns),                                     'Right namespaces');
+            ok(grep($rc[$i]->{ns} == $_, @$ns),                                'Right namespaces');
             $tests_run++;
-            like($rc[$i]->{timestamp},  qr/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/,      'Timestamp validates');
+            like($rc[$i]->{timestamp},  qr/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/, 'Timestamp validates');
             $tests_run++;
-            like($rc[$i]->{type},       qr/^\w+$/,                                  'Type looks vaguely OK');
+            like($rc[$i]->{type},       qr/^\w+$/,                             'Type looks vaguely OK');
             $tests_run++;
-            cmp_ok(length $rc[$i]->{title}, '>', 0,                                 'Title looks vaguely OK');
+            cmp_ok(length $rc[$i]->{title}, '>', 0,                            'Title looks vaguely OK');
             $tests_run++;
         }
     }
