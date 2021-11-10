@@ -59,52 +59,54 @@ only parameter is a hashref with keys:
 
 =item *
 
-I<agent> sets a custom useragent. It is recommended to use C<operator>
+C<agent> sets a custom useragent. It is recommended to use C<operator>
 instead, which is all we need to do the right thing for you. If you really
 want to do it yourself, see L<https://meta.wikimedia.org/wiki/User-agent_policy>
 for guidance on what information must be included.
 
 =item *
 
-I<assert> sets a parameter for the AssertEdit extension (commonly 'bot')
+C<assert> sets a parameter for the AssertEdit extension (commonly 'bot')
 
 Refer to L<http://mediawiki.org/wiki/Extension:AssertEdit>.
 
 =item *
 
-I<operator> allows the bot to send you a message when it fails an assert. This
+C<operator> allows the bot to send you a message when it fails an assert. This
 is also the recommended way to customize the user agent string, which is
 required by the Wikimedia Foundation. A warning will be emitted if you omit
 this.
 
 =item *
 
-I<maxlag> allows you to set the maxlag parameter (default is the recommended 5s).
+C<maxlag> allows you to set the maxlag parameter (default is the recommended 5s).
 
-Please refer to the MediaWiki documentation prior to changing this from the
-default.
-
-=item *
-
-I<protocol> allows you to specify 'http' or 'https' (default is 'http')
+Please refer to the
+L<MediaWiki|https://www.mediawiki.org/wiki/Manual:Maxlag_parameter> documentation
+prior to changing this from the default.
 
 =item *
 
-I<host> sets the domain name of the wiki to connect to
+C<protocol> allows you to specify 'http' or 'https' (default is 'https')
 
 =item *
 
-I<path> sets the path to api.php (with no leading or trailing slash)
+C<host> sets the domain name of the wiki to connect to (e.g. 'en.wikipedia.org')
 
 =item *
 
-I<login_data> is a hashref of credentials to pass to L</login>.
+C<path> sets the path to api.php (with no leading or trailing slash, e.g. 'w')
 
 =item *
 
-I<debug> - whether to provide debug output.
+C<login_data> is a hashref of credentials to pass to L</login> (see L</login> for
+more information).
 
-1 provides only error messages; 2 provides further detail on internal operations.
+=item *
+
+C<debug> - whether to provide debug output (default is 0).
+
+1 provides some more warnings; 2 provides further detail on internal operations.
 
 =back
 
@@ -125,7 +127,7 @@ For backward compatibility, you can specify up to three parameters:
 
     my $bot = MediaWiki::Bot->new('My custom useragent string', $assert, $operator);
 
-B<This form is deprecated> will never do auto-login or autoconfiguration, and emits
+This form is deprecated, will never do auto-login or autoconfiguration, and emits
 deprecation warnings.
 
 For further reading:
@@ -257,26 +259,26 @@ Set what wiki to use. The parameter is a hashref with keys:
 
 =item *
 
-I<host> - the domain name
+C<host> - the domain name (e.g. en.wikipedia.org)
 
 =item *
 
-I<path> - the part of the path before api.php (usually 'w')
+C<path> - the part of the path before api.php (e.g. 'w')
 
 =item *
 
-I<protocol> is either 'http' or 'https'.
+C<protocol> is either 'http' or 'https'.
 
 =back
 
 If you don't set any parameter, it's previous value is used. If it has never
-been set, the default settings are 'http', 'en.wikipedia.org' and 'w'.
+been set, the default settings are 'https', 'en.wikipedia.org' and 'w'.
 
 For example:
 
     $bot->set_wiki({
         protocol    => 'https',
-        host        => 'secure.wikimedia.org',
+        host        => 'en.wikimedia.org',
         path        => 'wikipedia/meta/w',
     });
 
@@ -284,7 +286,7 @@ For backward compatibility, you can specify up to two parameters:
 
     $bot->set_wiki($host, $path);
 
-B<This form is deprecated>, and will emit deprecation warnings.
+This form is deprecated and will emit deprecation warnings.
 
 =cut
 
@@ -343,10 +345,10 @@ sub set_wiki {
 
 =head3 login
 
-This method takes a hashref with keys I<username> and I<password> at a minimum.
+This method takes a hashref with keys C<username> and C<password> at a minimum.
 See L</"Single User Login"> and L</"Basic authentication"> for additional options.
 
-Logs the use $username in, optionally using $password. First, an attempt will be
+Logs the $username in, optionally using $password. First, an attempt will be
 made to use cookies to log in. If this fails, an attempt will be made to use the
 password provided to log in, if any. If the login was successful, returns true;
 false otherwise.
@@ -377,7 +379,7 @@ For backward compatibility, you can call this as
 
     $bot->login($username, $password);
 
-B<This form is deprecated>, and will emit deprecation warnings. It will
+This form is deprecated, and will emit deprecation warnings. It will
 never do autoconfiguration or SUL login.
 
 =head4 Single User Login
@@ -702,6 +704,8 @@ For backward compatibility, you can specify up to four parameters:
 
     my @hist = $bot->get_history($title, $limit, $revid, $direction);
 
+This form is deprecated, and will emit deprecation warnings.
+
 B<References>: L<Getting page history|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history>,
 L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
@@ -821,7 +825,7 @@ Additional optional parameters are:
 
 =item *
 
-One of: all (default), redirects, or nonredirects.
+One of: C<all> (default), C<redirects>, or C<nonredirects>.
 
 =item *
 
@@ -1018,11 +1022,11 @@ Additional parameters are:
 
 =item *
 
-One of all, redirects, or nonredirects
+One of C<all>, C<redirects>, or C<nonredirects>
 
 =item *
 
-A single namespace number (unlike linksearch etc, which can accept an arrayref
+A single namespace number (unlike L</linksearch> etc, which can accept an arrayref
 of numbers).
 
 =item *
@@ -1154,8 +1158,8 @@ sub get_protection {
 
 =head3 get_last
 
-Returns the revid of the last revision to $page not made by $user. undef is
-returned if no result was found, as would be the case if the page is deleted.
+Returns the revid of the last revision to C<$page< not made by C<$user>. C<undef>
+is returned if no result was found, as would be the case if the page is deleted.
 
     my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
     if defined($revid) {
@@ -1191,7 +1195,7 @@ sub get_last {
 
      my ($timestamp, $user) = $bot->recent_edit_to_page($title);
 
-Returns timestamp and username for most recent (top) edit to $page.
+Returns timestamp and username for most recent (top) edit to C<$page>.
 
 B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
@@ -1217,8 +1221,8 @@ sub recent_edit_to_page {
 
     my @recent_editors = $bot->get_users($title, $limit, $revid, $direction);
 
-Gets the most recent editors to $page, up to $limit, starting from $revision
-and going in $direction.
+Gets the most recent editors to C<$page>, up to C<$limit>, starting from C<$revision>
+and going in C<$direction>.
 
 B<References:> L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
@@ -1255,8 +1259,8 @@ sub get_users {
 
 =head3 get_text
 
-Returns the wikitext of the specified $page_title.
-The first parameter $page_title is the only required one.
+Returns the wikitext of the specified C<$page_title>.
+The first parameter C<$page_title> is the only required one.
 
 The second parameter is a hashref with the following independent optional keys:
 
@@ -1309,6 +1313,8 @@ given as scalar parameters:
     my $wikitext = $bot->get_text('Page title', 123456, 2);
     print "Wikitext: $wikitext\n" if defined $wikitext;
 
+This form is deprecated, and will emit deprecation warnings.
+
 =cut
 
 sub get_text {
@@ -1358,7 +1364,7 @@ sub get_text {
 
 This is a synonym for L</get_protection>, which should be used in preference.
 
-B<This method is deprecated>, and will emit deprecation warnings.
+B<This method is deprecated> and will emit deprecation warnings.
 
 =cut
 
@@ -1388,31 +1394,31 @@ This method edits a wiki page, and takes a hashref of data with keys:
 
 =item *
 
-I<page> - the page title to edit
+C<page> - the page title to edit
 
 =item *
 
-I<text> - the page text to write
+C<text> - the page text to write
 
 =item *
 
-I<summary> - an edit summary
+C<summary> - an edit summary
 
 =item *
 
-I<minor> - whether to mark the edit as minor or not (boolean)
+C<minor> - whether to mark the edit as minor or not (boolean)
 
 =item *
 
-I<bot> - whether to mark the edit as a bot edit (boolean)
+C<bot> - whether to mark the edit as a bot edit (boolean)
 
 =item *
 
-I<assertion> - usually 'bot', but see L<http://mediawiki.org/wiki/Extension:AssertEdit>.
+C<assertion> - usually 'bot', but see L<http://mediawiki.org/wiki/Extension:AssertEdit>.
 
 =item *
 
-I<section> - edit a single section (identified by number) instead of the whole page
+C<section> - edit a single section (identified by number) instead of the whole page
 
 =back
 
@@ -1422,7 +1428,7 @@ You can also call this as:
 
     $bot->edit($page, $text, $summary, $is_minor, $assert, $markasbot);
 
-B<This form is deprecated>, and will emit deprecation warnings.
+This form is deprecated and will emit deprecation warnings.
 
 =head3 CAPTCHAs
 
@@ -1570,29 +1576,29 @@ sub edit {
 This moves a wiki page.
 
 If you wish to specify more options (like whether to suppress creation of a
-redirect), use $options_hashref, which has keys:
+redirect), use C<$options_hashref>, which has keys:
 
 =over 4
 
 =item *
 
-I<movetalk> specifies whether to attempt to the talk page.
+C<movetalk> specifies whether to attempt to the talk page.
 
 =item *
 
-I<noredirect> specifies whether to suppress creation of a redirect.
+C<noredirect> specifies whether to suppress creation of a redirect.
 
 =item *
 
-I<movesubpages> specifies whether to move subpages, if applicable.
+C<movesubpages> specifies whether to move subpages, if applicable.
 
 =item *
 
-I<watch> and I<unwatch> add or remove the page and the redirect from your watchlist.
+C<watch> and C<unwatch> add or remove the page and the redirect from your watchlist.
 
 =item *
 
-I<ignorewarnings> ignores warnings.
+C<ignorewarnings> ignores warnings.
 
 =back
 
@@ -1633,7 +1639,7 @@ sub move {
 
     $bot->patrol($rcid);
 
-Marks a page or revision identified by the $rcid as patrolled. To mark several
+Marks a page or revision identified by the C<$rcid> as patrolled. To mark several
 RCIDs as patrolled, you may pass an arrayref of them. Returns false and sets
 C<< $bot->{error} >> if the account cannot patrol.
 
@@ -1670,7 +1676,7 @@ sub patrol {
 
 =head3 purge_page
 
-Purges the server cache of the specified $page. Returns true on success; false
+Purges the server cache of the specified C<$page>. Returns true on success; false
 on failure. Pass an array reference to purge multiple pages.
 
 If you really care, a true return value is the number of pages successfully
@@ -1735,8 +1741,8 @@ sub purge_page {
 
 =head3 revert
 
-Reverts the specified $page_title to $revid, with an edit summary of $summary. A
-default edit summary will be used if $summary is omitted.
+Reverts the specified C<$page_title> to C<$revid>, with an edit summary of
+C<$summary>. A default edit summary will be used if C<$summary> is omitted.
 
     my $revid = $bot->get_last("User:Mike.lifeguard/sandbox", "Mike.lifeguard");
     print "Reverting to $revid\n" if defined($revid);
@@ -1766,9 +1772,9 @@ sub revert {
 
     $bot->undo($title, $revid, $summary, $after);
 
-Reverts the specified $revid, with an edit summary of $summary, using the undo
-function. To undo all revisions from $revid up to but not including this one,
-set $after to another revid. If not set, just undo the one revision ($revid).
+Reverts the specified C<$revid>, with an edit summary of C<$summary>, using the undo
+function. To undo all revisions from C<$revid> up to but not including this one,
+set C<$after> to another revid. If not set, just undo the one revision (C<$revid>).
 
 B<References:> L<API:Edit|https://www.mediawiki.org/wiki/API:Edit>
 
@@ -1819,7 +1825,7 @@ process it directly with a library such as L<Imager>.
 Images are scaled proportionally. (height/width) will remain
 constant, except for rounding errors.
 
-Height and width parameters describe the B<maximum> dimensions. A 400x200
+Height and width parameters describe the I<maximum> dimensions. A 400x200
 image will never be scaled to greater dimensions. You can scale it yourself;
 having the wiki do it is just lazy & selfish.
 
@@ -1857,7 +1863,7 @@ sub get_image{
 
 =head3 image_usage
 
-Gets a list of pages which include a certain $image. Include the C<File:>
+Gets a list of pages which include a certain C<$image>. Include the C<File:>
 namespace prefix to avoid incurring an extra round-trip (which will also emit
 a deprecation warnings).
 
@@ -1872,11 +1878,11 @@ numbers)
 
 =item *
 
-One of all, redirect, or nonredirects.
+One of C<all>, C<redirect>, or C<nonredirects>.
 
 =item *
 
-$options is a hashref as described in the section for L</linksearch>.
+C<$options> is a hashref as described in the section for L</linksearch>.
 
 =back
 
@@ -2005,7 +2011,7 @@ sub global_image_usage {
 A backward-compatible call to L</image_usage>. You can provide only the image
 title.
 
-B<This method is deprecated>, and will emit deprecation warnings.
+B<This method is deprecated> and will emit deprecation warnings.
 
 =cut
 
@@ -2018,7 +2024,7 @@ sub links_to_image {
 
 =head3 test_image_exists
 
-Checks if an image exists at $page.
+Checks if an image exists at C<$page>.
 
 =over 4
 
@@ -2184,7 +2190,7 @@ and summary. Summary and new filename are optional.
     });
 
 If on your target wiki is enabled uploading from URL, meaning C<$wgAllowCopyUploads>
-is set to true in LocalSettings.php and you have appropriate user rights, you
+is set to true in I<LocalSettings.php> and you have appropriate user rights, you
 can use this function to upload files to your wiki directly from remote server.
 
 B<References:> L<API:Upload#Uploading_from_URL|https://www.mediawiki.org/wiki/API:Upload#Uploading_from_URL>
@@ -2220,13 +2226,13 @@ sub upload_from_url {
 
 =head3 update_rc
 
-B<This method is deprecated>, and will emit deprecation warnings.
-Replace calls to C<update_rc()> with calls to the newer C<recentchanges()>, which
+B<This method is deprecated> and will emit deprecation warnings.
+Replace calls to C<update_rc> with calls to the newer L</recentchanges>, which
 returns all available data, including rcid.
 
-Returns an array containing the $limit most recent changes to the wiki's I<main
-namespace>. The array contains hashrefs with keys title, revid, old_revid,
-and timestamp.
+Returns an array containing the C<$limit> most recent changes to the wiki's I<main
+namespace>. The array contains hashrefs with keys C<title>, C<revid>,
+C<old_revid>, and C<timestamp>.
 
     my @rc = $bot->update_rc(5);
     foreach my $hashref (@rc) {
@@ -2294,20 +2300,20 @@ The first parameter is a hashref with the following keys:
 
 =item *
 
-I<ns> - the namespace number, or an arrayref of numbers to
-specify several; default is the main namespace
+C<ns> - the namespace number, or an arrayref of numbers to
+specify several; default is the main namespace (i.e. 0)
 
 =item *
 
-I<limit> - the number of rows to fetch; default is 50
+C<limit> - the number of rows to fetch; default is 50
 
 =item *
 
-I<user> - only list changes by this user
+C<user> - only list changes by this user
 
 =item *
 
-I<show> - itself a hashref where the key is a category and the value is
+C<show> - itself a hashref where the key is a category and the value is
 a boolean. If true, the category will be included; if false, excluded. The
 categories are kinds of edits: minor, bot, anon, redirect, patrolled. See
 "rcshow" at L<http://www.mediawiki.org/wiki/API:Recentchanges#Parameters>.
@@ -2337,35 +2343,35 @@ The hashref returned might contain the following keys:
 
 =item *
 
-I<ns> - the namespace number
+C<ns> - the namespace number
 
 =item *
 
-I<revid>
+C<revid>
 
 =item *
 
-I<old_revid>
+C<old_revid>
 
 =item *
 
-I<timestamp>
+C<timestamp>
 
 =item *
 
-I<rcid> - can be used with L</patrol>
+C<rcid> - can be used with L</patrol>
 
 =item *
 
-I<pageid>
+C<pageid>
 
 =item *
 
-I<type> - one of edit, new, log (there may be others)
+C<type> - one of C<edit>, C<new>, C<log> (there may be others)
 
 =item *
 
-I<title>
+C<title>
 
 =back
 
@@ -2373,6 +2379,8 @@ For backwards compatibility, the previous method signature is still
 supported:
 
     $bot->recentchanges($ns, $limit, $options_hashref);
+
+This form is deprecated and will emit deprecation warnings.
 
 B<References:> L<API:Recentchanges|https://www.mediawiki.org/wiki/API:Recentchanges>
 
@@ -2435,7 +2443,7 @@ sub recentchanges {
 
     my $count = $bot->count_contributions($user);
 
-Uses the API to count $user's contributions.
+Uses the API to count C<$user>'s contributions.
 
 B<References:> L<API:Users|https://www.mediawiki.org/wiki/API:Users>
 
@@ -2461,7 +2469,7 @@ sub count_contributions {
 
     ($timed_edits_count, $total_count) = $bot->timed_count_contributions($user, $days);
 
-Uses the API to count $user's contributions in last number of $days and total number of user's contributions (if needed).
+Uses the API to count C<$user>'s contributions in last number of C<$days> and total number of user's contributions (if needed).
 
 Example: If you want to get user contribs for last 30 and 365 days, and total number of edits you would write
 something like this:
@@ -2473,8 +2481,9 @@ You could get total number of edits also by separately calling count_contributio
 
     my $total = $bot->count_contributions($user);
 
-and use timed_count_contributions only in scalar context, but that would mean one more call to server (meaning more
-server load) of which you are excused as timed_count_contributions returns array with two parameters.
+and use timed_count_contributions only in scalar context, but that would mean one
+more call to server (meaning more server load) of which you are excused as
+timed_count_contributions returns array with two parameters.
 
 B<References:> L<Extension:UserDailyContribs|https://www.mediawiki.org/wiki/Extension:UserDailyContribs>
 
@@ -2500,8 +2509,8 @@ sub timed_count_contributions {
 
     my @users = $bot->get_allusers($limit, $user_group, $options_hashref);
 
-Returns an array of all users. Default $limit is 500. Optionally specify a
-$group (like 'sysop') to list that group only. The last optional parameter
+Returns an array of all users. Default C<$limit> is 500. Optionally specify a
+C<$group> (like 'sysop') to list that group only. The last optional parameter
 is an L</"Options hashref">.
 
 B<References:> L<API:Allusers|https://www.mediawiki.org/wiki/API:Allusers>
@@ -2533,13 +2542,13 @@ sub get_allusers {
 
     my @contribs = $bot->contributions($user, $namespace, $options, $from, $to);
 
-Returns an array of hashrefs of data for the user's contributions. $namespace
-can be an arrayref of namespace numbers. $options can be specified as in
+Returns an array of hashrefs of data for the user's contributions. C<$namespace>
+can be an arrayref of namespace numbers. C<$options> can be specified as in
 L</linksearch>.
-$from and $to are optional timestamps. ISO 8601 date and time is recommended:
-2001-01-15T14:56:00Z, see L<https://www.mediawiki.org/wiki/Timestamp> for all
+C<$from> and C<$to> are optional timestamps. ISO 8601 date and time is recommended:
+I<2001-01-15T14:56:00Z>, see L<https://www.mediawiki.org/wiki/Timestamp> for all
 possible formats.
-Note that $from (=ucend) has to be before $to (=ucstart), unlike direct API access.
+Note that C<$from> (=I<ucend>) has to be before C<$to> (=I<ucstart>), unlike direct API access.
 
 Specify an arrayref of users to get results for multiple users.
 
@@ -2586,7 +2595,7 @@ sub contributions {
 
 =head3 top_edits
 
-Returns an array of the page titles where the $user is the latest editor. The
+Returns an array of the page titles where the C<$user> is the latest editor. The
 second parameter is the familiar L<$options_hashref|/linksearch>.
 
     my @pages = $bot->top_edits("Mike.lifeguard", {max => 5});
@@ -2594,10 +2603,10 @@ second parameter is the familiar L<$options_hashref|/linksearch>.
         $bot->rollback($page, "Mike.lifeguard");
     }
 
-Note that accessing the data with a callback happens B<before> filtering
+Note that accessing the data with a callback happens I<before> filtering
 the top edits is done. For that reason, you should use L</contributions>
 if you need to use a callback. If you use a callback with top_edits(),
-you B<will not> necessarily get top edits returned. It is only safe to use a
+you I<will not> necessarily get top edits returned. It is only safe to use a
 callback if you I<check> that it is a top edit:
 
     $bot->top_edits("Mike.lifeguard", { hook => \&rv });
@@ -2644,7 +2653,7 @@ sub top_edits {
 
     my $latest_timestamp = $bot->last_active($user);
 
-Returns the last active time of $user in C<YYYY-MM-DDTHH:MM:SSZ>.
+Returns the last active time of C<$user> in C<YYYY-MM-DDTHH:MM:SSZ>.
 
 B<References:> L<API:Usercontribs|https://www.mediawiki.org/wiki/API:Usercontribs>
 
@@ -2746,7 +2755,7 @@ sub is_blocked {
 
 Retained for backwards compatibility. Use L</is_blocked> for clarity.
 
-B<This method is deprecated>, and will emit deprecation warnings.
+B<This method is deprecated> and will emit deprecation warnings.
 
 =cut
 
@@ -2835,7 +2844,7 @@ sub was_blocked {
 
 Retained for backwards compatibility. Use L</was_blocked> for clarity.
 
-B<This method is deprecated>, and will emit deprecation warnings.
+B<This method is deprecated> and will emit deprecation warnings.
 
 =cut
 
@@ -2946,7 +2955,7 @@ sub was_locked {
 =head3 get_pages_in_category
 
 Returns an array containing the names of all pages in the specified category
-(include the Category: prefix). Does not recurse into sub-categories.
+(include the I<Category:> prefix). Does not recurse into sub-categories.
 
     my @pages = $bot->get_pages_in_category('Category:People on stamps of Gabon');
     print "The pages in Category:People on stamps of Gabon are:\n@pages\n";
@@ -2999,8 +3008,8 @@ sub get_pages_in_category {
 
     my @pages = $bot->get_all_pages_in_category($category, $options_hashref);
 
-Returns an array containing the names of B<all> pages in the specified category
-(include the Category: prefix), including sub-categories. The $options_hashref
+Returns an array containing the names of I<all> pages in the specified category
+(include the I<Category:> prefix), including sub-categories. The $options_hashref
 is described fully in L</"Options hashref">.
 
 B<References:> L<Listing category contents|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Listing-category-contents>,
@@ -3111,13 +3120,13 @@ sub get_namespace_names {
     $bot->get_pages_in_namespace($namespace, $limit, $options_hashref);
 
 Returns an array containing the names of all pages in the specified namespace.
-The $namespace_id must be a number, not a namespace name.
+The C<$namespace_id> must be a number, not a namespace name.
 
-Setting $page_limit is optional, and specifies how many items to retrieve at
+Setting C<$page_limit> is optional, and specifies how many items to retrieve at
 once. Setting this to 'max' is recommended, and this is the default if omitted.
-If $page_limit is over 500, it will be rounded up to the next multiple of 500.
-If $page_limit is set higher than you are allowed to use, it will silently be
-reduced. Consider setting key 'max' in the L</"Options hashref"> to
+If C<$page_limit> is over 500, it will be rounded up to the next multiple of 500.
+If C<$page_limit> is set higher than you are allowed to use, it will silently be
+reduced. Consider setting key \C<max> in the L</"Options hashref"> to
 retrieve multiple sets of results:
 
     # Gotta get 'em all!
@@ -3154,7 +3163,7 @@ sub get_pages_in_namespace {
 
     my $expanded = $bot->expandtemplates($title, $wikitext);
 
-Expands templates on $page, using $text if provided, otherwise loading the page
+Expands templates on C<$page>, using C<$text> if provided, otherwise loading the page
 text automatically.
 
 B<References:> L<API:Parsing wikitext|https://www.mediawiki.org/wiki/API:Parsing_wikitext>
@@ -3187,7 +3196,7 @@ sub expandtemplates {
 
 =head3 list_transclusions
 
-Returns an array containing a list of all pages transcluding $page.
+Returns an array containing a list of all pages transcluding C<$page>.
 
 Other parameters are:
 
@@ -3195,7 +3204,7 @@ Other parameters are:
 
 =item *
 
-One of: all (default), redirects, or nonredirects
+One of: C<all> (default), C<redirects>, or C<nonredirects>
 
 =item *
 
@@ -3203,7 +3212,7 @@ A namespace number to search (pass an arrayref to search in multiple namespaces)
 
 =item *
 
-$options_hashref as described by L<MediaWiki::API>:
+C<$options_hashref> as described by L<MediaWiki::API>:
 
 Set max to limit the number of queries performed.
 
@@ -3272,8 +3281,8 @@ sub list_transclusions {
 
 =head3 linksearch
 
-Runs a linksearch on the specified $link and returns an array containing
-anonymous hashes with keys 'url' for the outbound URL, and 'title' for the page
+Runs a linksearch on the specified C<$link> and returns an array containing
+anonymous hashes with keys C<url> for the outbound URL, and C<title> for the page
 the link is on.
 
 Additional parameters are:
@@ -3286,13 +3295,13 @@ A namespace number to search (pass an arrayref to search in multiple namespaces)
 
 =item *
 
-You can search by $protocol (http is default).
+You can search by C<$protocol> (http is default).
 
 =item *
 
-$options_hashref is fully documented in L</"Options hashref">:
+C<$options_hashref> is fully documented in L</"Options hashref">:
 
-Set I<max> in $options to get more than one query's worth of results:
+Set C<max> in $options to get more than one query's worth of results:
 
     my $options = { max => 10, }; # I only want some results
     my @links = $bot->linksearch("slashdot.org", 1, undef, $options);
@@ -3302,7 +3311,7 @@ Set I<max> in $options to get more than one query's worth of results:
         print "$page: $url\n";
     }
 
-Set I<hook> to a subroutine reference to use a callback hook for incremental
+Set C<hook> to a subroutine reference to use a callback hook for incremental
 processing:
 
     my $options = { hook => \&mysub, }; # I want to do incremental processing
@@ -3358,7 +3367,8 @@ sub linksearch {
 
 =head3 db_to_domain
 
-Converts a wiki/database name (enwiki) to the domain name (en.wikipedia.org).
+Converts a wiki/database name (e.g. I<enwiki>) to the domain name (e.g.
+I<en.wikipedia.org>).
 
     my @wikis = ("enwiki", "kowiki", "bat-smgwiki", "nonexistent");
     foreach my $wiki (@wikis) {
@@ -3411,7 +3421,7 @@ sub db_to_domain {
     my $db = $bot->domain_to_db($domain_name);
 
 As you might expect, does the opposite of L</domain_to_db>: Converts a domain
-name (meta.wikimedia.org) into a database/wiki name (metawiki).
+name (e.g. I<meta.wikimedia.org>) into a database/wiki name (e.g. I<metawiki>).
 
 B<References:> L<Extension:SiteMatrix|https://www.mediawiki.org/wiki/Extension:SiteMatrix>
 
@@ -3450,17 +3460,17 @@ parameter is a hashref with keys:
 
 =item *
 
-I<type> is the log type (block, delete...)
+C<type> is the log type (C<block>, C<delete>...)
 
 =item *
 
-I<user> is the user who I<performed> the action. Do not include the User: prefix
+C<user> is the user who I<performed> the action. Do not include the I<User:> prefix
 
 =item *
 
-I<target> is the target of the action. Where an action was performed to a page,
+C<target> is the target of the action. Where an action was performed to a page,
 it is the page title. Where an action was performed to a user, it is
-User:$username.
+C<User:$username>.
 
 =back
 
@@ -3527,7 +3537,7 @@ sub get_log {
 
 =head3 search
 
-This is a simple search for your $search_term in page text. It returns an array
+This is a simple search for your C<$search_term> in page text. It returns an array
 of page titles matching.
 
 Additional optional parameters are:
@@ -3537,11 +3547,11 @@ Additional optional parameters are:
 =item *
 
 A namespace number to search in, or an arrayref of numbers (default is the
-main namespace)
+main namespace, i.e. 0)
 
 =item *
 
-$options_hashref is a hashref as described in L</"Options hashref">:
+C<$options_hashref> is a hashref as described in L</"Options hashref">:
 
 =back
 
@@ -3600,9 +3610,9 @@ sub search {
 
     $bot->email($user, $subject, $body);
 
-This allows you to send emails through the wiki. All 3 of $user (without the
-User: prefix), $subject and $body are required. If $user is an arrayref, this
-will send the same email (subject and body) to all users.
+This allows you to send emails through the wiki. All 3 of C<$user> (without the
+I<User:> prefix), C<$subject> and C<$body> are required. If C<$user> is an
+arrayref, this will send the same email (subject and body) to all users.
 
 B<References:> L<API:Email|https://www.mediawiki.org/wiki/API:Email>
 
@@ -3643,8 +3653,8 @@ sub email {
 
 =head2 get_mw_version
 
-Returns a hash ref with the MediaWiki version. The hash ref contains the keys
-I<major>, I<minor>, I<patch>, and I<string>.
+Returns a hashref with the MediaWiki version. The hash ref contains the keys
+C<major>, C<minor>, C<patch>, and C<string>.
 Returns undef on errors.
 
     my $mw_version = $bot->get_mw_version;
@@ -3925,7 +3935,7 @@ Set to 0 to retrieve all the results.
 Specifies a coderef to a hook function that can be used to process large lists
 as they come in. When this is used, your subroutine will get the raw data. This
 is noted in cases where it is known to be significant. For example, when
-using a hook with C<top_edits()>, you need to check whether the edit is the top
+using a hook with L</top_edits>, you need to check whether the edit is the top
 edit yourself - your subroutine gets results as they come in, and before they're
 filtered.
 
