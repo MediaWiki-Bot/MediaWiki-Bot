@@ -15,4 +15,4 @@ my $result = $bot->get_id('Main Page');
 is($result, 11791, 'Main Page found');
 
 $result = $bot->get_id('egaP niaM');
-is($result, undef, 'No page found');
+is($result, MediaWiki::Bot::PAGE_NONEXISTENT, 'No page found');
