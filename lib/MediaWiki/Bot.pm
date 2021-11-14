@@ -1158,7 +1158,7 @@ sub get_protection {
 
 =head3 get_last
 
-Returns the revid of the last revision to C<$page< not made by C<$user>. C<undef>
+Returns the revid of the last revision to C<$page> not made by C<$user>. C<undef>
 is returned if no result was found, as would be the case if the page is deleted.
 
     my $revid = $bot->get_last('User:Mike.lifeguard/sandbox', 'Mike.lifeguard');
