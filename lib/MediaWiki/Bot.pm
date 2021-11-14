@@ -897,6 +897,118 @@ sub what_links_here {
     return @links;
 }
 
+=head3 get_page
+
+Given a $page_title (required), this function returns a hash ref (or undef on 
+error) with several data of a page. That data can comfortably be used to 
+L</edit> a page. 
+
+The second parameter (optional) is a hashref with optional keys that will be 
+forwarded to the API, if their name starts with C<rv...>. Especially interesting
+are the params rvsection and rvstartid, see L</get_text> for some more detailed
+description.
+
+The returned hashref contains the following keys:
+
+=over 4
+
+=item *
+
+C<page> - the full page title (including the resolved namespace) or undef if the 
+page does not exist
+
+=item *
+
+C<pageid> - the page id (set to PAGE_NONEXISTENT, i.e. -1, if page does not exist)
+
+=item *
+
+C<text> - the text of the page (or of a section depending on the input params), 
+see L</get_text> for details.
+
+=item *
+
+C<section> - if 'rvsection' is set (in the second parameter of the dunction call),
+then this key will be set to the same value. Otherwise it will be unset.
+
+=item *
+
+C<edittoken> - a token that will be used by L</edit> to detect edit conflicts.
+
+=back
+
+This function is very similar to L</get_text>. It just gives a more comfortable way
+to edit pages.
+With L</get_text> you might write:
+
+    my $params = {};
+    # get_text will add an edittoken to $params
+    my $text = $bot->get_text('My page', $params);
+    $text .= "\n\n* More text\n";
+    $bot->edit({
+        page      => 'My page',
+        text      => $text,
+        summary   => 'Adding new content',
+        section   => 'new',
+        edittoken => $params->{'edittoken'},
+    });
+
+With L</get_page> the same will be done via:
+
+    my $page = $bot->get_page('My page');
+    $page->{'text'} .= "\n\n* More text\n";
+    $page->{'summary'} = 'Adding new content';
+    $page->{'section'} = 'new';
+    $bot->edit($page);
+
+That means you don't have to cope with the edit token. That will be done implicitly. And you don't have to tell the page name again. if you use C<'rvsection' = n> in the second parameter, then you don't even have to explicitly set the section number again.
+
+B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
+L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
+
+=cut
+
+sub get_page {
+    my $self     = shift;
+    my $pagename = shift;
+    my $options  = shift // {};
+    unless(defined $pagename){
+        if($self->{'debug'} > 1){
+            warn "get_page(): param \$pagename is not defined.\n";
+        }
+        return;
+    }
+    my $hash = {
+        action => 'query',
+        titles => $pagename,
+        prop   => 'revisions',
+        rvprop => 'content',
+    };
+    # users might forget that the param is called section and not rvsection
+    if(defined $options->{'section'} && !(defined $options->{'rvsection'})){
+        $options->{'rvsection'} = $options->{'section'};
+    }
+    for my $key(keys %$options){
+        if(substr($key, 0, 2) eq 'rv'){
+            $hash->{$key} = $options->{$key};
+        }
+    }
+    my $page = {
+        'page' => $pagename,
+        'edittoken' => $self->_get_edittoken($pagename),
+    };
+    if(defined $options->{'rvsection'}){
+        $page->{'section'} = $options->{'rvsection'};
+    }
+    my $res = $self->{api}->api($hash);
+    return $self->_handle_api_error() unless $res;
+    ($page->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
+    if($page->{'pageid'} != PAGE_NONEXISTENT){
+       $page->{'text'} = $data->{revisions}[0]->{'*'};
+    }
+    return $page;
+}
+
 =head3 get_id
 
 Returns the id of the specified $page_title. Returns PAGE_NONEXISTENT (i.e. -1) if 
@@ -1221,118 +1333,6 @@ sub get_last {
        $revid = $data->{revisions}[0]->{revid};
     }
     return $revid;
-}
-
-=head3 get_page
-
-Given a $page_title (required), this function returns a hash ref (or undef on 
-error) with several data of a page. That data can comfortably be used to 
-L</edit> a page. 
-
-The second parameter (optional) is a hashref with optional keys that will be 
-forwarded to the API, if their name starts with C<rv...>. Especially interesting
-are the params rvsection and rvstartid, see L</get_text> for some more detailed
-description.
-
-The returned hashref contains the following keys:
-
-=over 4
-
-=item *
-
-C<page> - the full page title (including the resolved namespace) or undef if the 
-page does not exist
-
-=item *
-
-C<pageid> - the page id (set to PAGE_NONEXISTENT, i.e. -1, if page does not exist)
-
-=item *
-
-C<text> - the text of the page (or of a section depending on the input params), 
-see L</get_text> for details.
-
-=item *
-
-C<section> - if 'rvsection' is set (in the second parameter of the dunction call),
-then this key will be set to the same value. Otherwise it will be unset.
-
-=item *
-
-C<edittoken> - a token that will be used by L</edit> to detect edit conflicts.
-
-=back
-
-This function is very similar to L</get_text>. It just gives a more comfortable way
-to edit pages.
-With L</get_text> you might write:
-
-    my $params = {};
-    # get_text will add an edittoken to $params
-    my $text = $bot->get_text('My page', $params);
-    $text .= "\n\n* More text\n";
-    $bot->edit({
-        page      => 'My page',
-        text      => $text,
-        summary   => 'Adding new content',
-        section   => 'new',
-        edittoken => $params->{'edittoken'},
-    });
-
-With L</get_page> the same will be done via:
-
-    my $page = $bot->get_page('My page');
-    $page->{'text'} .= "\n\n* More text\n";
-    $page->{'summary'} = 'Adding new content';
-    $page->{'section'} = 'new';
-    $bot->edit($page);
-
-That means you don't have to cope with the edit token. That will be done implicitly. And you don't have to tell the page name again. if you use C<'rvsection' = n> in the second parameter, then you don't even have to explicitly set the section number again.
-
-B<References:> L<Fetching page text|https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text>,
-L<API:Properties#revisions|https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
-
-=cut
-
-sub get_page {
-    my $self     = shift;
-    my $pagename = shift;
-    my $options  = shift // {};
-    unless(defined $pagename){
-        if($self->{'debug'} > 1){
-            warn "get_page(): param \$pagename is not defined.\n";
-        }
-        return;
-    }
-    my $hash = {
-        action => 'query',
-        titles => $pagename,
-        prop   => 'revisions',
-        rvprop => 'content',
-    };
-    # users might forget that the param is called section and not rvsection
-    if(defined $options->{'section'} && !(defined $options->{'rvsection'})){
-        $options->{'rvsection'} = $options->{'section'};
-    }
-    for my $key(keys %$options){
-        if(substr($key, 0, 2) eq 'rv'){
-            $hash->{$key} = $options->{$key};
-        }
-    }
-    my $page = {
-        'page' => $pagename,
-        'edittoken' => $self->_get_edittoken($pagename),
-    };
-    if(defined $options->{'rvsection'}){
-        $page->{'section'} = $options->{'rvsection'};
-    }
-    my $res = $self->{api}->api($hash);
-    return $self->_handle_api_error() unless $res;
-    ($page->{'pageid'}, my $data) = %{ $res->{query}->{pages} };
-    if($page->{'pageid'} != PAGE_NONEXISTENT){
-       $page->{'text'} = $data->{revisions}[0]->{'*'};
-    }
-    return $page;
 }
 
 =head3 recent_edit_to_page
