@@ -425,8 +425,8 @@ METHODS
     API:Properties#revisions
     <https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv>
 
-    For backward-compatibility the params \revid and \section_number may
-    also be given as scalar parameters:
+    For backward-compatibility the params revid and section_number may also
+    be given as scalar parameters:
 
         my $wikitext = $bot->get_text('Page title', 123456, 2);
         print "Wikitext: $wikitext\n" if defined $wikitext;
