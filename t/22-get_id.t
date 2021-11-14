@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::RequiresInternet 'test.wikipedia.org' => 80;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use MediaWiki::Bot;
 my $t = __FILE__;
@@ -16,3 +16,6 @@ is($result, 11791, 'Main Page found');
 
 $result = $bot->get_id('egaP niaM');
 is($result, MediaWiki::Bot::PAGE_NONEXISTENT, 'No page found');
+
+$result = $bot->get_id();
+is($result, undef, 'param missing');
