@@ -308,6 +308,36 @@ Example:
 The array returned contains hashrefs with keys: revid, user, comment, minor,
 timestamp\_date, and timestamp\_time.
 
+For backward compatibility, you can specify up to four parameters:
+
+    my @hist = $bot->get_history($title, $limit, $revid, $direction);
+
+**References**: [Getting page history](https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history),
+[API:Properties#revisions](https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv)
+
+## get\_history\_step\_by\_step
+
+    my @hist = $bot->get_history_step_by_step($title);
+    my @hist = $bot->get_history_step_by_step($title, $additional_params);
+
+Same as get\_history(), but does not return the full history at once, but let's you
+loop through it.
+
+The optional call-by-reference hash ref $additional\_params can be used to loop
+through a page's full history by using the 'continue' param returned by the API.
+
+Example:
+
+    my $ready;
+    my $filter_params = {};
+    while(!$ready){
+        my @hist = $bot->get_history_step_by_step($page, $filter_params);
+        if(@hist == 0 || !defined($filter_params->{'continue'})){
+            $ready = 1;
+        }
+        # do something with @hist
+    }
+
 **References**: [Getting page history](https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Getting-page-history),
 [API:Properties#revisions](https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv)
 
@@ -339,20 +369,44 @@ Example:
 
 ## get\_text
 
-Returns an the wikitext of the specified $page\_title. The second parameter is
-$revid - if defined, returns the text of that revision; the third is
-$section\_number - if defined, returns the text of that section.
+Returns the wikitext of the specified $page\_title.
+The first parameter $page\_title is the only required one.
+
+The second parameter is a hashref with the following independent optional keys:
+
+- `rvstartid` - if defined, this function returns the text of that revision, otherwise
+the newest revision will be used.
+- `rvsection` - if defined, returns the text of that section. Otherwise the
+whole page text will be returned.
+- `pageid` - this is an output parameter and can be used to fetch the id of a page
+without the need of calling ["get\_id"](#get_id) additionally. Note that the value of this
+param is ignored and it will be overwritten by this function.
+- `rv...` - any param starting with 'rv' will be forwarded to the api call.
 
 A blank page will return wikitext of "" (which evaluates to false in Perl,
 but is defined); a nonexistent page will return undef (which also evaluates
 to false in Perl, but is obviously undefined). You can distinguish between
 blank and nonexistent pages by using [defined](https://metacpan.org/pod/perlfunc#defined):
 
+    # simple example
     my $wikitext = $bot->get_text('Page title');
+    print "Wikitext: $wikitext\n" if defined $wikitext;
+
+    # advanced example
+    my $options = {'revid'=>123456, 'section_number'=>2};
+    $wikitext = $bot->get_text('Page title', $options);
+    die "error, see API error message\n" unless defined $options->{'pageid'};
+    warn "page doesn't exist\n" if $options->{'pageid'} == MediaWiki::Bot::PAGE_NONEXISTENT;
     print "Wikitext: $wikitext\n" if defined $wikitext;
 
 **References:** [Fetching page text](https://github.com/MediaWiki-Bot/MediaWiki-Bot/wiki/Fetching-page-text),
 [API:Properties#revisions](https://www.mediawiki.org/wiki/API:Properties#revisions_.2F_rv)
+
+For backward-compatibility the params `revid` and `section_number` may also be
+given as scalar parameters:
+
+    my $wikitext = $bot->get_text('Page title', 123456, 2);
+    print "Wikitext: $wikitext\n" if defined $wikitext;
 
 ## get\_id
 
@@ -1205,6 +1259,25 @@ Returns a list of the usergroups a user is in:
     my @usergroups = $bot->usergroups('Mike.lifeguard');
 
 **References:** [API:Users](https://www.mediawiki.org/wiki/API:Users)
+
+## get\_mw\_version
+
+Returns a hash ref with the MediaWiki version. The hash ref contains the keys
+_major_, _minor_, _patch_, and _string_.
+Returns undef on errors.
+
+    my $mw_version = $bot->get_mw_version;
+
+    # get version as string
+    my $mw_ver_as_string = $mw_version->{'major'} . '.' . $mw_version->{'minor'};
+    if(defined $mw_version->{'patch'}){
+        $mw_ver_as_string .= '.' . $mw_version->{'patch'};
+    }
+
+    # or simply
+    my $mw_ver_as_string = $mw_version->{'string'};
+
+**References:** [API:Siteinfo](https://www.mediawiki.org/wiki/API:Siteinfo)
 
 ## Options hashref
 
