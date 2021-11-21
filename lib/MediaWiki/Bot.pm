@@ -659,23 +659,42 @@ sub diff {
         $oldid = shift;
     }
 
+    # backward-compatibility with MediaWiki < 1.30
+    my $mw_version = $self->get_mw_version;
+    if($mw_version->{'major'} == 1 && $mw_version->{'minor'} < 30){
+        my $hash = {
+            action   => 'query',
+            prop     => 'revisions',
+            rvdiffto => $oldid,
+        };
+        if ($title) {
+            $hash->{titles}  = $title;
+            $hash->{rvlimit} = 1;
+        }
+        elsif ($revid) {
+            $hash->{'revids'} = $revid;
+        }
+        my $res = $self->{api}->api($hash);
+        return $self->_handle_api_error() unless $res;
+        my @revids = keys %{ $res->{query}{pages} };
+        my $diff   = $res->{query}{pages}{ $revids[0] }{revisions}[0]{diff}{'*'};
+        return $diff;
+    }
+    # from MediaWiki 1.30 on the 'compare' action should be used
     my $hash = {
-        action   => 'query',
-        prop     => 'revisions',
-        rvdiffto => $oldid,
+        action => 'compare',
+        torev  => $oldid,
     };
     if ($title) {
-        $hash->{titles}  = $title;
-        $hash->{rvlimit} = 1;
+        $hash->{fromtitle}  = $title;
     }
     elsif ($revid) {
-        $hash->{'revids'} = $revid;
+        $hash->{'fromrev'} = $revid;
     }
 
     my $res = $self->{api}->api($hash);
     return $self->_handle_api_error() unless $res;
-    my @revids = keys %{ $res->{query}->{pages} };
-    my $diff   = $res->{query}->{pages}->{ $revids[0] }->{revisions}->[0]->{diff}->{'*'};
+    my $diff = $res->{'compare'}{'*'};
 
     return $diff;
 }
