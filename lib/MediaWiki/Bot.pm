@@ -1601,23 +1601,34 @@ redirect), use C<$options_hashref>, which has keys:
 
 =item *
 
-C<movetalk> specifies whether to attempt to the talk page.
+C<movetalk> specifies whether to attempt to the talk page. (1 or 0)
 
 =item *
 
-C<noredirect> specifies whether to suppress creation of a redirect.
+C<noredirect> specifies whether to suppress creation of a redirect. (1 or 0)
 
 =item *
 
-C<movesubpages> specifies whether to move subpages, if applicable.
+C<movesubpages> specifies whether to move subpages, if applicable. (1 or 0)
 
 =item *
 
-C<watch> and C<unwatch> add or remove the page and the redirect from your watchlist.
+C<watchlist> specifices whether to add or remove the page and the redirect from your watchlist.
+Allowed values: C<nochange>, C<preferences>, C<unwatch>, C<watch>. Default value: C<preferences>
 
 =item *
 
-C<ignorewarnings> ignores warnings.
+C<watchlistexpiry> specifies the watchlist expiry timestamp. Ommitting leaves unchanged.
+Value might be relative (C<5 months> or C<2 weeks>) or absolute (e.g. C<2014-09-18T12:34:56Z>).
+For no expiry, use C<infinite>, C<indefinite>, C<infinity> or C<never>.
+
+=item *
+
+C<ignorewarnings> ignores warnings. (1 or 0)
+
+=item *
+
+For more params and details see L<API:Move|https://www.mediawiki.org/wiki/API:Move>.
 
 =back
 
@@ -1639,17 +1650,13 @@ sub move {
     my $reason = shift;
     my $opts   = shift;
 
-    my $hash = {
-        action => 'move',
-        from   => $from,
-        to     => $to,
-        reason => $reason,
-    };
-    $hash->{movetalk}     = $opts->{movetalk}     if defined($opts->{movetalk});
-    $hash->{noredirect}   = $opts->{noredirect}   if defined($opts->{noredirect});
-    $hash->{movesubpages} = $opts->{movesubpages} if defined($opts->{movesubpages});
+    my $api_hash = {%$opts};
+    $api_hash->{'action'} = 'move';
+    $api_hash->{'from'}   = $from;
+    $api_hash->{'to'}     = $to;
+    $api_hash->{'reason'} = $reason;
 
-    my $res = $self->{api}->edit($hash);
+    my $res = $self->{api}->edit($api_hash);
     return $self->_handle_api_error() unless $res;
     return $res; # should we return something more useful?
 }
