@@ -3451,7 +3451,7 @@ sub db_to_domain {
 
     my $db = $bot->domain_to_db($domain_name);
 
-As you might expect, does the opposite of L</domain_to_db>: Converts a domain
+As you might expect, does the opposite of L</db_to_domain>: Converts a domain
 name (e.g. I<meta.wikimedia.org>) into a database/wiki name (e.g. I<metawiki>).
 
 B<References:> L<Extension:SiteMatrix|https://www.mediawiki.org/wiki/Extension:SiteMatrix>
@@ -3882,7 +3882,7 @@ sub _get_sitematrix {
     }
 
     # Now filter out closed wikis
-    my $response = $self->{api}->{ua}->get('http://noc.wikimedia.org/conf/closed.dblist');
+    my $response = $self->{api}->{ua}->get('http://noc.wikimedia.org/conf/dblists/closed.dblist');
     if ($response->is_success()) {
         my @closed_list = split(/\n/, $response->decoded_content);
         CLOSED: foreach my $closed (@closed_list) {

@@ -1183,7 +1183,7 @@ You can pass an arrayref to do bulk lookup:
 
     my $db = $bot->domain_to_db($domain_name);
 
-As you might expect, does the opposite of ["domain\_to\_db"](#domain_to_db): Converts a domain
+As you might expect, does the opposite of ["db\_to\_domain"](#db_to_domain): Converts a domain
 name (e.g. _meta.wikimedia.org_) into a database/wiki name (e.g. _metawiki_).
 
 **References:** [Extension:SiteMatrix](https://www.mediawiki.org/wiki/Extension:SiteMatrix)

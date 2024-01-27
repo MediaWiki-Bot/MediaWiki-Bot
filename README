@@ -1313,7 +1313,7 @@ METHODS
 
         my $db = $bot->domain_to_db($domain_name);
 
-    As you might expect, does the opposite of "domain_to_db": Converts a
+    As you might expect, does the opposite of "db_to_domain": Converts a
     domain name (e.g. meta.wikimedia.org) into a database/wiki name (e.g.
     metawiki).
 
