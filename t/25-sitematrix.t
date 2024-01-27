@@ -12,7 +12,7 @@ my $bot = MediaWiki::Bot->new({
 });
 
 {   # db->domain
-    my @wikis = ('enwiktionary', 'bat-smgwiki', 'nonexistentwiki', 'meta', 'otrs-wiki', 'aawiki');
+    my @wikis = ('enwiktionary', 'sgswiki', 'nonexistentwiki', 'meta', 'otrs-wiki', 'aawiki');
     my $ought = [
               'en.wiktionary.org',      # ok
               'bat-smg.wikipedia.org',  # ok
@@ -32,7 +32,7 @@ my $bot = MediaWiki::Bot->new({
     my $wikis = $bot->domain_to_db(\@domains);
     my $ought = [
           'enwiktionary',   # ok
-          'bat-smgwiki',    # ok
+          'sgswiki',        # ok
           undef,            # doesn't exist
           'meta',           # ok
           undef,            # private
