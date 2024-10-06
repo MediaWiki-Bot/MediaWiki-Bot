@@ -36,7 +36,7 @@ my $bot = MediaWiki::Bot->new({
           undef,            # doesn't exist
           'meta',           # ok
           undef,            # private
-          undefr            # closed (was 'aawiki')
+          undef             # closed (was 'aawiki')
         ];
 
     ok(     @$wikis,                    'Something was returned');
