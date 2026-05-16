@@ -12,5 +12,5 @@ my $bot = MediaWiki::Bot->new({
 });
 
 my @usergroups = $bot->usergroups('Mike.lifeguard');
-is_deeply [ sort @usergroups ], [ sort qw(* user autoconfirmed reviewer) ],
+is_deeply [ sort @usergroups ], [ sort qw(* user autoconfirmed) ],
     'Right usergroups were returned';
