@@ -1851,9 +1851,12 @@ process it directly with a library such as L<Imager>.
 Images are scaled proportionally. (height/width) will remain
 constant, except for rounding errors.
 
-Height and width parameters describe the I<maximum> dimensions. A 400x200
-image will never be scaled to greater dimensions. You can scale it yourself;
-having the wiki do it is just lazy & selfish.
+Height and width parameters describe the I<approximate> dimensions. You can
+scale it yourself; having the wiki do it is just lazy & selfish.
+
+Since T360589, it is no longer guaranteed that the thumbnail URL returned by the
+API matches the requested thumbnail width. The thumbnail, which will
+be fetched from a pregenerated list, is either of the same width or larger.
 
 B<References:> L<API:Properties#imageinfo|https://www.mediawiki.org/wiki/API:Properties#imageinfo_.2F_ii>
 

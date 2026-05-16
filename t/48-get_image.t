@@ -32,7 +32,7 @@ subtest 'no width, no height' => sub {
 
 subtest 'supply a width' => sub {
     plan tests => 3;
-    my $data = $bot->get_image($image_name, {width => 12});
+    my $data = $bot->get_image($image_name, {width => 40});
     ok $data, 'wscaled image retrieved';
 
     my $img = Imager->new;
@@ -40,12 +40,11 @@ subtest 'supply a width' => sub {
     ok $did_read, 'retrieved wscaled data is an image.'
         or diag $img->errstr;
 
-    is $img->getwidth(),  12, 'wscaled img has w 12';
+    is $img->getwidth(),  40, 'wscaled img has w 40';
 };
 
-#supply a width & a not-to-scale height. These
-# should both be considered maximum dimensions,
-# and scale should be proportional.
+#supply a width & a not-to-scale height.
+# Scale should be proportional.
 subtest 'supply a width and a not-to-scale height' => sub {
     plan tests => 4;
     my $data = $bot->get_image($image_name, {width => 200, height => 200});
@@ -56,6 +55,6 @@ subtest 'supply a width and a not-to-scale height' => sub {
     ok $did_read, 'retrieved whscaled data is an image.'
         or diag $img->errstr;
 
-    cmp_ok $img->getwidth(),  '<=', 200, '200 height is max';
-    cmp_ok $img->getheight(), '<=', 200, '200 width is max';
+    is $img->getwidth(),  250, '200 -> 250';
+    is $img->getheight(), 333, '200 -> 333';
 };
