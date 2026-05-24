@@ -606,16 +606,27 @@ METHODS
     If you wish to specify more options (like whether to suppress creation
     of a redirect), use $options_hashref, which has keys:
 
-      * movetalk specifies whether to attempt to the talk page.
+      * movetalk specifies whether to attempt to the talk page. (1 or 0)
 
-      * noredirect specifies whether to suppress creation of a redirect.
+      * noredirect specifies whether to suppress creation of a redirect. (1
+      or 0)
 
-      * movesubpages specifies whether to move subpages, if applicable.
+      * movesubpages specifies whether to move subpages, if applicable. (1
+      or 0)
 
-      * watch and unwatch add or remove the page and the redirect from your
-      watchlist.
+      * watchlist specifices whether to add or remove the page and the
+      redirect from your watchlist. Allowed values: nochange, preferences,
+      unwatch, watch. Default value: preferences
 
-      * ignorewarnings ignores warnings.
+      * watchlistexpiry specifies the watchlist expiry timestamp. Ommitting
+      leaves unchanged. Value might be relative (5 months or 2 weeks) or
+      absolute (e.g. 2014-09-18T12:34:56Z). For no expiry, use infinite,
+      indefinite, infinity or never.
+
+      * ignorewarnings ignores warnings. (1 or 0)
+
+      * For more params and details see API:Move
+      <https://www.mediawiki.org/wiki/API:Move>.
 
         my @pages = ("Humor", "Rumor");
         foreach my $page (@pages) {
@@ -716,9 +727,13 @@ METHODS
     Images are scaled proportionally. (height/width) will remain constant,
     except for rounding errors.
 
-    Height and width parameters describe the maximum dimensions. A 400x200
-    image will never be scaled to greater dimensions. You can scale it
-    yourself; having the wiki do it is just lazy & selfish.
+    Height and width parameters describe the approximate dimensions. You
+    can scale it yourself; having the wiki do it is just lazy & selfish.
+
+    Since T360589, it is no longer guaranteed that the thumbnail URL
+    returned by the API matches the requested thumbnail width. The
+    thumbnail, which will be fetched from a pregenerated list, is either of
+    the same width or larger.
 
     References: API:Properties#imageinfo
     <https://www.mediawiki.org/wiki/API:Properties#imageinfo_.2F_ii>
